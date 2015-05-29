@@ -2,7 +2,7 @@
 module IGraph where
 
 import qualified Data.ByteString.Char8 as B
-import Foreign (nullPtr)
+import Foreign hiding (new)
 
 import IGraph.Internal.Graph
 import IGraph.Internal.Initialization
@@ -35,9 +35,11 @@ instance Graph LGraph U where
 
     addLEdges name es (LGraph g) = do
         vec <- listToVector $ concat xs
-        igraphAddEdges g vec nullPtr
-        value <- listToStrVector $ map (B.pack . show) vs
-        igraphCattributeEASSetv g name value
+        let attr = makeAttributeRecord name vs
+        alloca $ \ptr -> do
+            poke ptr attr
+            vptr <- listToVectorP [castPtr ptr]
+            igraphAddEdges g vec (castPtr vptr)
         return ()
       where
         (xs, vs) = unzip $ map ( \(a,b,v) -> ([fromIntegral a, fromIntegral b], v) ) es

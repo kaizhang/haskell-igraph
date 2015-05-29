@@ -1,7 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Internal.Attribute where
 
-import Data.Serialize (Serialize, encode)
+import qualified Data.ByteString.Char8 as B
 import Control.Monad
 import Control.Applicative
 import Foreign
@@ -15,22 +15,24 @@ import System.IO.Unsafe (unsafePerformIO)
 #include "igraph/igraph.h"
 #include "cbits/igraph.c"
 
-makeAttributeRecord :: Serialize a => String -> [a] -> AttributeRecord
-makeAttributeRecord name xs = AttributeRecord name 2 value
-  where
-    value = unsafePerformIO $ listToStrVector $ map encode xs
+makeAttributeRecord :: Show a => String -> [a] -> AttributeRecord
+makeAttributeRecord name xs = unsafePerformIO $ do
+    ptr <- newCAString name
+    value <- listToStrVector $ map (B.pack . show) xs
+    return $ AttributeRecord ptr 2 value
 
-data AttributeRecord = AttributeRecord String Int StrVectorPtr
+data AttributeRecord = AttributeRecord CString Int StrVectorPtr
+    deriving (Show)
 
 instance Storable AttributeRecord where
     sizeOf _ = {#sizeof igraph_attribute_record_t #}
     alignment _ = {#alignof igraph_attribute_record_t #}
     peek p = AttributeRecord
-        <$> (({#get igraph_attribute_record_t->name #} p) >>= peekCString)
+        <$> ({#get igraph_attribute_record_t->name #} p)
         <*> liftM fromIntegral ({#get igraph_attribute_record_t->type #} p)
         <*> liftM castPtr ({#get igraph_attribute_record_t->value #} p)
     poke p (AttributeRecord name t vptr) = do
-        liftM ({#set igraph_attribute_record_t.name #} p) $ newCString name
+        {#set igraph_attribute_record_t.name #} p name
         {#set igraph_attribute_record_t.type #} p $ fromIntegral t
         {#set igraph_attribute_record_t.value #} p $ castPtr vptr
 
@@ -46,4 +48,4 @@ instance Storable AttributeRecord where
 
 {#fun igraph_cattribute_EAS_setv as ^ { `IGraphPtr', `String', `StrVectorPtr' } -> `Int' #}
 
-
+{#fun c_test as ^ {} -> `Ptr AttributeRecord' castPtr #}
