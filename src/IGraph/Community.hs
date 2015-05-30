@@ -12,12 +12,13 @@ import Data.Ord
 import Data.Function (on)
 
 import IGraph
+import IGraph.Mutable (U)
 import IGraph.Internal.Data
 import IGraph.Internal.Community
 import IGraph.Internal.Arpack
 
-communityLeadingEigenvector :: LGraph d v e
-                            -> (LGraph d v e -> Maybe [Double])  -- ^ extract weights
+communityLeadingEigenvector :: LGraph U v e
+                            -> (LGraph U v e -> Maybe [Double])  -- ^ extract weights
                             -> Int  -- ^ number of steps
                             -> [[Int]]
 communityLeadingEigenvector g@(LGraph gr) fn step = unsafePerformIO $ do

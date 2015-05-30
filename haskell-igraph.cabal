@@ -26,6 +26,7 @@ library
     IGraph.Internal.Clique
     IGraph.Internal.Community
     IGraph
+    IGraph.Mutable
     IGraph.Clique
     IGraph.Community
     IGraph.Read
@@ -36,6 +37,7 @@ library
     , bytestring >=0.9
     , cereal
     , bytestring-lexing
+    , primitive
 
   extra-libraries:     igraph
   hs-source-dirs:      src

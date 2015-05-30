@@ -3,6 +3,7 @@ import Control.Monad
 import Data.Serialize
 import qualified Data.ByteString.Internal as B
 import IGraph
+import IGraph.Mutable
 import IGraph.Read
 import IGraph.Clique
 import IGraph.Community
