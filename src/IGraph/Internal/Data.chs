@@ -1,8 +1,8 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Internal.Data where
 
+import Control.Monad
 import qualified Data.ByteString.Char8 as B
-import Control.Monad (forM_)
 import Foreign
 import Foreign.C.Types
 import Foreign.C.String
@@ -11,14 +11,11 @@ import System.IO.Unsafe (unsafePerformIO)
 #include "igraph/igraph.h"
 #include "cbits/igraph.c"
 
-data Vector
-{#pointer *igraph_vector_t as VectorPtr -> Vector #}
+{#pointer *igraph_vector_t as VectorPtr foreign finalizer igraph_vector_destroy newtype#}
 
 -- Construtors and destructors
 
 {#fun igraph_vector_new as ^ { `Int' } -> `VectorPtr' #}
-
-{#fun igraph_vector_destroy as ^ { `VectorPtr' } -> `()' #}
 
 listToVector :: [Double] -> IO VectorPtr
 listToVector xs = do
@@ -28,6 +25,12 @@ listToVector xs = do
   where
     n = length xs
 
+vectorPtrToList :: VectorPtr -> IO [Double]
+vectorPtrToList vptr = do
+    n <- igraphVectorSize vptr
+    allocaArray n $ \ptr -> do
+        igraphVectorCopyTo vptr ptr
+        liftM (map realToFrac) $ peekArray n ptr
 
 -- Initializing elements
 
@@ -45,6 +48,14 @@ listToVector xs = do
 {#fun pure igraph_vector_tail as ^ { `VectorPtr' } -> `Double' #}
 
 
+-- Copying vectors
+
+{#fun igraph_vector_copy_to as ^ { `VectorPtr', id `Ptr CDouble' } -> `()' #}
+
+-- Vector properties
+{#fun igraph_vector_size as ^ { `VectorPtr' } -> `Int' #}
+
+
 data VectorP
 {#pointer *igraph_vector_ptr_t as VectorPPtr -> VectorP #}
 
@@ -53,7 +64,9 @@ data VectorP
 {#fun igraph_vector_ptr_destroy as ^ { `VectorPPtr' } -> `()' #}
 {#fun igraph_vector_ptr_destroy_all as ^ { `VectorPPtr' } -> `()' #}
 
+{#fun igraph_vector_ptr_e as ^ { `VectorPPtr', `Int' } -> `Ptr ()' #}
 {#fun igraph_vector_ptr_set as ^ { `VectorPPtr', `Int', id `Ptr ()' } -> `()' #}
+{#fun igraph_vector_ptr_size as ^ { `VectorPPtr' } -> `Int' #}
 
 listToVectorP :: [Ptr ()] -> IO VectorPPtr
 listToVectorP xs = do
@@ -62,6 +75,21 @@ listToVectorP xs = do
     return vptr
   where
     n = length xs
+
+vectorPPtrToList :: VectorPPtr -> IO [[Double]]
+vectorPPtrToList vpptr = do
+    n <- igraphVectorPtrSize vpptr
+    forM [0..n-1] $ \i -> do
+        vptr <- igraphVectorPtrE vpptr i
+        fptr <- newForeignPtr_ $ castPtr vptr
+        vectorPtrToList $ VectorPtr fptr
+
+allocaVectorP :: (VectorPPtr -> IO b) -> IO b
+allocaVectorP fn = do
+    vptr <- igraphVectorPtrNew 0
+    r <- fn vptr
+    igraphVectorPtrDestroyAll vptr
+    return r
 
 data StrVector
 {#pointer *igraph_strvector_t as StrVectorPtr -> StrVector #}
@@ -89,12 +117,9 @@ listToStrVector xs = do
     n = length xs
 
 
-data Matrix
-{#pointer *igraph_matrix_t as MatrixPtr -> Matrix #}
+{#pointer *igraph_matrix_t as MatrixPtr foreign finalizer igraph_matrix_destroy newtype#}
 
 {#fun igraph_matrix_new as ^ { `Int', `Int' } -> `MatrixPtr' #}
-
-{#fun igraph_matrix_destroy as ^ { `MatrixPtr' } -> `()' #}
 
 {#fun igraph_matrix_null as ^ { `MatrixPtr' } -> `()' #}
 

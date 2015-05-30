@@ -1,6 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Internal.Generator where
 
+import Control.Monad
 import Foreign
 import Foreign.C.Types
 

@@ -42,10 +42,10 @@ instance Storable AttributeRecord where
 
 {#fun pure igraph_cattribute_GAN as ^ { `IGraphPtr', `String' } -> `Double' #}
 
+{#fun pure igraph_cattribute_VAS as ^ { `IGraphPtr', `String', `Int' } -> `String' #}
+
 {#fun pure igraph_cattribute_EAN as ^ { `IGraphPtr', `String', `Int' } -> `Double' #}
 
 {#fun pure igraph_cattribute_EAS as ^ { `IGraphPtr', `String', `Int' } -> `String' #}
 
 {#fun igraph_cattribute_EAS_setv as ^ { `IGraphPtr', `String', `StrVectorPtr' } -> `Int' #}
-
-{#fun c_test as ^ {} -> `Ptr AttributeRecord' castPtr #}

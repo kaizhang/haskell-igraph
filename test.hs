@@ -3,14 +3,20 @@ import Control.Monad
 import Data.Serialize
 import qualified Data.ByteString.Internal as B
 import IGraph
+import IGraph.Read
+import IGraph.Clique
+import IGraph.Community
 import IGraph.Internal.Graph
 import IGraph.Internal.Generator
 import IGraph.Internal.Attribute
 import IGraph.Internal.Initialization
 import Foreign.Ptr
 
+import System.Environment
+
 main = do
-    let g = new 5 :: LGraph U String Double
-    addLEdges "weight" [(1,2,1.1234),(3,4,pi)] g
-    let s = igraphCattributeEAS (_graph g) "weight" 1
-    print $ (read s :: Double)
+    [fl] <- getArgs
+    g <- readAdjMatrix fl :: IO (LGraph U B.ByteString ())
+    print $ (map.map) (flip vertexLab g) $ maximalCliques (0,0) g
+    print $ (map.map) (flip vertexLab g) $ communityLeadingEigenvector g (const Nothing) 1000
+
