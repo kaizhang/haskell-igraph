@@ -14,7 +14,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 -- Construtors and destructors
 
-{#fun igraph_vector_new as ^ { `Int' } -> `VectorPtr' #}
+{#fun igraph_vector_init as igraphVectorNew { +, `Int' } -> `VectorPtr' #}
 
 listToVector :: [Double] -> IO VectorPtr
 listToVector xs = do
@@ -55,13 +55,9 @@ vectorPtrToList vptr = do
 {#fun igraph_vector_size as ^ { `VectorPtr' } -> `Int' #}
 
 
-data VectorP
-{#pointer *igraph_vector_ptr_t as VectorPPtr -> VectorP #}
+{#pointer *igraph_vector_ptr_t as VectorPPtr foreign finalizer igraph_vector_ptr_destroy_all newtype#}
 
-{#fun igraph_vector_ptr_new as ^ { `Int' } -> `VectorPPtr' #}
-
-{#fun igraph_vector_ptr_destroy as ^ { `VectorPPtr' } -> `()' #}
-{#fun igraph_vector_ptr_destroy_all as ^ { `VectorPPtr' } -> `()' #}
+{#fun igraph_vector_ptr_init as igraphVectorPtrNew { +, `Int' } -> `VectorPPtr' #}
 
 {#fun igraph_vector_ptr_e as ^ { `VectorPPtr', `Int' } -> `Ptr ()' #}
 {#fun igraph_vector_ptr_set as ^ { `VectorPPtr', `Int', id `Ptr ()' } -> `()' #}
@@ -82,13 +78,6 @@ vectorPPtrToList vpptr = do
         vptr <- igraphVectorPtrE vpptr i
         fptr <- newForeignPtr_ $ castPtr vptr
         vectorPtrToList $ VectorPtr fptr
-
-allocaVectorP :: (VectorPPtr -> IO b) -> IO b
-allocaVectorP fn = do
-    vptr <- igraphVectorPtrNew 0
-    r <- fn vptr
-    igraphVectorPtrDestroyAll vptr
-    return r
 
 data StrVector
 {#pointer *igraph_strvector_t as StrVectorPtr -> StrVector #}

@@ -14,7 +14,8 @@ cliques :: (Int, Int)  -- ^ Minimum and maximum size of the cliques to be return
                        -- No bound will be used if negative or zero
         -> LGraph d v e
         -> [[Int]]     -- ^ cliques represented by node ids
-cliques (lo, hi) (LGraph g) = unsafePerformIO $ allocaVectorP $ \vpptr -> do
+cliques (lo, hi) (LGraph g) = unsafePerformIO $ do
+    vpptr <- igraphVectorPtrNew 0
     _ <- igraphCliques g vpptr lo hi
     (map.map) truncate <$> vectorPPtrToList vpptr
 
@@ -22,6 +23,7 @@ maximalCliques :: (Int, Int)  -- ^ Minimum and maximum size of the cliques to be
                               -- No bound will be used if negative or zero
                -> LGraph d v e
                -> [[Int]]     -- ^ cliques represented by node ids
-maximalCliques (lo, hi) (LGraph g) = unsafePerformIO $ allocaVectorP $ \vpptr -> do
+maximalCliques (lo, hi) (LGraph g) = unsafePerformIO $ do
+    vpptr <- igraphVectorPtrNew 0
     _ <- igraphMaximalCliques g vpptr lo hi
     (map.map) truncate <$> vectorPPtrToList vpptr

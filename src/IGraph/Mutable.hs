@@ -50,7 +50,7 @@ instance MGraph MLGraph U where
             alloca $ \ptr -> do
                 poke ptr attr
                 vptr <- listToVectorP [castPtr ptr]
-                igraphAddVertices g n (castPtr vptr)
+                withVectorPPtr vptr $ \p -> igraphAddVertices g n $ castPtr p
 
     addEdges es (MLGraph g) = unsafePrimToPrim $ do
         vec <- listToVector xs
@@ -64,6 +64,6 @@ instance MGraph MLGraph U where
         alloca $ \ptr -> do
             poke ptr attr
             vptr <- listToVectorP [castPtr ptr]
-            igraphAddEdges g vec (castPtr vptr)
+            withVectorPPtr vptr $ \p -> igraphAddEdges g vec $ castPtr p
       where
         (xs, vs) = unzip $ map ( \(a,b,v) -> ([fromIntegral a, fromIntegral b], v) ) es

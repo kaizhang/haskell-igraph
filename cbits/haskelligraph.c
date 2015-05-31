@@ -3,20 +3,6 @@
 
 #include <igraph/igraph.h>
 
-igraph_vector_t* igraph_vector_new(long int size)
-{
-  igraph_vector_t* vector = (igraph_vector_t*) malloc (sizeof (igraph_vector_t));
-  igraph_vector_init(vector, size);
-  return vector;
-}
-
-igraph_vector_ptr_t* igraph_vector_ptr_new(long int size)
-{
-  igraph_vector_ptr_t* vptr = (igraph_vector_ptr_t*) malloc (sizeof (igraph_vector_ptr_t));
-  igraph_vector_ptr_init(vptr, size);
-  return vptr;
-}
-
 igraph_strvector_t* igraph_strvector_new(long int size)
 {
   igraph_strvector_t* vector = (igraph_strvector_t*) malloc (sizeof (igraph_strvector_t));

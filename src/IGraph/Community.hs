@@ -22,18 +22,14 @@ communityLeadingEigenvector :: LGraph U v e
                             -> Int  -- ^ number of steps
                             -> [[Int]]
 communityLeadingEigenvector g@(LGraph gr) ws step = unsafePerformIO $ do
-    arparck <- igraphArpackNew
-    vec <- igraphVectorNew 0
-    withArpackOptPtr arparck $ \ap -> withVectorPtr vec $ \vptr -> case ws of
-        Just xs -> do
-            ws' <- listToVector xs
-            withVectorPtr ws' $ \wptr ->
-                igraphCommunityLeadingEigenvector gr wptr nullPtr vptr step ap nullPtr
-                                                  False nullPtr nullPtr nullPtr nullFunPtr nullPtr  
-
-        _ -> igraphCommunityLeadingEigenvector gr nullPtr nullPtr vptr step ap nullPtr
-                                                  False nullPtr nullPtr nullPtr nullFunPtr nullPtr  
-    xs <- vectorPtrToList vec
+    ap <- igraphArpackNew
+    vptr <- igraphVectorNew 0
+    wptr <- case ws of
+        Just w -> listToVector w
+        _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+    igraphCommunityLeadingEigenvector gr wptr nullPtr vptr step ap nullPtr
+                                      False nullPtr nullPtr nullPtr nullFunPtr nullPtr  
+    xs <- vectorPtrToList vptr
     return $ map f $ groupBy ((==) `on` snd) $ sortBy (comparing snd) $ zip [0..] xs
   where
     f = fst . unzip
