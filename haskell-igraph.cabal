@@ -17,17 +17,21 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     
-    IGraph.Internal.Arpack
     IGraph.Internal.Initialization
+    IGraph.Internal.Constants
+    IGraph.Internal.Arpack
     IGraph.Internal.Data
     IGraph.Internal.Graph
     IGraph.Internal.Attribute
+    IGraph.Internal.Selector
+    IGraph.Internal.Structure
     IGraph.Internal.Generator
     IGraph.Internal.Clique
     IGraph.Internal.Community
     IGraph
     IGraph.Mutable
     IGraph.Clique
+    IGraph.Structure
     IGraph.Community
     IGraph.Read
   -- other-modules:       

@@ -76,3 +76,8 @@ void igraph_arpack_destroy(igraph_arpack_options_t* arpack)
     free(arpack);
   arpack = NULL;
 }
+
+igraph_vs_t* igraph_vs_new() {
+  igraph_vs_t* vs = (igraph_vs_t*) malloc (sizeof (igraph_vs_t));
+  return vs;
+}
