@@ -18,16 +18,16 @@ import IGraph.Internal.Community
 import IGraph.Internal.Arpack
 
 communityLeadingEigenvector :: LGraph U v e
-                            -> (LGraph U v e -> Maybe [Double])  -- ^ extract weights
+                            -> Maybe [Double]  -- ^ extract weights
                             -> Int  -- ^ number of steps
                             -> [[Int]]
-communityLeadingEigenvector g@(LGraph gr) fn step = unsafePerformIO $ do
+communityLeadingEigenvector g@(LGraph gr) ws step = unsafePerformIO $ do
     arparck <- igraphArpackNew
     vec <- igraphVectorNew 0
-    withArpackOptPtr arparck $ \ap -> withVectorPtr vec $ \vptr -> case fn g of
+    withArpackOptPtr arparck $ \ap -> withVectorPtr vec $ \vptr -> case ws of
         Just xs -> do
-            ws <- listToVector xs
-            withVectorPtr ws $ \wptr ->
+            ws' <- listToVector xs
+            withVectorPtr ws' $ \wptr ->
                 igraphCommunityLeadingEigenvector gr wptr nullPtr vptr step ap nullPtr
                                                   False nullPtr nullPtr nullPtr nullFunPtr nullPtr  
 

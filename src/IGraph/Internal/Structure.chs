@@ -11,26 +11,25 @@ import Foreign.C.Types
 {#import IGraph.Internal.Arpack #}
 
 #include "igraph/igraph.h"
-#include "cbits/igraph.c"
 
 {#fun igraph_closeness as ^ { `IGraphPtr'
                             , `VectorPtr'
                             , %`IGraphVsPtr'
-                            , `IGraphNeimode'
+                            , `Neimode'
                             , `VectorPtr'
                             , `Bool' } -> `Int' #}
 
 {#fun igraph_betweenness as ^ { `IGraphPtr'
-                              , id `Ptr VectorPtr'
+                              , `VectorPtr'
                               , %`IGraphVsPtr'
                               , `Bool' 
-                              , id `Ptr VectorPtr'
+                              , `VectorPtr'
                               , `Bool' } -> `Int' #}
 
 {#fun igraph_eigenvector_centrality as ^ { `IGraphPtr'
-                                         , id `Ptr VectorPtr'
+                                         , `VectorPtr'
                                          , id `Ptr CDouble'
                                          , `Bool'
                                          , `Bool'
-                                         , id `Ptr VectorPtr'
+                                         , `VectorPtr'
                                          , `ArpackOptPtr' } -> `Int' #}

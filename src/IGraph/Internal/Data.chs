@@ -8,8 +8,7 @@ import Foreign.C.Types
 import Foreign.C.String
 import System.IO.Unsafe (unsafePerformIO)
 
-#include "igraph/igraph.h"
-#include "cbits/igraph.c"
+#include "cbits/haskelligraph.c"
 
 {#pointer *igraph_vector_t as VectorPtr foreign finalizer igraph_vector_destroy newtype#}
 

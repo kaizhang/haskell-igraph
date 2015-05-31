@@ -12,8 +12,7 @@ import System.IO.Unsafe (unsafePerformIO)
 {#import IGraph.Internal.Graph #}
 {#import IGraph.Internal.Data #}
 
-#include "igraph/igraph.h"
-#include "cbits/igraph.c"
+#include "cbits/haskelligraph.c"
 
 makeAttributeRecord :: Show a => String -> [a] -> AttributeRecord
 makeAttributeRecord name xs = unsafePerformIO $ do

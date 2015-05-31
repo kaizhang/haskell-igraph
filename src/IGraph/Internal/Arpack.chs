@@ -5,8 +5,7 @@ import Control.Monad
 import Foreign
 import Foreign.C.Types
 
-#include "igraph/igraph.h"
-#include "cbits/igraph.c"
+#include "cbits/haskelligraph.c"
 
 {#pointer *igraph_arpack_options_t as ArpackOptPtr foreign finalizer igraph_arpack_destroy newtype#}
 

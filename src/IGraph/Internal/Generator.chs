@@ -7,8 +7,7 @@ import Foreign.C.Types
 
 {#import IGraph.Internal.Graph #}
 
-#include "igraph/igraph.h"
-#include "cbits/igraph.c"
+#include "cbits/haskelligraph.c"
 
 -- Deterministic Graph Generators
 

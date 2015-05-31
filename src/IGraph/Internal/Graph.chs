@@ -9,8 +9,7 @@ import System.IO.Unsafe (unsafePerformIO)
 {#import IGraph.Internal.Initialization #}
 {#import IGraph.Internal.Data #}
 
-#include "igraph/igraph.h"
-#include "cbits/igraph.c"
+#include "cbits/haskelligraph.c"
 
 {#pointer *igraph_t as IGraphPtr foreign finalizer igraph_destroy newtype#}
 

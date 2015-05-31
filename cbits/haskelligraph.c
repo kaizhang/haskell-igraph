@@ -1,3 +1,6 @@
+#ifndef HASKELL_IGRAPH
+#define HASKELL_IGRAPH
+
 #include <igraph/igraph.h>
 
 igraph_vector_t* igraph_vector_new(long int size)
@@ -81,3 +84,5 @@ igraph_vs_t* igraph_vs_new() {
   igraph_vs_t* vs = (igraph_vs_t*) malloc (sizeof (igraph_vs_t));
   return vs;
 }
+
+#endif

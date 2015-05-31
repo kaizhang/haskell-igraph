@@ -19,6 +19,9 @@ data LGraph d v e = LGraph
     { _graph :: IGraphPtr }
 
 class MGraph (Mutable gr) d => Graph gr d where
+    nVertices :: gr d v e -> Int
+    nEdges :: gr d v e -> Int
+
     mkGraph :: (Show v, Show e) => (Int, Maybe [v]) -> ([(Int, Int)], Maybe [e]) -> gr d v e
     mkGraph (n, vattr) (es,eattr) = runST $ do
         g <- new 0
@@ -37,15 +40,23 @@ class MGraph (Mutable gr) d => Graph gr d where
 
     edgeLab :: Read e => (Int, Int) -> gr d v e -> e
 
+    edgeLabByEid :: Read e => Int -> gr d v e -> e
+
     unsafeFreeze :: PrimMonad m => Mutable gr (PrimState m) d v e -> m (gr d v e)
 
     unsafeThaw :: PrimMonad m => gr d v e -> m (Mutable gr (PrimState m) d v e)
 
 
 instance Graph LGraph U where
+    nVertices (LGraph g) = igraphVcount g
+
+    nEdges (LGraph g) = igraphEcount g
+
     vertexLab i (LGraph g) = read $ igraphCattributeVAS g vertexAttr i
 
     edgeLab (fr,to) (LGraph g) = read $ igraphCattributeEAS g edgeAttr $ igraphGetEid g fr to True True
+
+    edgeLabByEid i (LGraph g) = read $ igraphCattributeEAS g edgeAttr i
 
     unsafeFreeze (MLGraph g) = return $ LGraph g
 

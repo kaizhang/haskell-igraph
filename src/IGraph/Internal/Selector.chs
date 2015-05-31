@@ -9,8 +9,7 @@ import System.IO.Unsafe (unsafePerformIO)
 {#import IGraph.Internal.Constants #}
 {#import IGraph.Internal.Data #}
 
-#include "igraph/igraph.h"
-#include "cbits/igraph.c"
+#include "cbits/haskelligraph.c"
 
 {#pointer *igraph_vs_t as IGraphVsPtr foreign finalizer igraph_vs_destroy newtype #}
 
@@ -18,6 +17,6 @@ import System.IO.Unsafe (unsafePerformIO)
 
 {#fun igraph_vs_all as ^ { `IGraphVsPtr' } -> `Int' #}
 
-{#fun igraph_vs_adj as ^ { `IGraphVsPtr', `Int', `IGraphNeimode' } -> `Int' #}
+{#fun igraph_vs_adj as ^ { `IGraphVsPtr', `Int', `Neimode' } -> `Int' #}
 
 {#fun igraph_vs_vector as ^ { `IGraphVsPtr', `VectorPtr' } -> `Int' #}

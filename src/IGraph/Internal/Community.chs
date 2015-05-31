@@ -8,8 +8,7 @@ import Foreign.C.Types
 {#import IGraph.Internal.Graph #}
 {#import IGraph.Internal.Data #}
 
-#include "igraph/igraph.h"
-#include "cbits/igraph.c"
+#include "cbits/haskelligraph.c"
 
 {#fun igraph_community_leading_eigenvector as ^ { `IGraphPtr'
                                                 , id `Ptr VectorPtr'
