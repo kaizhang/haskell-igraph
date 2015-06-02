@@ -22,7 +22,7 @@ closeness :: [Int]  -- ^ vertices
           -> Neimode
           -> Bool   -- ^ whether to normalize
           -> [Double]
-closeness vs (LGraph g) ws mode normal = unsafePerformIO $ do
+closeness vs gr ws mode normal = unsafePerformIO $ do
     vsptr <- igraphVsNew
     vs' <- listToVector $ map fromIntegral vs
     igraphVsVector vsptr vs'
@@ -30,7 +30,7 @@ closeness vs (LGraph g) ws mode normal = unsafePerformIO $ do
     ws' <- case ws of
         Just w -> listToVector w
         _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
-    igraphCloseness g vptr vsptr mode ws' normal
+    igraphCloseness (_graph gr) vptr vsptr mode ws' normal
     vectorPtrToList vptr
 
 -- | betweenness centrality
@@ -38,7 +38,7 @@ betweenness :: [Int]
             -> LGraph d v e
             -> Maybe [Double]
             -> [Double]
-betweenness vs (LGraph g) ws = unsafePerformIO $ do
+betweenness vs gr ws = unsafePerformIO $ do
     vsptr <- igraphVsNew
     vs' <- listToVector $ map fromIntegral vs
     igraphVsVector vsptr vs'
@@ -46,18 +46,18 @@ betweenness vs (LGraph g) ws = unsafePerformIO $ do
     ws' <- case ws of
         Just w -> listToVector w
         _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
-    igraphBetweenness g vptr vsptr True ws' False
+    igraphBetweenness (_graph gr) vptr vsptr True ws' False
     vectorPtrToList vptr
 
 -- | eigenvector centrality
 eigenvectorCentrality :: LGraph d v e
                       -> Maybe [Double]
                       -> [Double]
-eigenvectorCentrality (LGraph g) ws = unsafePerformIO $ do
+eigenvectorCentrality gr ws = unsafePerformIO $ do
     vptr <- igraphVectorNew 0
     ws' <- case ws of
         Just w -> listToVector w
         _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
     arparck <- igraphArpackNew
-    igraphEigenvectorCentrality g vptr nullPtr True True ws' arparck
+    igraphEigenvectorCentrality (_graph gr) vptr nullPtr True True ws' arparck
     vectorPtrToList vptr

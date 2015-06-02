@@ -19,7 +19,7 @@ igraphNew n directed _ = igraphNew' n directed
 
 -- Graph Constructors and Destructors
 
-{#fun igraph_new as igraphNew' { `Int', `Bool' } -> `IGraphPtr' #}
+{#fun igraph_empty as igraphNew' { +, `Int', `Bool' } -> `IGraphPtr' #}
 
 -- Basic Query Operations
 
@@ -36,3 +36,6 @@ igraphNew n directed _ = igraphNew' n directed
 {# fun igraph_add_edge as ^ { `IGraphPtr', `Int', `Int' } -> `()' #}
 
 {# fun igraph_add_edges as ^ { `IGraphPtr', `VectorPtr', id `Ptr ()' } -> `()' #}
+
+
+{#fun igraph_full as ^ { +, `Int', `Bool', `Bool' } -> `IGraphPtr' #}

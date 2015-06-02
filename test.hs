@@ -1,7 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 import Foreign hiding (new)
 import Control.Monad
 import Data.Serialize
-import qualified Data.ByteString.Internal as B
+import qualified Data.ByteString.Char8 as B
+import qualified Data.HashMap.Strict as M
 import IGraph
 import IGraph.Mutable
 import IGraph.Read
@@ -15,9 +18,15 @@ import System.Environment
 
 main = do
     [fl] <- getArgs
-    g <- readAdjMatrixWeighted fl :: IO (LGraph U B.ByteString Double)
-    let ws = map (abs . flip edgeLabByEid g) [0 .. nEdges g - 1]
-    print $ (map.map) (flip vertexLab g) $ maximalCliques (0,0) g
-    print $ (map.map) (flip vertexLab g) $ communityLeadingEigenvector g (Just ws) 1000
-    print $ closeness [1,2] g Nothing IgraphAll True
-
+    g <- readAdjMatrix fl :: IO (LGraph U B.ByteString ())
+    let n = nNodes g
+        r = map (f g) [0..n-1]
+    mapM_ h r
+  where
+    f g i = let name = nodeLab g i
+                xs = map (nodeLab g) $ neighbors g i
+            in (name, B.intercalate "," xs)
+    h (a,b) = do
+        B.putStr a
+        B.putStr "\t"
+        B.putStrLn b

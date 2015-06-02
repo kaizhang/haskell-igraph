@@ -13,7 +13,7 @@ maintainer:          kai@kzhang.org
 category:            Math
 build-type:          Simple
 extra-source-files:  cbits
-cabal-version:       >=1.10
+cabal-version:       >=1.22
 
 library
   exposed-modules:     
@@ -25,7 +25,6 @@ library
     IGraph.Internal.Attribute
     IGraph.Internal.Selector
     IGraph.Internal.Structure
-    IGraph.Internal.Generator
     IGraph.Internal.Clique
     IGraph.Internal.Community
     IGraph
@@ -41,6 +40,8 @@ library
     , bytestring >=0.9
     , bytestring-lexing
     , primitive
+    , unordered-containers
+    , hashable
 
   extra-libraries:     igraph
   hs-source-dirs:      src

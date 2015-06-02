@@ -14,16 +14,16 @@ cliques :: (Int, Int)  -- ^ Minimum and maximum size of the cliques to be return
                        -- No bound will be used if negative or zero
         -> LGraph d v e
         -> [[Int]]     -- ^ cliques represented by node ids
-cliques (lo, hi) (LGraph g) = unsafePerformIO $ do
+cliques (lo, hi) gr = unsafePerformIO $ do
     vpptr <- igraphVectorPtrNew 0
-    _ <- igraphCliques g vpptr lo hi
+    _ <- igraphCliques (_graph gr) vpptr lo hi
     (map.map) truncate <$> vectorPPtrToList vpptr
 
 maximalCliques :: (Int, Int)  -- ^ Minimum and maximum size of the cliques to be returned.
                               -- No bound will be used if negative or zero
                -> LGraph d v e
                -> [[Int]]     -- ^ cliques represented by node ids
-maximalCliques (lo, hi) (LGraph g) = unsafePerformIO $ do
+maximalCliques (lo, hi) gr = unsafePerformIO $ do
     vpptr <- igraphVectorPtrNew 0
-    _ <- igraphMaximalCliques g vpptr lo hi
+    _ <- igraphMaximalCliques (_graph gr) vpptr lo hi
     (map.map) truncate <$> vectorPPtrToList vpptr

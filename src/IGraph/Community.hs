@@ -21,13 +21,13 @@ communityLeadingEigenvector :: LGraph U v e
                             -> Maybe [Double]  -- ^ extract weights
                             -> Int  -- ^ number of steps
                             -> [[Int]]
-communityLeadingEigenvector g@(LGraph gr) ws step = unsafePerformIO $ do
+communityLeadingEigenvector gr ws step = unsafePerformIO $ do
     ap <- igraphArpackNew
     vptr <- igraphVectorNew 0
     wptr <- case ws of
         Just w -> listToVector w
         _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
-    igraphCommunityLeadingEigenvector gr wptr nullPtr vptr step ap nullPtr
+    igraphCommunityLeadingEigenvector (_graph gr) wptr nullPtr vptr step ap nullPtr
                                       False nullPtr nullPtr nullPtr nullFunPtr nullPtr  
     xs <- vectorPtrToList vptr
     return $ map f $ groupBy ((==) `on` snd) $ sortBy (comparing snd) $ zip [0..] xs

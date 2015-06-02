@@ -107,7 +107,7 @@ listToStrVector xs = do
 
 {#pointer *igraph_matrix_t as MatrixPtr foreign finalizer igraph_matrix_destroy newtype#}
 
-{#fun igraph_matrix_new as ^ { `Int', `Int' } -> `MatrixPtr' #}
+{#fun igraph_matrix_init as igraphMatrixNew { +, `Int', `Int' } -> `MatrixPtr' #}
 
 {#fun igraph_matrix_null as ^ { `MatrixPtr' } -> `()' #}
 

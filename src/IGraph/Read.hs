@@ -11,7 +11,7 @@ readAdjMatrix fl = do
     c <- B.readFile fl
     let (header:xs) = B.lines c
         mat = map (map (fst . fromJust . readDouble) . B.words) xs
-        es = fst $ unzip $ filter f $ zip [ (i,j) | i <- [0..nrow-1], j <- [0..nrow-1] ] $ concat mat
+        es = fst $ unzip $ filter f $ zip [ (i,j) | i <- [0..nrow-1], j <- [i..nrow-1] ] $ concat mat
         nrow = length mat
         ncol = length $ head mat
     if nrow /= ncol
@@ -25,7 +25,7 @@ readAdjMatrixWeighted fl = do
     c <- B.readFile fl
     let (header:xs) = B.lines c
         mat = map (map (fst . fromJust . readDouble) . B.words) xs
-        (es, ws) = unzip $ filter f $ zip [ (i,j) | i <- [0..nrow-1], j <- [0..nrow-1] ] $ concat mat
+        (es, ws) = unzip $ filter f $ zip [ (i,j) | i <- [0..nrow-1], j <- [i..nrow-1] ] $ concat mat
         nrow = length mat
         ncol = length $ head mat
     if nrow /= ncol

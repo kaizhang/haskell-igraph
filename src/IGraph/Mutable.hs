@@ -21,9 +21,9 @@ type LEdge a = (Int, Int, a)
 class MGraph gr d where
     new :: PrimMonad m => Int -> m (gr (PrimState m) d v e)
 
-    addVertices :: PrimMonad m => Int -> gr (PrimState m) d v e -> m ()
+    addNodes :: PrimMonad m => Int -> gr (PrimState m) d v e -> m ()
 
-    addLVertices :: (Show v, PrimMonad m)
+    addLNodes :: (Show v, PrimMonad m)
                  => Int  -- ^ the number of new vertices add to the graph
                  -> [v]  -- ^ vertices' labels
                  -> gr (PrimState m) d v e -> m ()
@@ -41,9 +41,9 @@ data D
 instance MGraph MLGraph U where
     new n = unsafePrimToPrim $ igraphInit >>= igraphNew n False >>= return . MLGraph
 
-    addVertices n (MLGraph g) = unsafePrimToPrim $ igraphAddVertices g n nullPtr
+    addNodes n (MLGraph g) = unsafePrimToPrim $ igraphAddVertices g n nullPtr
 
-    addLVertices n labels (MLGraph g)
+    addLNodes n labels (MLGraph g)
         | n /= length labels = error "addLVertices: incorrect number of labels"
         | otherwise = unsafePrimToPrim $ do
             let attr = makeAttributeRecord vertexAttr labels
