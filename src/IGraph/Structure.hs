@@ -1,5 +1,7 @@
 module IGraph.Structure
     ( closeness
+    , betweenness
+    , eigenvectorCentrality
     ) where
 
 import Control.Monad
