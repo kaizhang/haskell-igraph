@@ -12,7 +12,7 @@ import System.IO.Unsafe (unsafePerformIO)
 {#import IGraph.Internal.Graph #}
 {#import IGraph.Internal.Data #}
 
-#include "cbits/haskelligraph.c"
+#include "igraph/igraph.h"
 
 makeAttributeRecord :: Show a => String -> [a] -> AttributeRecord
 makeAttributeRecord name xs = unsafePerformIO $ do
@@ -21,7 +21,6 @@ makeAttributeRecord name xs = unsafePerformIO $ do
     return $ AttributeRecord ptr 2 value
 
 data AttributeRecord = AttributeRecord CString Int StrVectorPtr
-    deriving (Show)
 
 instance Storable AttributeRecord where
     sizeOf _ = {#sizeof igraph_attribute_record_t #}
@@ -29,11 +28,14 @@ instance Storable AttributeRecord where
     peek p = AttributeRecord
         <$> ({#get igraph_attribute_record_t->name #} p)
         <*> liftM fromIntegral ({#get igraph_attribute_record_t->type #} p)
-        <*> liftM castPtr ({#get igraph_attribute_record_t->value #} p)
+        <*> ( do ptr <- {#get igraph_attribute_record_t->value #} p
+                 fptr <- newForeignPtr_ . castPtr $ ptr
+                 return $ StrVectorPtr fptr )
     poke p (AttributeRecord name t vptr) = do
         {#set igraph_attribute_record_t.name #} p name
         {#set igraph_attribute_record_t.type #} p $ fromIntegral t
-        {#set igraph_attribute_record_t.value #} p $ castPtr vptr
+        withStrVectorPtr vptr $ \ptr ->
+            {#set igraph_attribute_record_t.value #} p $ castPtr ptr
 
 {#fun pure igraph_cattribute_has_attr as ^ { `IGraphPtr', `Int', `String' } -> `Bool' #}
 

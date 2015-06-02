@@ -79,12 +79,10 @@ vectorPPtrToList vpptr = do
         fptr <- newForeignPtr_ $ castPtr vptr
         vectorPtrToList $ VectorPtr fptr
 
-data StrVector
-{#pointer *igraph_strvector_t as StrVectorPtr -> StrVector #}
 
-{#fun igraph_strvector_new as ^ { `Int' } -> `StrVectorPtr' #}
+{#pointer *igraph_strvector_t as StrVectorPtr foreign finalizer igraph_strvector_destroy newtype#}
 
-{#fun igraph_strvector_destroy as ^ { `StrVectorPtr' } -> `()' #}
+{#fun igraph_strvector_init as igraphStrvectorNew { +, `Int' } -> `StrVectorPtr' #}
 
 {#fun igraph_strvector_get_ as igraphStrvectorGet' { `StrVectorPtr', `Int' } -> `Ptr CString' id #}
 
