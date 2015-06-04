@@ -21,6 +21,8 @@ igraphNew n directed _ = igraphNew' n directed
 
 {#fun igraph_empty as igraphNew' { +, `Int', `Bool' } -> `IGraphPtr' #}
 
+{#fun igraph_copy as ^ { +, `IGraphPtr' } -> `IGraphPtr' #}
+
 -- Basic Query Operations
 
 {#fun pure igraph_vcount as ^ { `IGraphPtr' } -> `Int' #}

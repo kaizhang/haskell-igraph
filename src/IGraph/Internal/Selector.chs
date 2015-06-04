@@ -61,3 +61,14 @@ igraph_integer_t igraph_vit_get(igraph_vit_t *vit) {
 {#fun igraph_vit_next as ^ { `IGraphVitPtr' } -> `()' #}
 
 {#fun igraph_vit_get as ^ { `IGraphVitPtr' } -> `Int' #}
+
+vitToList :: IGraphVitPtr -> IO [Int]
+vitToList vit = do
+    isEnd <- igraphVitEnd vit
+    if isEnd
+      then return []
+      else do
+        cur <- igraphVitGet vit
+        igraphVitNext vit
+        acc <- vitToList vit
+        return $ cur : acc

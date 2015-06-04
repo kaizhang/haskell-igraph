@@ -72,21 +72,29 @@ instance Graph LGraph U where
 
     unsafeThaw (LGraph g _) = return $ MLGraph g
 
+thaw :: (PrimMonad m, Graph LGraph d) => LGraph d v e -> m (MLGraph (PrimState m) d v e)
+thaw (LGraph g _) = unsafePrimToPrim $ igraphCopy g >>= return . MLGraph
 
 neighbors :: LGraph d v e -> Int -> [Int]
 neighbors gr i = unsafePerformIO $ do
     vs <- igraphVsNew
     igraphVsAdj vs i IgraphAll
     vit <- igraphVitNew (_graph gr) vs
-    loop vit
-  where
-    loop x = do
-        isEnd <- igraphVitEnd x
-        if isEnd
-           then return []
-           else do
-               cur <- igraphVitGet x
-               igraphVitNext x
-               acc <- loop x
-               return $ cur : acc
+    vitToList vit
+
+-- | Find all Nodes that have a link from the given Node.
+suc :: LGraph D v e -> Int -> [Int]
+suc gr i = unsafePerformIO $ do
+    vs <- igraphVsNew
+    igraphVsAdj vs i IgraphOut
+    vit <- igraphVitNew (_graph gr) vs
+    vitToList vit
+
+-- | Find all Nodes that link to to the given Node.
+pre :: LGraph D v e -> Int -> [Int]
+pre gr i = unsafePerformIO $ do
+    vs <- igraphVsNew
+    igraphVsAdj vs i IgraphIn
+    vit <- igraphVitNew (_graph gr) vs
+    vitToList vit
 
