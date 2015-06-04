@@ -18,27 +18,27 @@ edgeAttr = "edge_attribute"
 
 type LEdge a = (Int, Int, a)
 
-class MGraph gr d where
-    new :: PrimMonad m => Int -> m (gr (PrimState m) d v e)
+-- | Mutable labeled graph
+newtype MLGraph m d v e = MLGraph IGraphPtr
 
-    addNodes :: PrimMonad m => Int -> gr (PrimState m) d v e -> m ()
+class MGraph d where
+    new :: PrimMonad m => Int -> m (MLGraph (PrimState m) d v e)
+
+    addNodes :: PrimMonad m => Int -> MLGraph(PrimState m) d v e -> m ()
 
     addLNodes :: (Show v, PrimMonad m)
                  => Int  -- ^ the number of new vertices add to the graph
                  -> [v]  -- ^ vertices' labels
-                 -> gr (PrimState m) d v e -> m ()
+                 -> MLGraph (PrimState m) d v e -> m ()
 
-    addEdges :: PrimMonad m => [(Int, Int)] -> gr (PrimState m) d v e -> m ()
+    addEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
 
-    addLEdges :: (PrimMonad m, Show e) => [LEdge e] -> gr (PrimState m) d v e -> m ()
-
--- | Mutable labeled graph
-newtype MLGraph m d v e = MLGraph IGraphPtr
+    addLEdges :: (PrimMonad m, Show e) => [LEdge e] -> MLGraph (PrimState m) d v e -> m ()
 
 data U
 data D
 
-instance MGraph MLGraph U where
+instance MGraph U where
     new n = unsafePrimToPrim $ igraphInit >>= igraphNew n False >>= return . MLGraph
 
     addNodes n (MLGraph g) = unsafePrimToPrim $ igraphAddVertices g n nullPtr

@@ -6,7 +6,7 @@ import Data.Maybe
 
 import IGraph
 
-readAdjMatrix :: Graph gr d => FilePath -> IO (gr d B.ByteString ())
+readAdjMatrix :: Graph d => FilePath -> IO (LGraph d B.ByteString ())
 readAdjMatrix fl = do
     c <- B.readFile fl
     let (header:xs) = B.lines c
@@ -20,7 +20,7 @@ readAdjMatrix fl = do
   where
     f ((i,j),v) = i /= j && v /= 0
 
-readAdjMatrixWeighted :: Graph gr d => FilePath -> IO (gr d B.ByteString Double)
+readAdjMatrixWeighted :: Graph d => FilePath -> IO (LGraph d B.ByteString Double)
 readAdjMatrixWeighted fl = do
     c <- B.readFile fl
     let (header:xs) = B.lines c
