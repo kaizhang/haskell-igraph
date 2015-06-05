@@ -6,3 +6,5 @@ import Foreign
 #include "cbits/haskelligraph.c"
 
 {#enum igraph_neimode_t as Neimode {underscoreToCase} deriving (Show, Eq) #}
+
+{#enum igraph_edgeorder_type_t as EdgeOrderType {underscoreToCase} deriving (Show, Eq) #}

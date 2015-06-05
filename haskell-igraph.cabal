@@ -45,6 +45,7 @@ library
     , unordered-containers
     , hashable
     , split
+    , data-default-class
 
   extra-libraries:     igraph
   hs-source-dirs:      src
@@ -52,3 +53,21 @@ library
   build-tools:         c2hs >=0.25.0
   C-Sources:
     cbits/haskelligraph.c
+
+test-suite tests
+  type: exitcode-stdio-1.0
+  hs-source-dirs: tests
+  main-is: test.hs
+  other-modules:       
+
+  default-language:    Haskell2010
+  build-depends: 
+      base
+    , haskell-igraph
+    , tasty
+    , tasty-golden
+    , tasty-hunit
+
+source-repository  head
+  type: git
+  location: https://github.com/kaizhang/haskell-igraph.git

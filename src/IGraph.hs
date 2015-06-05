@@ -1,6 +1,20 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleContexts #-}
-module IGraph where
+module IGraph
+    ( LGraph(..)
+    , U
+    , D
+    , Graph(..)
+    , mkGraph
+
+    , unsafeFreeze
+    , unsafeThaw
+    , thaw
+
+    , neighbors
+    , pre
+    , suc
+    ) where
 
 import Control.Monad (liftM)
 import Control.Monad.ST (runST)
@@ -16,10 +30,13 @@ import IGraph.Internal.Constants
 import IGraph.Internal.Attribute
 import IGraph.Internal.Selector
 
+type Node = Int
+type Edge = (Node, Node)
+
 -- | graph with labeled nodes and edges
 data LGraph d v e = LGraph
     { _graph :: IGraphPtr
-    , _nodeLabelToId :: M.HashMap v [Int] }
+    , _labelToNode :: M.HashMap v [Node] }
 
 
 class MGraph d => Graph d where
@@ -29,10 +46,17 @@ class MGraph d => Graph d where
     nEdges :: LGraph d v e -> Int
     nEdges (LGraph g _) = igraphEcount g
 
-    nodeLab :: Read v => LGraph d v e -> Int -> v
+    edges :: LGraph d v e -> [Edge]
+    edges (LGraph g _) = unsafePerformIO $ do
+        es <- igraphEsAll IgraphEdgeorderFrom
+        eit <- igraphEitNew g es
+        eids <- eitToList eit
+        mapM (igraphEdge g) eids
+
+    nodeLab :: Read v => LGraph d v e -> Node -> v
     nodeLab (LGraph g _) i = read $ igraphCattributeVAS g vertexAttr i
 
-    edgeLab :: Read e => LGraph d v e -> (Int, Int) -> e
+    edgeLab :: Read e => LGraph d v e -> Edge -> e
     edgeLab (LGraph g _) (fr,to) = read $ igraphCattributeEAS g edgeAttr $ igraphGetEid g fr to True True
 
     edgeLabByEid :: Read e => LGraph d v e -> Int -> e
@@ -42,7 +66,7 @@ class MGraph d => Graph d where
 instance Graph U where
 
 
-mkGraph :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e) => (Int, Maybe [v]) -> ([(Int, Int)], Maybe [e]) -> LGraph d v e
+mkGraph :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e) => (Node, Maybe [v]) -> ([Edge], Maybe [e]) -> LGraph d v e
 mkGraph (n, vattr) (es,eattr) = runST $ do
     g <- new 0
     let addV | isNothing vattr = addNodes n g
@@ -70,7 +94,7 @@ unsafeThaw (LGraph g _) = return $ MLGraph g
 thaw :: (PrimMonad m, Graph d) => LGraph d v e -> m (MLGraph (PrimState m) d v e)
 thaw (LGraph g _) = unsafePrimToPrim . liftM MLGraph . igraphCopy $ g
 
-neighbors :: LGraph d v e -> Int -> [Int]
+neighbors :: LGraph d v e -> Node -> [Node]
 neighbors gr i = unsafePerformIO $ do
     vs <- igraphVsNew
     igraphVsAdj vs i IgraphAll
@@ -78,7 +102,7 @@ neighbors gr i = unsafePerformIO $ do
     vitToList vit
 
 -- | Find all Nodes that have a link from the given Node.
-suc :: LGraph D v e -> Int -> [Int]
+suc :: LGraph D v e -> Node -> [Node]
 suc gr i = unsafePerformIO $ do
     vs <- igraphVsNew
     igraphVsAdj vs i IgraphOut
@@ -86,7 +110,7 @@ suc gr i = unsafePerformIO $ do
     vitToList vit
 
 -- | Find all Nodes that link to to the given Node.
-pre :: LGraph D v e -> Int -> [Int]
+pre :: LGraph D v e -> Node -> [Node]
 pre gr i = unsafePerformIO $ do
     vs <- igraphVsNew
     igraphVsAdj vs i IgraphIn

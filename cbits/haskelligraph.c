@@ -18,6 +18,20 @@ char** igraph_strvector_get_(igraph_strvector_t* s, long int i)
   return x;
 }
 
+igraph_arpack_options_t* igraph_arpack_new()
+{
+  igraph_arpack_options_t *arpack = (igraph_arpack_options_t*) malloc(sizeof(igraph_arpack_options_t));
+  igraph_arpack_options_init(arpack);
+  return arpack;
+}
+
+void igraph_arpack_destroy(igraph_arpack_options_t* arpack)
+{
+  if (arpack)
+    free(arpack);
+  arpack = NULL;
+}
+
 void haskelligraph_init()
 {
   /* attach attribute table */

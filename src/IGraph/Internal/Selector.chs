@@ -72,3 +72,55 @@ vitToList vit = do
         igraphVitNext vit
         acc <- vitToList vit
         return $ cur : acc
+
+
+-- Edge Selector
+
+{#pointer *igraph_es_t as IGraphEsPtr foreign finalizer igraph_es_destroy newtype #}
+
+{#fun igraph_es_all as ^ { +, `EdgeOrderType' } -> `IGraphEsPtr' #}
+
+
+-- Edge iterator
+
+{#pointer *igraph_eit_t as IGraphEitPtr foreign finalizer igraph_eit_destroy newtype #}
+
+#c
+igraph_eit_t* igraph_eit_new(const igraph_t *graph, igraph_es_t es) {
+  igraph_eit_t* eit = (igraph_eit_t*) malloc (sizeof (igraph_eit_t));
+  igraph_eit_create(graph, es, eit);
+  return eit;
+}
+
+igraph_bool_t igraph_eit_end(igraph_eit_t *eit) {
+  return IGRAPH_EIT_END(*eit);
+}
+
+void igraph_eit_next(igraph_eit_t *eit) {
+  IGRAPH_EIT_NEXT(*eit);
+}
+
+igraph_integer_t igraph_eit_get(igraph_eit_t *eit) {
+  return IGRAPH_EIT_GET(*eit);
+}
+#endc
+
+{#fun igraph_eit_new as ^ { `IGraphPtr', %`IGraphEsPtr' } -> `IGraphEitPtr' #}
+
+{#fun igraph_eit_end as ^ { `IGraphEitPtr' } -> `Bool' #}
+
+{#fun igraph_eit_next as ^ { `IGraphEitPtr' } -> `()' #}
+
+{#fun igraph_eit_get as ^ { `IGraphEitPtr' } -> `Int' #}
+
+eitToList :: IGraphEitPtr -> IO [Int]
+eitToList eit = do
+    isEnd <- igraphEitEnd eit
+    if isEnd
+      then return []
+      else do
+        cur <- igraphEitGet eit
+        igraphEitNext eit
+        acc <- eitToList eit
+        return $ cur : acc
+

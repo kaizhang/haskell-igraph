@@ -8,6 +8,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 {#import IGraph.Internal.Initialization #}
 {#import IGraph.Internal.Data #}
+{#import IGraph.Internal.Constants #}
 
 #include "cbits/haskelligraph.c"
 
@@ -30,6 +31,14 @@ igraphNew n directed _ = igraphNew' n directed
 {#fun pure igraph_ecount as ^ { `IGraphPtr' } -> `Int' #}
 
 {#fun pure igraph_get_eid_ as igraphGetEid { `IGraphPtr', `Int', `Int', `Bool', `Bool' } -> `Int' #}
+
+{#fun igraph_edge as igraphEdge' { `IGraphPtr', `Int', id `Ptr CInt', id `Ptr CInt' } -> `Int' #}
+igraphEdge :: IGraphPtr -> Int -> IO (Int, Int)
+igraphEdge g i = alloca $ \fr -> alloca $ \to -> do
+    igraphEdge' g i fr to
+    fr' <- peek fr
+    to' <- peek to
+    return (fromIntegral fr', fromIntegral to')
 
 -- Adding and Deleting Vertices and Edges
 

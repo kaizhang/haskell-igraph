@@ -5,6 +5,7 @@ module IGraph.Layout
 import Foreign (nullPtr)
 import Control.Applicative ((<$>))
 import System.IO.Unsafe (unsafePerformIO)
+import Data.Default.Class
 
 import IGraph
 import IGraph.Internal.Clique
@@ -15,6 +16,12 @@ data LayoutOpt = LayoutOpt
     { _seed :: Maybe [(Double, Double)]
     , _nIter :: Int
     } deriving (Show)
+
+instance Default LayoutOpt where
+    def = LayoutOpt
+        { _seed = Nothing
+        , _nIter = 10000
+        }
 
 kamadaKawai :: Graph d => LGraph d v e -> Double -> Double -> Double -> Double -> LayoutOpt -> [(Double, Double)]
 kamadaKawai gr sigma initemp coolexp kkconst opt = unsafePerformIO $ do
