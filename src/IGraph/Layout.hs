@@ -27,7 +27,7 @@ kamadaKawai :: Graph d => LGraph d v e -> Double -> Double -> Double -> Double -
 kamadaKawai gr sigma initemp coolexp kkconst opt = unsafePerformIO $ do
     mptr <- mat
     igraphLayoutKamadaKawai (_graph gr) mptr (_nIter opt) sigma initemp coolexp kkconst useSeed nullPtr nullPtr nullPtr nullPtr
-    [x, y] <- matrixPtrToLists mptr
+    [x, y] <- matrixPtrToColumnLists mptr
     return $ zip x y
   where
     (useSeed, mat) = case _seed opt of

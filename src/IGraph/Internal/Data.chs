@@ -123,6 +123,7 @@ listToStrVector xs = do
 
 {#fun igraph_matrix_ncol as ^ { `MatrixPtr' } -> `Int' #}
 
+-- row lists to matrix
 listsToMatrixPtr :: [[Double]] -> IO MatrixPtr
 listsToMatrixPtr xs = do
     mptr <- igraphMatrixNew r c
@@ -134,11 +135,15 @@ listsToMatrixPtr xs = do
     r = length xs
     c = maximum $ map length xs
 
+-- to row lists
 matrixPtrToLists :: MatrixPtr -> IO [[Double]]
-matrixPtrToLists mptr = do
+matrixPtrToLists = liftM transpose . matrixPtrToColumnLists
+
+matrixPtrToColumnLists :: MatrixPtr -> IO [[Double]]
+matrixPtrToColumnLists mptr = do
     r <- igraphMatrixNrow mptr
     c <- igraphMatrixNcol mptr
     xs <- allocaArray (r*c) $ \ptr -> do
         igraphMatrixCopyTo mptr ptr
         peekArray (r*c) ptr
-    return $ transpose $ chunksOf r $ map realToFrac xs
+    return $ chunksOf r $ map realToFrac xs
