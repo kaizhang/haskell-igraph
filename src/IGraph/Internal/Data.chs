@@ -7,6 +7,8 @@ import Foreign
 import Foreign.C.Types
 import Foreign.C.String
 import System.IO.Unsafe (unsafePerformIO)
+import Data.List (transpose)
+import Data.List.Split (chunksOf)
 
 #include "cbits/haskelligraph.c"
 
@@ -111,6 +113,32 @@ listToStrVector xs = do
 
 {#fun igraph_matrix_fill as ^ { `MatrixPtr', `Double' } -> `()' #}
 
-{#fun pure igraph_matrix_e as ^ { `MatrixPtr', `Int', `Int' } -> `Double' #}
+{#fun igraph_matrix_e as ^ { `MatrixPtr', `Int', `Int' } -> `Double' #}
 
-{#fun pure igraph_matrix_set as ^ { `MatrixPtr', `Int', `Int', `Double' } -> `()' #}
+{#fun igraph_matrix_set as ^ { `MatrixPtr', `Int', `Int', `Double' } -> `()' #}
+
+{#fun igraph_matrix_copy_to as ^ { `MatrixPtr', id `Ptr CDouble' } -> `()' #}
+
+{#fun igraph_matrix_nrow as ^ { `MatrixPtr' } -> `Int' #}
+
+{#fun igraph_matrix_ncol as ^ { `MatrixPtr' } -> `Int' #}
+
+listsToMatrixPtr :: [[Double]] -> IO MatrixPtr
+listsToMatrixPtr xs = do
+    mptr <- igraphMatrixNew r c
+    forM_ (zip [0..] xs) $ \(i, row) ->
+        forM_ (zip [0..] row) $ \(j,v) ->
+            igraphMatrixSet mptr i j v
+    return mptr
+  where
+    r = length xs
+    c = maximum $ map length xs
+
+matrixPtrToLists :: MatrixPtr -> IO [[Double]]
+matrixPtrToLists mptr = do
+    r <- igraphMatrixNrow mptr
+    c <- igraphMatrixNcol mptr
+    xs <- allocaArray (r*c) $ \ptr -> do
+        igraphMatrixCopyTo mptr ptr
+        peekArray (r*c) ptr
+    return $ transpose $ chunksOf r $ map realToFrac xs

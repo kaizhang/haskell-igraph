@@ -27,12 +27,14 @@ library
     IGraph.Internal.Structure
     IGraph.Internal.Clique
     IGraph.Internal.Community
+    IGraph.Internal.Layout
     IGraph
     IGraph.Mutable
     IGraph.Clique
     IGraph.Structure
     IGraph.Community
     IGraph.Read
+    IGraph.Layout
   -- other-modules:       
   -- other-extensions:    
   build-depends:
@@ -42,6 +44,7 @@ library
     , primitive
     , unordered-containers
     , hashable
+    , split
 
   extra-libraries:     igraph
   hs-source-dirs:      src
