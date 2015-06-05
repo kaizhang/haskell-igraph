@@ -46,12 +46,19 @@ class MGraph d => Graph d where
     nEdges :: LGraph d v e -> Int
     nEdges (LGraph g _) = igraphEcount g
 
+{-
     edges :: LGraph d v e -> [Edge]
     edges (LGraph g _) = unsafePerformIO $ do
         es <- igraphEsAll IgraphEdgeorderFrom
         eit <- igraphEitNew g es
         eids <- eitToList eit
         mapM (igraphEdge g) eids
+        -}
+
+    edges :: LGraph d v e -> [Edge]
+    edges gr@(LGraph g _) = unsafePerformIO $ mapM (igraphEdge g) [0..n-1]
+      where
+        n = nEdges gr
 
     nodeLab :: Read v => LGraph d v e -> Node -> v
     nodeLab (LGraph g _) i = read $ igraphCattributeVAS g vertexAttr i
@@ -64,6 +71,7 @@ class MGraph d => Graph d where
 
 
 instance Graph U where
+instance Graph D where
 
 
 mkGraph :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e) => (Node, Maybe [v]) -> ([Edge], Maybe [e]) -> LGraph d v e

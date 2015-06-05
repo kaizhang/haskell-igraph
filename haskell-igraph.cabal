@@ -59,6 +59,8 @@ test-suite tests
   hs-source-dirs: tests
   main-is: test.hs
   other-modules:       
+    Test.Basic
+    Test.Utils
 
   default-language:    Haskell2010
   build-depends: 
@@ -67,6 +69,7 @@ test-suite tests
     , tasty
     , tasty-golden
     , tasty-hunit
+    , random
 
 source-repository  head
   type: git
