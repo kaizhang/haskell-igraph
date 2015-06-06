@@ -7,23 +7,43 @@ import Foreign.C.Types
 {#import IGraph.Internal.Arpack #}
 {#import IGraph.Internal.Graph #}
 {#import IGraph.Internal.Data #}
+{#import IGraph.Internal.Constants #}
 
 #include "cbits/haskelligraph.c"
 
-{#fun igraph_community_leading_eigenvector as ^ { `IGraphPtr'
-                                                , `VectorPtr'
-                                                , id `Ptr MatrixPtr'
-                                                , `VectorPtr'
-                                                , `Int'
-                                                , `ArpackOptPtr'
-                                                , id `Ptr CDouble'
-                                                , `Bool'
-                                                , id `Ptr VectorPtr'
-                                                , id `Ptr VectorPPtr'
-                                                , id `Ptr VectorPtr'
-                                                , id `T'
-                                                , id `Ptr ()'
-                                                } -> `Int' #}
+{#fun igraph_community_spinglass as ^
+{ `IGraphPtr'
+, `VectorPtr'
+, id `Ptr CDouble'
+, id `Ptr CDouble'
+, `VectorPtr'
+, id `Ptr VectorPtr'
+, `Int'
+, `Bool'
+, `Double'
+, `Double'
+, `Double'
+, `SpincommUpdate'
+, `Double'
+, `SpinglassImplementation'
+, `Double'
+} -> `Int' #}
+
+{#fun igraph_community_leading_eigenvector as ^
+{ `IGraphPtr'
+, `VectorPtr'
+, id `Ptr MatrixPtr'
+, `VectorPtr'
+, `Int'
+, `ArpackOptPtr'
+, id `Ptr CDouble'
+, `Bool'
+, id `Ptr VectorPtr'
+, id `Ptr VectorPPtr'
+, id `Ptr VectorPtr'
+, id `T'
+, id `Ptr ()'
+} -> `Int' #}
 
 type T = FunPtr ( Ptr VectorPtr
                 -> CLong
