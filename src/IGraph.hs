@@ -6,6 +6,7 @@ module IGraph
     , D
     , Graph(..)
     , mkGraph
+    , fromLabeledEdges
 
     , unsafeFreeze
     , unsafeThaw
@@ -16,10 +17,12 @@ module IGraph
     , suc
     ) where
 
+import Control.Arrow ((***))
 import Control.Monad (liftM)
 import Control.Monad.ST (runST)
 import Control.Monad.Primitive
 import qualified Data.HashMap.Strict as M
+import Data.List (nub)
 import Data.Hashable (Hashable)
 import Data.Maybe
 import System.IO.Unsafe (unsafePerformIO)
@@ -46,15 +49,6 @@ class MGraph d => Graph d where
     nEdges :: LGraph d v e -> Int
     nEdges (LGraph g _) = igraphEcount g
 
-{-
-    edges :: LGraph d v e -> [Edge]
-    edges (LGraph g _) = unsafePerformIO $ do
-        es <- igraphEsAll IgraphEdgeorderFrom
-        eit <- igraphEitNew g es
-        eids <- eitToList eit
-        mapM (igraphEdge g) eids
-        -}
-
     edges :: LGraph d v e -> [Edge]
     edges gr@(LGraph g _) = unsafePerformIO $ mapM (igraphEdge g) [0..n-1]
       where
@@ -64,7 +58,8 @@ class MGraph d => Graph d where
     nodeLab (LGraph g _) i = read $ igraphCattributeVAS g vertexAttr i
 
     edgeLab :: Read e => LGraph d v e -> Edge -> e
-    edgeLab (LGraph g _) (fr,to) = read $ igraphCattributeEAS g edgeAttr $ igraphGetEid g fr to True True
+    edgeLab (LGraph g _) (fr,to) = read $ igraphCattributeEAS g edgeAttr $
+                                   igraphGetEid g fr to True True
 
     edgeLabByEid :: Read e => LGraph d v e -> Int -> e
     edgeLabByEid (LGraph g _) i = read $ igraphCattributeEAS g edgeAttr i
@@ -74,7 +69,8 @@ instance Graph U where
 instance Graph D where
 
 
-mkGraph :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e) => (Node, Maybe [v]) -> ([Edge], Maybe [e]) -> LGraph d v e
+mkGraph :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e)
+        => (Node, Maybe [v]) -> ([Edge], Maybe [e]) -> LGraph d v e
 mkGraph (n, vattr) (es,eattr) = runST $ do
     g <- new 0
     let addV | isNothing vattr = addNodes n g
@@ -88,6 +84,15 @@ mkGraph (n, vattr) (es,eattr) = runST $ do
     zip' a b | length a /= length b = error "incorrect length"
              | otherwise = zipWith (\(x,y) z -> (x,y,z)) a b
 
+fromLabeledEdges :: (Graph d, Hashable v, Read v, Eq v, Show v)
+                 => [(v, v)] -> LGraph d v ()
+fromLabeledEdges es = mkGraph (n, Just labels) (es', Nothing)
+  where
+    es' = map (f *** f) es
+      where f x = M.lookupDefault undefined x labelToId
+    labels = nub $ concat [ [a,b] | (a,b) <- es ]
+    labelToId = M.fromList $ zip labels [0..]
+    n = M.size labelToId
 
 unsafeFreeze :: (Hashable v, Eq v, Read v, PrimMonad m) => MLGraph (PrimState m) d v e -> m (LGraph d v e)
 unsafeFreeze (MLGraph g) = return $ LGraph g labToId
@@ -102,6 +107,7 @@ unsafeThaw (LGraph g _) = return $ MLGraph g
 thaw :: (PrimMonad m, Graph d) => LGraph d v e -> m (MLGraph (PrimState m) d v e)
 thaw (LGraph g _) = unsafePrimToPrim . liftM MLGraph . igraphCopy $ g
 
+-- | Find all neighbors of the given node
 neighbors :: LGraph d v e -> Node -> [Node]
 neighbors gr i = unsafePerformIO $ do
     vs <- igraphVsNew
@@ -109,7 +115,7 @@ neighbors gr i = unsafePerformIO $ do
     vit <- igraphVitNew (_graph gr) vs
     vitToList vit
 
--- | Find all Nodes that have a link from the given Node.
+-- | Find all nodes that have a link from the given node.
 suc :: LGraph D v e -> Node -> [Node]
 suc gr i = unsafePerformIO $ do
     vs <- igraphVsNew
@@ -117,7 +123,7 @@ suc gr i = unsafePerformIO $ do
     vit <- igraphVitNew (_graph gr) vs
     vitToList vit
 
--- | Find all Nodes that link to to the given Node.
+-- | Find all nodes that link to to the given node.
 pre :: LGraph D v e -> Node -> [Node]
 pre gr i = unsafePerformIO $ do
     vs <- igraphVsNew
