@@ -80,6 +80,8 @@ vitToList vit = do
 
 {#fun igraph_es_all as ^ { +, `EdgeOrderType' } -> `IGraphEsPtr' #}
 
+{# fun igraph_es_vector as ^ { +, `VectorPtr' } -> `IGraphEsPtr' #}
+
 
 -- Edge iterator
 
@@ -124,3 +126,6 @@ eitToList eit = do
         acc <- eitToList eit
         return $ cur : acc
 
+-- delete edges
+
+{# fun igraph_delete_edges as ^ { `IGraphPtr', %`IGraphEsPtr' } -> `Int' #}

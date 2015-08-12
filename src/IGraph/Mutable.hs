@@ -5,6 +5,7 @@ import Foreign
 import Control.Monad.Primitive
 
 import IGraph.Internal.Graph
+import IGraph.Internal.Selector
 import IGraph.Internal.Data
 import IGraph.Internal.Attribute
 import IGraph.Internal.Initialization
@@ -44,6 +45,8 @@ class MGraph d where
 
     addLEdges :: (PrimMonad m, Show e) => [LEdge e] -> MLGraph (PrimState m) d v e -> m ()
 
+    delEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
+
 data U
 data D
 
@@ -66,6 +69,14 @@ instance MGraph U where
       where
         (xs, vs) = unzip $ map ( \(a,b,v) -> ([fromIntegral a, fromIntegral b], v) ) es
 
+    delEdges es (MLGraph g) = unsafePrimToPrim $ do
+        vptr <- listToVector $ map fromIntegral eids
+        esptr <- igraphEsVector vptr
+        igraphDeleteEdges g esptr
+        return ()
+      where
+        eids = flip map es $ \(fr, to) -> igraphGetEid g fr to False True
+
 instance MGraph D where
     new n = unsafePrimToPrim $ igraphInit >>= igraphNew n True >>= return . MLGraph
 
@@ -84,3 +95,11 @@ instance MGraph D where
             withVectorPPtr vptr $ \p -> igraphAddEdges g vec $ castPtr p
       where
         (xs, vs) = unzip $ map ( \(a,b,v) -> ([fromIntegral a, fromIntegral b], v) ) es
+
+    delEdges es (MLGraph g) = unsafePrimToPrim $ do
+        vptr <- listToVector $ map fromIntegral eids
+        esptr <- igraphEsVector vptr
+        igraphDeleteEdges g esptr
+        return ()
+      where
+        eids = flip map es $ \(fr, to) -> igraphGetEid g fr to True True

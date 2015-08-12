@@ -9,6 +9,7 @@ module IGraph
     , fromLabeledEdges
 
     , unsafeFreeze
+    , freeze
     , unsafeThaw
     , thaw
 
@@ -101,6 +102,11 @@ unsafeFreeze (MLGraph g) = return $ LGraph g labToId
     nV = igraphVcount g
     labels = map (read . igraphCattributeVAS g vertexAttr) [0 .. nV-1]
 
+freeze :: (Hashable v, Eq v, Read v, PrimMonad m) => MLGraph (PrimState m) d v e -> m (LGraph d v e)
+freeze (MLGraph g) = do
+    g' <- unsafePrimToPrim $ igraphCopy g
+    unsafeFreeze (MLGraph g')
+
 unsafeThaw :: PrimMonad m => LGraph d v e -> m (MLGraph (PrimState m) d v e)
 unsafeThaw (LGraph g _) = return $ MLGraph g
 
@@ -130,4 +136,3 @@ pre gr i = unsafePerformIO $ do
     igraphVsAdj vs i IgraphIn
     vit <- igraphVitNew (_graph gr) vs
     vitToList vit
-
