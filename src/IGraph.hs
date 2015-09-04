@@ -16,6 +16,8 @@ module IGraph
     , neighbors
     , pre
     , suc
+
+    , filterNode
     ) where
 
 import Control.Arrow ((***))
@@ -40,30 +42,40 @@ type Edge = (Node, Node)
 -- | graph with labeled nodes and edges
 data LGraph d v e = LGraph
     { _graph :: IGraphPtr
-    , _labelToNode :: M.HashMap v [Node] }
-
+    , _labelToNode :: M.HashMap v [Node]
+    }
 
 class MGraph d => Graph d where
     nNodes :: LGraph d v e -> Int
     nNodes (LGraph g _) = igraphVcount g
+    {-# INLINE nNodes #-}
+
+    nodes :: LGraph d v e -> [Int]
+    nodes gr = [0 .. nNodes gr - 1]
+    {-# INLINE nodes #-}
 
     nEdges :: LGraph d v e -> Int
     nEdges (LGraph g _) = igraphEcount g
+    {-# INLINE nEdges #-}
 
     edges :: LGraph d v e -> [Edge]
     edges gr@(LGraph g _) = unsafePerformIO $ mapM (igraphEdge g) [0..n-1]
       where
         n = nEdges gr
+    {-# INLINE edges #-}
 
     nodeLab :: Read v => LGraph d v e -> Node -> v
     nodeLab (LGraph g _) i = read $ igraphCattributeVAS g vertexAttr i
+    {-# INLINE nodeLab #-}
 
     edgeLab :: Read e => LGraph d v e -> Edge -> e
     edgeLab (LGraph g _) (fr,to) = read $ igraphCattributeEAS g edgeAttr $
                                    igraphGetEid g fr to True True
+    {-# INLINE edgeLab #-}
 
     edgeLabByEid :: Read e => LGraph d v e -> Int -> e
     edgeLabByEid (LGraph g _) i = read $ igraphCattributeEAS g edgeAttr i
+    {-# INLINE edgeLabByEid #-}
 
 
 instance Graph U where
@@ -116,23 +128,29 @@ thaw (LGraph g _) = unsafePrimToPrim . liftM MLGraph . igraphCopy $ g
 -- | Find all neighbors of the given node
 neighbors :: LGraph d v e -> Node -> [Node]
 neighbors gr i = unsafePerformIO $ do
-    vs <- igraphVsNew
-    igraphVsAdj vs i IgraphAll
+    vs <- igraphVsAdj i IgraphAll
     vit <- igraphVitNew (_graph gr) vs
     vitToList vit
 
 -- | Find all nodes that have a link from the given node.
 suc :: LGraph D v e -> Node -> [Node]
 suc gr i = unsafePerformIO $ do
-    vs <- igraphVsNew
-    igraphVsAdj vs i IgraphOut
+    vs <- igraphVsAdj i IgraphOut
     vit <- igraphVitNew (_graph gr) vs
     vitToList vit
 
 -- | Find all nodes that link to to the given node.
 pre :: LGraph D v e -> Node -> [Node]
 pre gr i = unsafePerformIO $ do
-    vs <- igraphVsNew
-    igraphVsAdj vs i IgraphIn
+    vs <- igraphVsAdj i IgraphIn
     vit <- igraphVitNew (_graph gr) vs
     vitToList vit
+
+-- | Keep nodes that satisfy the constraint
+filterNode :: (Hashable v, Eq v, Read v, Graph d)
+           => (Node -> Bool) -> LGraph d v e -> LGraph d v e
+filterNode f gr = runST $ do
+    let deleted = filter (not . f) $ nodes gr
+    gr' <- thaw gr
+    delNodes deleted gr'
+    unsafeFreeze gr'

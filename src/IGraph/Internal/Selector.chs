@@ -14,20 +14,11 @@ import System.IO.Unsafe (unsafePerformIO)
 
 {#pointer *igraph_vs_t as IGraphVsPtr foreign finalizer igraph_vs_destroy newtype #}
 
-#c
-igraph_vs_t* igraph_vs_new() {
-  igraph_vs_t* vs = (igraph_vs_t*) malloc (sizeof (igraph_vs_t));
-  return vs;
-}
-#endc
+{#fun igraph_vs_all as ^ { + } -> `IGraphVsPtr' #}
 
-{#fun igraph_vs_new as ^ { } -> `IGraphVsPtr' #}
+{#fun igraph_vs_adj as ^ { +, `Int', `Neimode' } -> `IGraphVsPtr' #}
 
-{#fun igraph_vs_all as ^ { `IGraphVsPtr' } -> `Int' #}
-
-{#fun igraph_vs_adj as ^ { `IGraphVsPtr', `Int', `Neimode' } -> `Int' #}
-
-{#fun igraph_vs_vector as ^ { `IGraphVsPtr', `VectorPtr' } -> `Int' #}
+{#fun igraph_vs_vector as ^ { +, `VectorPtr' } -> `IGraphVsPtr' #}
 
 
 -- Vertex iterator
@@ -125,6 +116,11 @@ eitToList eit = do
         igraphEitNext eit
         acc <- eitToList eit
         return $ cur : acc
+
+-- delete vertices
+
+{# fun igraph_delete_vertices as ^ { `IGraphPtr', %`IGraphVsPtr' } -> `Int' #}
+
 
 -- delete edges
 

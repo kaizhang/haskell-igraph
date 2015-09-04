@@ -41,6 +41,13 @@ class MGraph d where
                 vptr <- listToVectorP [castPtr ptr]
                 withVectorPPtr vptr $ \p -> igraphAddVertices g n $ castPtr p
 
+    delNodes :: PrimMonad m => [Int] -> MLGraph (PrimState m) d v e -> m ()
+    delNodes ns (MLGraph g) = unsafePrimToPrim $ do
+        vptr <- listToVector $ map fromIntegral ns
+        vsptr <- igraphVsVector vptr
+        igraphDeleteVertices g vsptr
+        return ()
+
     addEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
 
     addLEdges :: (PrimMonad m, Show e) => [LEdge e] -> MLGraph (PrimState m) d v e -> m ()

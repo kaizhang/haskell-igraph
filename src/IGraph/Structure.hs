@@ -25,9 +25,8 @@ closeness :: [Int]  -- ^ vertices
           -> Bool   -- ^ whether to normalize
           -> [Double]
 closeness vs gr ws mode normal = unsafePerformIO $ do
-    vsptr <- igraphVsNew
     vs' <- listToVector $ map fromIntegral vs
-    igraphVsVector vsptr vs'
+    vsptr <- igraphVsVector vs'
     vptr <- igraphVectorNew 0
     ws' <- case ws of
         Just w -> listToVector w
@@ -41,9 +40,8 @@ betweenness :: [Int]
             -> Maybe [Double]
             -> [Double]
 betweenness vs gr ws = unsafePerformIO $ do
-    vsptr <- igraphVsNew
     vs' <- listToVector $ map fromIntegral vs
-    igraphVsVector vsptr vs'
+    vsptr <- igraphVsVector vs'
     vptr <- igraphVectorNew 0
     ws' <- case ws of
         Just w -> listToVector w
