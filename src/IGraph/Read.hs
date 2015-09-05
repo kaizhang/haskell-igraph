@@ -1,5 +1,6 @@
 module IGraph.Read
     ( readAdjMatrix
+    , fromAdjMatrix
     , readAdjMatrixWeighted
     ) where
 
@@ -14,18 +15,21 @@ readDouble = fst . fromJust . readSigned readExponential
 {-# INLINE readDouble #-}
 
 readAdjMatrix :: Graph d => FilePath -> IO (LGraph d B.ByteString ())
-readAdjMatrix fl = do
-    c <- B.readFile fl
-    let (header:xs) = B.lines c
+readAdjMatrix = fmap fromAdjMatrix . B.readFile
+
+fromAdjMatrix :: Graph d => B.ByteString -> LGraph d B.ByteString ()
+fromAdjMatrix bs =
+    let (header:xs) = B.lines bs
         mat = map (map readDouble . B.words) xs
         es = fst $ unzip $ filter f $ zip [ (i,j) | i <- [0..nrow-1], j <- [0..nrow-1] ] $ concat mat
         nrow = length mat
         ncol = length $ head mat
-    if nrow /= ncol
-       then error "nrow != ncol"
-       else return $ mkGraph (nrow, Just $ B.words header) (es, Nothing)
+    in if nrow /= ncol
+         then error "fromAdjMatrix: nrow != ncol"
+         else mkGraph (nrow, Just $ B.words header) (es, Nothing)
   where
     f ((i,j),v) = i < j && v /= 0
+{-# INLINE fromAdjMatrix #-}
 
 readAdjMatrixWeighted :: Graph d => FilePath -> IO (LGraph d B.ByteString Double)
 readAdjMatrixWeighted fl = do
