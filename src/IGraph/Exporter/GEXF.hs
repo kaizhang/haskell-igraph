@@ -17,7 +17,7 @@ import IGraph
 
 data NodeAttr = NodeAttr
     { _size :: Double
-    , _colour :: AlphaColour Double
+    , _nodeColour :: AlphaColour Double
     , _nodeLabel :: String
     , _positionX :: Double
     , _positionY :: Double
@@ -29,7 +29,7 @@ instance Hashable NodeAttr where
 defaultNodeAttributes :: NodeAttr
 defaultNodeAttributes = NodeAttr
     { _size = 1.0
-    , _colour = opaque black
+    , _nodeColour = opaque black
     , _nodeLabel = ""
     , _positionX = 0
     , _positionY = 0
@@ -37,6 +37,8 @@ defaultNodeAttributes = NodeAttr
 
 data EdgeAttr = EdgeAttr
     { _edgeLabel :: String
+    , _edgeColour :: AlphaColour Double
+    , _edgeWeight :: Double
     } deriving (Show, Read, Eq)
 
 instance Hashable EdgeAttr where
@@ -45,6 +47,8 @@ instance Hashable EdgeAttr where
 defaultEdgeAttributes :: EdgeAttr
 defaultEdgeAttributes = EdgeAttr
     { _edgeLabel = ""
+    , _edgeColour = opaque black
+    , _edgeWeight = 1.0
     }
 
 genXMLTree :: ArrowXml a => LGraph U NodeAttr EdgeAttr -> a XmlTree XmlTree
@@ -74,18 +78,31 @@ genXMLTree gr = root [] [gexf]
                       ]
       where
         at = nodeLab gr i
-        rgb = toSRGB24 $ _colour at `over` black
+        rgb = toSRGB24 $ _nodeColour at `over` black
         r = show (fromIntegral $ channelRed rgb :: Int)
         b = show (fromIntegral $ channelBlue rgb :: Int)
         g = show (fromIntegral $ channelGreen rgb :: Int)
-        a = show $ alphaChannel $ _colour at
+        a = show $ alphaChannel $ _nodeColour at
 
     mkEdge (fr,to) =
         mkelem "edge" [ attr "source" $ txt $ show fr
-                      , attr "target" $ txt $ show to ] []
+                      , attr "target" $ txt $ show to
+                      , attr "weight" $ txt $ show $ _edgeWeight at ]
+                      [ aelem "viz:color" [ attr "r" $ txt r
+                                          , attr "g" $ txt g
+                                          , attr "b" $ txt b
+                                          , attr "a" $ txt a ]
+                      ]
+      where
+        at = edgeLab gr (fr,to)
+        rgb = toSRGB24 $ _edgeColour at `over` black
+        r = show (fromIntegral $ channelRed rgb :: Int)
+        b = show (fromIntegral $ channelBlue rgb :: Int)
+        g = show (fromIntegral $ channelGreen rgb :: Int)
+        a = show $ alphaChannel $ _edgeColour at
 {-# INLINE genXMLTree #-}
 
 writeGEXF :: FilePath -> LGraph U NodeAttr EdgeAttr -> IO ()
 writeGEXF fl gr = runX (genXMLTree gr >>> writeDocument config fl) >> return ()
   where
-    config = [withIdent yes]
+    config = [withIndent yes]
