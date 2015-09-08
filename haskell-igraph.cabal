@@ -35,15 +35,18 @@ library
     IGraph.Community
     IGraph.Read
     IGraph.Layout
+    IGraph.Exporter.GEXF
   -- other-modules:
   -- other-extensions:
   build-depends:
       base >=4.0 && <5.0
     , bytestring >=0.9
     , bytestring-lexing >=0.5
+    , colour
     , primitive
     , unordered-containers
     , hashable
+    , hxt
     , split
     , data-default-class
 
