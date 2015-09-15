@@ -18,6 +18,7 @@ module IGraph
     , suc
 
     , filterNode
+    , filterEdge
     ) where
 
 import Control.Arrow ((***))
@@ -153,4 +154,13 @@ filterNode f gr = runST $ do
     let deleted = filter (not . f) $ nodes gr
     gr' <- thaw gr
     delNodes deleted gr'
+    unsafeFreeze gr'
+
+-- | Keep nodes that satisfy the constraint
+filterEdge :: (Hashable v, Eq v, Read v, Graph d)
+           => (Edge -> Bool) -> LGraph d v e -> LGraph d v e
+filterEdge f gr = runST $ do
+    let deleted = filter (not . f) $ edges gr
+    gr' <- thaw gr
+    delEdges deleted gr'
     unsafeFreeze gr'
