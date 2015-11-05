@@ -11,6 +11,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 {#import IGraph.Internal.Graph #}
 {#import IGraph.Internal.Data #}
+{#import IGraph.Internal.Constants #}
 
 #include "igraph/igraph.h"
 
@@ -37,7 +38,7 @@ instance Storable AttributeRecord where
         withStrVectorPtr vptr $ \ptr ->
             {#set igraph_attribute_record_t.value #} p $ castPtr ptr
 
-{#fun pure igraph_cattribute_has_attr as ^ { `IGraphPtr', `Int', `String' } -> `Bool' #}
+{#fun pure igraph_cattribute_has_attr as ^ { `IGraphPtr', `AttributeElemtype', `String' } -> `Bool' #}
 
 {#fun igraph_cattribute_GAN_set as ^ { `IGraphPtr', `String', `Double' } -> `Int' #}
 

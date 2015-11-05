@@ -12,3 +12,5 @@ import Foreign
 {#enum igraph_spincomm_update_t as SpincommUpdate {underscoreToCase} deriving (Show, Eq) #}
 
 {#enum igraph_spinglass_implementation_t as SpinglassImplementation {underscoreToCase} deriving (Show, Eq) #}
+
+{#enum igraph_attribute_elemtype_t as AttributeElemtype {underscoreToCase} deriving (Show, Eq) #}

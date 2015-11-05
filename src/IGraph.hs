@@ -69,10 +69,24 @@ class MGraph d => Graph d where
     nodeLab (LGraph g _) i = read $ igraphCattributeVAS g vertexAttr i
     {-# INLINE nodeLab #-}
 
+    nodeLabMaybe :: Read v => LGraph d v e -> Node -> Maybe v
+    nodeLabMaybe gr@(LGraph g _) i =
+        if igraphCattributeHasAttr g IgraphAttributeVertex vertexAttr
+            then Just $ nodeLab gr i
+            else Nothing
+    {-# INLINE nodeLabMaybe #-}
+
     edgeLab :: Read e => LGraph d v e -> Edge -> e
     edgeLab (LGraph g _) (fr,to) = read $ igraphCattributeEAS g edgeAttr $
                                    igraphGetEid g fr to True True
     {-# INLINE edgeLab #-}
+
+    edgeLabMaybe :: Read e => LGraph d v e -> Edge -> Maybe e
+    edgeLabMaybe gr@(LGraph g _) i =
+        if igraphCattributeHasAttr g IgraphAttributeEdge edgeAttr
+            then Just $ edgeLab gr i
+            else Nothing
+    {-# INLINE edgeLabMaybe #-}
 
     edgeLabByEid :: Read e => LGraph d v e -> Int -> e
     edgeLabByEid (LGraph g _) i = read $ igraphCattributeEAS g edgeAttr i
