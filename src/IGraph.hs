@@ -22,14 +22,16 @@ module IGraph
     ) where
 
 import Control.Arrow ((***))
-import Control.Monad (liftM)
+import Control.Monad (liftM, join)
 import Control.Monad.ST (runST)
 import Control.Monad.Primitive
-import qualified Data.HashMap.Strict as M
+import Data.Serialize (Serialize, encode, decode)
+import qualified Data.ByteString as B
+import qualified Data.Map.Strict as M
 import Data.List (nub)
-import Data.Hashable (Hashable)
 import Data.Maybe
 import System.IO.Unsafe (unsafePerformIO)
+import Foreign.C.String (CString)
 
 import IGraph.Mutable
 import IGraph.Internal.Graph
@@ -43,7 +45,7 @@ type Edge = (Node, Node)
 -- | graph with labeled nodes and edges
 data LGraph d v e = LGraph
     { _graph :: IGraphPtr
-    , _labelToNode :: M.HashMap v [Node]
+    , _labelToNode :: M.Map v [Node]
     }
 
 class MGraph d => Graph d where
@@ -65,17 +67,19 @@ class MGraph d => Graph d where
         n = nEdges gr
     {-# INLINE edges #-}
 
-    nodeLab :: Read v => LGraph d v e -> Node -> v
-    nodeLab (LGraph g _) i = read $ igraphCattributeVAS g vertexAttr i
+    nodeLab :: Serialize v => LGraph d v e -> Node -> v
+    nodeLab (LGraph g _) i = unsafePerformIO $ join $ fmap decode' $
+        igraphCattributeVAS g vertexAttr i
     {-# INLINE nodeLab #-}
 
-    edgeLab :: Read e => LGraph d v e -> Edge -> e
-    edgeLab (LGraph g _) (fr,to) = read $ igraphCattributeEAS g edgeAttr $
-                                   igraphGetEid g fr to True True
+    edgeLab :: Serialize e => LGraph d v e -> Edge -> e
+    edgeLab (LGraph g _) (fr,to) = unsafePerformIO $ join $ fmap decode' $
+        igraphCattributeEAS g edgeAttr $ igraphGetEid g fr to True True
     {-# INLINE edgeLab #-}
 
-    edgeLabByEid :: Read e => LGraph d v e -> Int -> e
-    edgeLabByEid (LGraph g _) i = read $ igraphCattributeEAS g edgeAttr i
+    edgeLabByEid :: Serialize e => LGraph d v e -> Int -> e
+    edgeLabByEid (LGraph g _) i = unsafePerformIO $ join $ fmap decode' $
+        igraphCattributeEAS g edgeAttr i
     {-# INLINE edgeLabByEid #-}
 
 
@@ -83,7 +87,7 @@ instance Graph U where
 instance Graph D where
 
 
-mkGraph :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e)
+mkGraph :: (Graph d, Ord v, Serialize v, Serialize e)
         => (Node, Maybe [v]) -> ([Edge], Maybe [e]) -> LGraph d v e
 mkGraph (n, vattr) (es,eattr) = runST $ do
     g <- new 0
@@ -98,24 +102,28 @@ mkGraph (n, vattr) (es,eattr) = runST $ do
     zip' a b | length a /= length b = error "incorrect length"
              | otherwise = zipWith (\(x,y) z -> (x,y,z)) a b
 
-fromLabeledEdges :: (Graph d, Hashable v, Read v, Eq v, Show v)
+fromLabeledEdges :: (Graph d, Serialize v, Ord v)
                  => [(v, v)] -> LGraph d v ()
 fromLabeledEdges es = mkGraph (n, Just labels) (es', Nothing)
   where
     es' = map (f *** f) es
-      where f x = M.lookupDefault undefined x labelToId
+      where f x = M.findWithDefault undefined x labelToId
     labels = nub $ concat [ [a,b] | (a,b) <- es ]
     labelToId = M.fromList $ zip labels [0..]
     n = M.size labelToId
 
-unsafeFreeze :: (Hashable v, Eq v, Read v, PrimMonad m) => MLGraph (PrimState m) d v e -> m (LGraph d v e)
+unsafeFreeze :: (Ord v, Serialize v, PrimMonad m)
+             => MLGraph (PrimState m) d v e -> m (LGraph d v e)
 unsafeFreeze (MLGraph g) = return $ LGraph g labToId
   where
     labToId = M.fromListWith (++) $ zip labels $ map return [0..nV-1]
     nV = igraphVcount g
-    labels = map (read . igraphCattributeVAS g vertexAttr) [0 .. nV-1]
+    labels = unsafePerformIO $ do
+        at <- mapM (igraphCattributeVAS g vertexAttr) [0 .. nV-1]
+        mapM decode' at
 
-freeze :: (Hashable v, Eq v, Read v, PrimMonad m) => MLGraph (PrimState m) d v e -> m (LGraph d v e)
+freeze :: (Ord v, Serialize v, PrimMonad m)
+       => MLGraph (PrimState m) d v e -> m (LGraph d v e)
 freeze (MLGraph g) = do
     g' <- unsafePrimToPrim $ igraphCopy g
     unsafeFreeze (MLGraph g')
@@ -148,7 +156,7 @@ pre gr i = unsafePerformIO $ do
     vitToList vit
 
 -- | Keep nodes that satisfy the constraint
-filterNode :: (Hashable v, Eq v, Read v, Graph d)
+filterNode :: (Ord v, Serialize v, Graph d)
            => (Node -> Bool) -> LGraph d v e -> LGraph d v e
 filterNode f gr = runST $ do
     let deleted = filter (not . f) $ nodes gr
@@ -157,10 +165,18 @@ filterNode f gr = runST $ do
     unsafeFreeze gr'
 
 -- | Keep nodes that satisfy the constraint
-filterEdge :: (Hashable v, Eq v, Read v, Graph d)
+filterEdge :: (Serialize v, Ord v, Graph d)
            => (Edge -> Bool) -> LGraph d v e -> LGraph d v e
 filterEdge f gr = runST $ do
     let deleted = filter (not . f) $ edges gr
     gr' <- thaw gr
     delEdges deleted gr'
     unsafeFreeze gr'
+
+decode' :: Serialize a => CString -> IO a
+decode' x = do
+    x' <- B.packCString x
+    case decode x' of
+        Left e -> error e
+        Right r -> return r
+{-# INLINE decode' #-}

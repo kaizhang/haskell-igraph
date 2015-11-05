@@ -1,7 +1,8 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Internal.Attribute where
 
-import qualified Data.ByteString.Char8 as B
+import Data.Serialize (Serialize, encode)
+import qualified Data.ByteString as B
 import Control.Monad
 import Control.Applicative
 import Foreign
@@ -14,11 +15,12 @@ import System.IO.Unsafe (unsafePerformIO)
 
 #include "igraph/igraph.h"
 
-makeAttributeRecord :: Show a => String -> [a] -> AttributeRecord
+makeAttributeRecord :: Serialize a => String -> [a] -> AttributeRecord
 makeAttributeRecord name xs = unsafePerformIO $ do
     ptr <- newCAString name
-    value <- listToStrVector $ map (B.pack . show) xs
+    value <- listToStrVector $ map encode xs
     return $ AttributeRecord ptr 2 value
+{-# INLINE makeAttributeRecord #-}
 
 data AttributeRecord = AttributeRecord CString Int StrVectorPtr
 
@@ -43,10 +45,10 @@ instance Storable AttributeRecord where
 
 {#fun pure igraph_cattribute_GAN as ^ { `IGraphPtr', `String' } -> `Double' #}
 
-{#fun pure igraph_cattribute_VAS as ^ { `IGraphPtr', `String', `Int' } -> `String' #}
+{#fun igraph_cattribute_VAS as ^ { `IGraphPtr', `String', `Int' } -> `CString' #}
 
 {#fun pure igraph_cattribute_EAN as ^ { `IGraphPtr', `String', `Int' } -> `Double' #}
 
-{#fun pure igraph_cattribute_EAS as ^ { `IGraphPtr', `String', `Int' } -> `String' #}
+{#fun igraph_cattribute_EAS as ^ { `IGraphPtr', `String', `Int' } -> `CString' #}
 
 {#fun igraph_cattribute_EAS_setv as ^ { `IGraphPtr', `String', `StrVectorPtr' } -> `Int' #}

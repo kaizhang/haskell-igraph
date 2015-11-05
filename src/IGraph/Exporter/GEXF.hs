@@ -7,11 +7,12 @@ module IGraph.Exporter.GEXF
     , writeGEXF
     ) where
 
-import Data.Hashable
 import Data.Colour (AlphaColour, black, over, alphaChannel, opaque)
 import Data.Colour.SRGB (toSRGB24, channelRed, channelBlue, channelGreen)
-import Text.XML.HXT.Core
+import Data.Function (on)
+import Data.Serialize (Serialize, put, get)
 import Data.Tree.NTree.TypeDefs
+import Text.XML.HXT.Core
 import Text.XML.HXT.DOM.TypeDefs
 import IGraph
 
@@ -21,10 +22,17 @@ data NodeAttr = NodeAttr
     , _nodeLabel :: String
     , _positionX :: Double
     , _positionY :: Double
-    } deriving (Show, Read, Eq)
+    } deriving (Show, Read)
 
-instance Hashable NodeAttr where
-    hashWithSalt salt at = hashWithSalt salt $ _nodeLabel at
+instance Serialize NodeAttr where
+    put = put . show
+    get = fmap read get
+
+instance Ord NodeAttr where
+    compare = compare `on` _nodeLabel
+
+instance Eq NodeAttr where
+    (==) = (==) `on` _nodeLabel
 
 defaultNodeAttributes :: NodeAttr
 defaultNodeAttributes = NodeAttr
@@ -39,10 +47,17 @@ data EdgeAttr = EdgeAttr
     { _edgeLabel :: String
     , _edgeColour :: AlphaColour Double
     , _edgeWeight :: Double
-    } deriving (Show, Read, Eq)
+    } deriving (Show, Read)
 
-instance Hashable EdgeAttr where
-    hashWithSalt salt at = hashWithSalt salt $ _edgeLabel at
+instance Serialize EdgeAttr where
+    put = put . show
+    get = fmap read get
+
+instance Ord EdgeAttr where
+    compare = compare `on` _edgeLabel
+
+instance Eq EdgeAttr where
+    (==) = (==) `on` _edgeLabel
 
 defaultEdgeAttributes :: EdgeAttr
 defaultEdgeAttributes = EdgeAttr
