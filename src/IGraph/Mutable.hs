@@ -3,7 +3,6 @@ module IGraph.Mutable where
 
 import Foreign
 import Control.Monad.Primitive
-import Data.Serialize
 
 import IGraph.Internal.Graph
 import IGraph.Internal.Selector
@@ -29,7 +28,7 @@ class MGraph d where
     addNodes :: PrimMonad m => Int -> MLGraph(PrimState m) d v e -> m ()
     addNodes n (MLGraph g) = unsafePrimToPrim $ igraphAddVertices g n nullPtr
 
-    addLNodes :: (Serialize v, PrimMonad m)
+    addLNodes :: (Show v, PrimMonad m)
                  => Int  -- ^ the number of new vertices add to the graph
                  -> [v]  -- ^ vertices' labels
                  -> MLGraph (PrimState m) d v e -> m ()
@@ -51,7 +50,7 @@ class MGraph d where
 
     addEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
 
-    addLEdges :: (PrimMonad m, Serialize e) => [LEdge e] -> MLGraph (PrimState m) d v e -> m ()
+    addLEdges :: (PrimMonad m, Show e) => [LEdge e] -> MLGraph (PrimState m) d v e -> m ()
 
     delEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
 

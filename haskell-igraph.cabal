@@ -43,9 +43,8 @@ library
     , bytestring >=0.9
     , bytestring-lexing >=0.5
     , colour
-    , cereal
     , primitive
-    , containers
+    , unordered-containers
     , hashable
     , hxt
     , split
