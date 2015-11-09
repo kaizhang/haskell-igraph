@@ -3,13 +3,15 @@
 
 name:                haskell-igraph
 version:             0.1.0
--- synopsis:
--- description:
+synopsis:            Imcomplete igraph bindings
+description:         This is an attempt to create a complete bindings for the
+                     igraph<"http://igraph.org/c/"> library. Related work:
+                     https://hackage.haskell.org/package/igraph.
 license:             MIT
 license-file:        LICENSE
 author:              Kai Zhang
 maintainer:          kai@kzhang.org
--- copyright:
+copyright:           (c) 2015 Kai Zhang
 category:            Math
 build-type:          Simple
 extra-source-files:  cbits/haskelligraph.c
@@ -56,6 +58,8 @@ library
   build-tools:         c2hs >=0.25.0
   C-Sources:
     cbits/haskelligraph.c
+    cbits/Selector.chs.c
+    cbits/Structure.chs.c
 
 test-suite tests
   type: exitcode-stdio-1.0
