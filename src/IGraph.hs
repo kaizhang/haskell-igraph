@@ -47,6 +47,8 @@ data LGraph d v e = LGraph
     }
 
 class MGraph d => Graph d where
+    isDirected :: LGraph d v e -> Bool
+
     nNodes :: LGraph d v e -> Int
     nNodes (LGraph g _) = igraphVcount g
     {-# INLINE nNodes #-}
@@ -94,8 +96,10 @@ class MGraph d => Graph d where
 
 
 instance Graph U where
-instance Graph D where
+    isDirected = const False
 
+instance Graph D where
+    isDirected = const True
 
 mkGraph :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e)
         => (Node, Maybe [v]) -> ([Edge], Maybe [e]) -> LGraph d v e

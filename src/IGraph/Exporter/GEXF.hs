@@ -51,7 +51,7 @@ defaultEdgeAttributes = EdgeAttr
     , _edgeWeight = 1.0
     }
 
-genXMLTree :: ArrowXml a => LGraph U NodeAttr EdgeAttr -> a XmlTree XmlTree
+genXMLTree :: (ArrowXml a, Graph d) => LGraph d NodeAttr EdgeAttr -> a XmlTree XmlTree
 genXMLTree gr = root [] [gexf]
   where
     gexf = mkelem "gexf" [ attr "version" $ txt "1.2"
@@ -60,8 +60,10 @@ genXMLTree gr = root [] [gexf]
                               , attr "xmlns:xsi" $ txt "http://www.w3.org/2001/XMLSchema-instance"
                               , attr "xsi:schemaLocation" $ txt "http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd"
                               ] [graph]
+    directed | isDirected gr = "directed"
+             | otherwise = "undirected"
     graph = mkelem "graph" [ attr "mode" $ txt "static"
-                           , attr "defaultedgetype" $ txt "undirected"
+                           , attr "defaultedgetype" $ txt directed
                            ] [ns, es]
     ns = mkelem "nodes" [] $ map mkNode $ nodes gr
     es = mkelem "edges" [] $ map mkEdge $ edges gr
