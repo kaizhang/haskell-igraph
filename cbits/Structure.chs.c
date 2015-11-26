@@ -1,4 +1,11 @@
 #include "IGraph/Internal/Structure.chs.h"
+int __c2hs_wrapped__igraph_induced_subgraph(const igraph_t * graph,
+                                            igraph_t * res,
+                                            const igraph_vs_t * vids,
+                                            igraph_subgraph_implementation_t impl)
+{
+    return igraph_induced_subgraph(graph, res, *vids, impl);
+}
 int __c2hs_wrapped__igraph_closeness(const igraph_t * graph,
                                      igraph_vector_t * res,
                                      const igraph_vs_t * vids,

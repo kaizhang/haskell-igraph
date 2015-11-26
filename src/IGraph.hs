@@ -78,6 +78,10 @@ class MGraph d => Graph d where
             else Nothing
     {-# INLINE nodeLabMaybe #-}
 
+    getNodes :: (Hashable v, Eq v) => LGraph d v e -> v -> [Node]
+    getNodes gr x = M.lookupDefault [] x $ _labelToNode gr
+    {-# INLINE getNodes #-}
+
     edgeLab :: Read e => LGraph d v e -> Edge -> e
     edgeLab (LGraph g _) (fr,to) = read $ igraphCattributeEAS g edgeAttr $
                                    igraphGetEid g fr to True True

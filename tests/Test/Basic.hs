@@ -11,6 +11,7 @@ import Data.List
 
 import IGraph
 import IGraph.Mutable
+import IGraph.Structure
 
 tests :: TestTree
 tests = testGroup "Basic tests"

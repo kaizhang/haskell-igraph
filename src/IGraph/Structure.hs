@@ -1,5 +1,6 @@
 module IGraph.Structure
-    ( closeness
+    ( inducedSubgraph
+    , closeness
     , betweenness
     , eigenvectorCentrality
     ) where
@@ -8,14 +9,30 @@ import Control.Monad
 import Foreign
 import Foreign.C.Types
 import System.IO.Unsafe (unsafePerformIO)
+import qualified Data.HashMap.Strict as M
+import Data.Hashable (Hashable)
 
 import IGraph
-import IGraph.Mutable (U)
+import IGraph.Mutable
+import IGraph.Internal.Graph
 import IGraph.Internal.Data
 import IGraph.Internal.Selector
 import IGraph.Internal.Structure
 import IGraph.Internal.Arpack
 import IGraph.Internal.Constants
+import IGraph.Internal.Attribute
+
+inducedSubgraph :: (Hashable v, Eq v, Read v) => LGraph d v e -> [Int] -> LGraph d v e
+inducedSubgraph gr vs = unsafePerformIO $ do
+    vs' <- listToVector $ map fromIntegral vs
+    vsptr <- igraphVsVector vs'
+    mallocForeignPtrBytes 160 >>= \gptr -> withForeignPtr gptr $ \p -> do
+        igraphInducedSubgraph (_graph gr) p vsptr IgraphSubgraphCreateFromScratch
+        let g' = IGraphPtr gptr
+            labToId = M.fromListWith (++) $ zip labels $ map return [0..nV-1]
+            nV = igraphVcount g'
+            labels = map (read . igraphCattributeVAS g' vertexAttr) [0 .. nV-1]
+        return $ LGraph g' labToId
 
 -- | closeness centrality
 closeness :: [Int]  -- ^ vertices

@@ -12,6 +12,11 @@ import Foreign.C.Types
 
 #include "igraph/igraph.h"
 
+{#fun igraph_induced_subgraph as ^ { `IGraphPtr'
+                                   , id `Ptr (IGraphPtr)'
+                                   , %`IGraphVsPtr'
+                                   , `SubgraphImplementation' } -> `Int' #}
+
 {#fun igraph_closeness as ^ { `IGraphPtr'
                             , `VectorPtr'
                             , %`IGraphVsPtr'
@@ -22,7 +27,7 @@ import Foreign.C.Types
 {#fun igraph_betweenness as ^ { `IGraphPtr'
                               , `VectorPtr'
                               , %`IGraphVsPtr'
-                              , `Bool' 
+                              , `Bool'
                               , `VectorPtr'
                               , `Bool' } -> `Int' #}
 

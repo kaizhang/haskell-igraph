@@ -14,3 +14,6 @@ import Foreign
 {#enum igraph_spinglass_implementation_t as SpinglassImplementation {underscoreToCase} deriving (Show, Eq) #}
 
 {#enum igraph_attribute_elemtype_t as AttributeElemtype {underscoreToCase} deriving (Show, Eq) #}
+
+{#enum igraph_subgraph_implementation_t as SubgraphImplementation {underscoreToCase}
+       deriving (Show, Read, Eq) #}
