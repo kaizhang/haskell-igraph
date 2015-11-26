@@ -104,7 +104,7 @@ genXMLTree gr = root [] [gexf]
         a = show $ alphaChannel $ _edgeColour at
 {-# INLINE genXMLTree #-}
 
-writeGEXF :: FilePath -> LGraph U NodeAttr EdgeAttr -> IO ()
+writeGEXF :: Graph d => FilePath -> LGraph d NodeAttr EdgeAttr -> IO ()
 writeGEXF fl gr = runX (genXMLTree gr >>> writeDocument config fl) >> return ()
   where
     config = [withIndent yes]
