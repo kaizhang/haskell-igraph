@@ -171,18 +171,18 @@ pre gr i = unsafePerformIO $ do
 
 -- | Keep nodes that satisfy the constraint
 filterNode :: (Hashable v, Eq v, Read v, Graph d)
-           => (Node -> Bool) -> LGraph d v e -> LGraph d v e
+           => (LGraph d v e -> Node -> Bool) -> LGraph d v e -> LGraph d v e
 filterNode f gr = runST $ do
-    let deleted = filter (not . f) $ nodes gr
+    let deleted = filter (not . f gr) $ nodes gr
     gr' <- thaw gr
     delNodes deleted gr'
     unsafeFreeze gr'
 
 -- | Keep nodes that satisfy the constraint
 filterEdge :: (Hashable v, Eq v, Read v, Graph d)
-           => (Edge -> Bool) -> LGraph d v e -> LGraph d v e
+           => (LGraph d v e -> Edge -> Bool) -> LGraph d v e -> LGraph d v e
 filterEdge f gr = runST $ do
-    let deleted = filter (not . f) $ edges gr
+    let deleted = filter (not . f gr) $ edges gr
     gr' <- thaw gr
     delEdges deleted gr'
     unsafeFreeze gr'
