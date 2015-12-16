@@ -67,6 +67,12 @@ class MGraph d => Graph d where
         n = nEdges gr
     {-# INLINE edges #-}
 
+    hasEdge :: LGraph d v e -> Edge -> Bool
+    hasEdge (LGraph g _) (fr, to)
+        | igraphGetEid g fr to True False < 0 = False
+        | otherwise = True
+    {-# INLINE hasEdge #-}
+
     nodeLab :: Read v => LGraph d v e -> Node -> v
     nodeLab (LGraph g _) i = read $ igraphCattributeVAS g vertexAttr i
     {-# INLINE nodeLab #-}
