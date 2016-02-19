@@ -1,4 +1,24 @@
 #include "IGraph/Internal/Structure.chs.h"
+int __c2hs_wrapped__igraph_pagerank(const igraph_t * graph,
+                                    igraph_pagerank_algo_t algo,
+                                    igraph_vector_t * vector,
+                                    igraph_real_t * value,
+                                    const igraph_vs_t * vids,
+                                    igraph_bool_t directed,
+                                    igraph_real_t damping,
+                                    const igraph_vector_t * weights,
+                                    void * options)
+{
+    return igraph_pagerank(graph,
+                           algo,
+                           vector,
+                           value,
+                           *vids,
+                           directed,
+                           damping,
+                           weights,
+                           options);
+}
 int __c2hs_wrapped__igraph_induced_subgraph(const igraph_t * graph,
                                             igraph_t * res,
                                             const igraph_vs_t * vids,

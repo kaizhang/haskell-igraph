@@ -3,6 +3,7 @@ module IGraph.Structure
     , closeness
     , betweenness
     , eigenvectorCentrality
+    , pagerank
     ) where
 
 import Control.Monad
@@ -77,4 +78,20 @@ eigenvectorCentrality gr ws = unsafePerformIO $ do
         _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
     arparck <- igraphArpackNew
     igraphEigenvectorCentrality (_graph gr) vptr nullPtr True True ws' arparck
+    vectorPtrToList vptr
+
+-- | Google's PageRank
+pagerank :: Graph d
+         => LGraph d v e
+         -> Maybe [Double]
+         -> Double  -- ^ damping factor, usually around 0.85
+         -> [Double]
+pagerank gr ws d = unsafePerformIO $ alloca $ \p -> do
+    vptr <- igraphVectorNew 0
+    vsptr <- igraphVsAll
+    ws' <- case ws of
+        Just w -> listToVector w
+        _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+    igraphPagerank (_graph gr) IgraphPagerankAlgoPrpack vptr p vsptr
+        (isDirected gr) d ws' nullPtr
     vectorPtrToList vptr

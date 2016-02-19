@@ -38,3 +38,13 @@ import Foreign.C.Types
                                          , `Bool'
                                          , `VectorPtr'
                                          , `ArpackOptPtr' } -> `Int' #}
+
+{#fun igraph_pagerank as ^ { `IGraphPtr'
+                           , `PagerankAlgo'
+                           , `VectorPtr'
+                           , id `Ptr CDouble'
+                           , %`IGraphVsPtr'
+                           , `Bool'
+                           , `Double'
+                           , `VectorPtr'
+                           , id `Ptr ()' } -> `Int' #}
