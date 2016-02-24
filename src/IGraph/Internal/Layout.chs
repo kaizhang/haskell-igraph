@@ -1,6 +1,9 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Internal.Layout where
 
+import qualified Foreign.Marshal.Utils as C2HSImp
+import qualified Foreign.Ptr as C2HSImp
+
 import Foreign
 import Foreign.C.Types
 

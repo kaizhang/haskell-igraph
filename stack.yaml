@@ -2,7 +2,7 @@ flags: {}
 packages:
 - '.'
 extra-deps: []
-resolver: lts-3.12
+resolver: lts-5.4
 
 extra-lib-dirs:
     - "/home/kai/opt/lib"
