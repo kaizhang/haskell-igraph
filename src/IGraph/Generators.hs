@@ -1,5 +1,6 @@
 module IGraph.Generators
-    ( erdosRenyiGame
+    ( ErdosRenyiModel(..)
+    , erdosRenyiGame
     ) where
 
 import IGraph

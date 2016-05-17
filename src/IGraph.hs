@@ -2,8 +2,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 module IGraph
     ( LGraph(..)
-    , U
-    , D
+    , U(..)
+    , D(..)
     , Graph(..)
     , mkGraph
     , fromLabeledEdges
@@ -19,10 +19,13 @@ module IGraph
 
     , filterNode
     , filterEdge
+
+    , nmap
+    , emap
     ) where
 
 import Control.Arrow ((***))
-import Control.Monad (liftM)
+import Control.Monad (liftM, forM_)
 import Control.Monad.ST (runST)
 import Control.Monad.Primitive
 import qualified Data.HashMap.Strict as M
@@ -195,3 +198,24 @@ filterEdge f gr = runST $ do
     gr' <- thaw gr
     delEdges deleted gr'
     unsafeFreeze gr'
+
+-- | Map a function over the node labels in a graph
+nmap :: (Graph d, Read v, Hashable u, Read u, Eq u, Show u)
+     => ((Node, v) -> u) -> LGraph d v e -> LGraph d u e
+nmap fn gr = unsafePerformIO $ do
+    (MLGraph g) <- thaw gr
+    forM_ (nodes gr) $ \i -> do
+        let label = fn (i, nodeLab gr i)
+        igraphCattributeVASSet g vertexAttr i (show label)
+    unsafeFreeze (MLGraph g)
+
+-- | Map a function over the edge labels in a graph
+emap :: (Graph d, Read v, Hashable v, Eq v, Read e1, Show e2)
+     => ((Edge, e1) -> e2) -> LGraph d v e1 -> LGraph d v e2
+emap fn gr = unsafePerformIO $ do
+    (MLGraph g) <- thaw gr
+    forM_ (edges gr) $ \(fr, to) -> do
+        let label = fn ((fr,to), edgeLabByEid gr i)
+            i = igraphGetEid g fr to True True
+        igraphCattributeEASSet g edgeAttr i (show label)
+    unsafeFreeze (MLGraph g)

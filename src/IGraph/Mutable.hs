@@ -54,8 +54,8 @@ class MGraph d where
 
     delEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
 
-data U
-data D
+data U = U
+data D = D
 
 instance MGraph U where
     new n = unsafePrimToPrim $ igraphInit >>= igraphNew n False >>= return . MLGraph

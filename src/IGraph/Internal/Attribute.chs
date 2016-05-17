@@ -15,7 +15,10 @@ import System.IO.Unsafe (unsafePerformIO)
 
 #include "igraph/igraph.h"
 
-makeAttributeRecord :: Show a => String -> [a] -> AttributeRecord
+makeAttributeRecord :: Show a
+                    => String    -- ^ name of the attribute
+                    -> [a]       -- ^ values of the attribute
+                    -> AttributeRecord
 makeAttributeRecord name xs = unsafePerformIO $ do
     ptr <- newCAString name
     value <- listToStrVector $ map (B.pack . show) xs
@@ -51,3 +54,7 @@ instance Storable AttributeRecord where
 {#fun pure igraph_cattribute_EAS as ^ { `IGraphPtr', `String', `Int' } -> `String' #}
 
 {#fun igraph_cattribute_EAS_setv as ^ { `IGraphPtr', `String', `StrVectorPtr' } -> `Int' #}
+
+{#fun igraph_cattribute_VAS_set as ^ { `IGraphPtr', `String', `Int', `String' } -> `Int' #}
+
+{#fun igraph_cattribute_EAS_set as ^ { `IGraphPtr', `String', `Int', `String' } -> `Int' #}
