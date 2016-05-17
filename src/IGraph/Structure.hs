@@ -4,6 +4,7 @@ module IGraph.Structure
     , betweenness
     , eigenvectorCentrality
     , pagerank
+    , personalizedPagerank
     ) where
 
 import Control.Monad
@@ -94,4 +95,21 @@ pagerank gr ws d = unsafePerformIO $ alloca $ \p -> do
         _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
     igraphPagerank (_graph gr) IgraphPagerankAlgoPrpack vptr p vsptr
         (isDirected gr) d ws' nullPtr
+    vectorPtrToList vptr
+
+personalizedPagerank :: Graph d
+                     => LGraph d v e
+                     -> [Double]   -- ^ reset probability
+                     -> Maybe [Double]
+                     -> Double
+                     -> [Double]
+personalizedPagerank gr reset ws d = unsafePerformIO $ alloca $ \p -> do
+    vptr <- igraphVectorNew 0
+    vsptr <- igraphVsAll
+    ws' <- case ws of
+        Just w -> listToVector w
+        _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+    reset' <- listToVector reset
+    igraphPersonalizedPagerank (_graph gr) IgraphPagerankAlgoPrpack vptr p vsptr
+        (isDirected gr) d reset' ws' nullPtr
     vectorPtrToList vptr

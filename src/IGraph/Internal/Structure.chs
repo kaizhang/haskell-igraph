@@ -48,3 +48,14 @@ import Foreign.C.Types
                            , `Double'
                            , `VectorPtr'
                            , id `Ptr ()' } -> `Int' #}
+
+{#fun igraph_personalized_pagerank as ^ { `IGraphPtr'
+                                        , `PagerankAlgo'
+                                        , `VectorPtr'
+                                        , id `Ptr CDouble'
+                                        , %`IGraphVsPtr'
+                                        , `Bool'
+                                        , `Double'
+                                        , `VectorPtr'
+                                        , `VectorPtr'
+                                        , id `Ptr ()' } -> `Int' #}

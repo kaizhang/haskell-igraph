@@ -37,8 +37,8 @@ instance Default LayoutOpt where
 
 data LayoutMethod = KamadaKawai
 
-getLayout :: Graph d => LGraph d v e -> LayoutOpt -> [(Double, Double)]
-getLayout gr opt = unsafePerformIO $ do
+getLayout :: Graph d => LGraph d v e -> LayoutOpt -> IO [(Double, Double)]
+getLayout gr opt = do
     mptr <- mat
 
     case _method opt of

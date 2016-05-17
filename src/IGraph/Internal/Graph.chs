@@ -49,4 +49,8 @@ igraphEdge g i = alloca $ \fr -> alloca $ \to -> do
 {# fun igraph_add_edges as ^ { `IGraphPtr', `VectorPtr', id `Ptr ()' } -> `()' #}
 
 
+-- generators
+
 {#fun igraph_full as ^ { +, `Int', `Bool', `Bool' } -> `IGraphPtr' #}
+
+{#fun igraph_erdos_renyi_game as ^ {+, `ErdosRenyi', `Int', `Double', `Bool', `Bool'} -> `IGraphPtr' #}

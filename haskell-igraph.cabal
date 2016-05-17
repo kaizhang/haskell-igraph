@@ -17,6 +17,10 @@ build-type:          Simple
 extra-source-files:  cbits/haskelligraph.c
 cabal-version:       >=1.22
 
+Flag graphics
+  Description: Enable graphics output
+  Default:     False
+
 library
   exposed-modules:
     IGraph.Internal.Initialization
@@ -25,6 +29,7 @@ library
     IGraph.Internal.Data
     IGraph.Internal.Graph
     IGraph.Internal.Attribute
+    IGraph.Internal.Isomorphism
     IGraph.Internal.Selector
     IGraph.Internal.Structure
     IGraph.Internal.Clique
@@ -34,12 +39,20 @@ library
     IGraph.Mutable
     IGraph.Clique
     IGraph.Structure
+    IGraph.Isomorphism
     IGraph.Community
     IGraph.Read
+    IGraph.Motif
     IGraph.Layout
+    IGraph.Generators
     IGraph.Exporter.GEXF
-  -- other-modules:
-  -- other-extensions:
+
+  if flag(graphics)
+    exposed-modules: IGraph.Exporter.Graphics
+
+  if flag(graphics)
+    build-depends: diagrams-lib, diagrams-svg
+
   build-depends:
       base >=4.0 && <5.0
     , bytestring >=0.9

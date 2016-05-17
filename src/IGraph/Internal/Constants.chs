@@ -25,3 +25,6 @@ import Foreign
 
 {#enum igraph_pagerank_algo_t as PagerankAlgo {underscoreToCase}
     deriving (Show, Read, Eq) #}
+
+{#enum igraph_erdos_renyi_t as ErdosRenyi {underscoreToCase}
+    deriving (Show, Read, Eq) #}

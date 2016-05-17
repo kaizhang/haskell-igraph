@@ -1,4 +1,26 @@
 #include "IGraph/Internal/Structure.chs.h"
+int __c2hs_wrapped__igraph_personalized_pagerank(const igraph_t * graph,
+                                                 igraph_pagerank_algo_t algo,
+                                                 igraph_vector_t * vector,
+                                                 igraph_real_t * value,
+                                                 const igraph_vs_t * vids,
+                                                 igraph_bool_t directed,
+                                                 igraph_real_t damping,
+                                                 igraph_vector_t * reset,
+                                                 const igraph_vector_t * weights,
+                                                 void * options)
+{
+    return igraph_personalized_pagerank(graph,
+                                        algo,
+                                        vector,
+                                        value,
+                                        *vids,
+                                        directed,
+                                        damping,
+                                        reset,
+                                        weights,
+                                        options);
+}
 int __c2hs_wrapped__igraph_pagerank(const igraph_t * graph,
                                     igraph_pagerank_algo_t algo,
                                     igraph_vector_t * vector,
