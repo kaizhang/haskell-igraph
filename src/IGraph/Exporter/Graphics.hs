@@ -22,11 +22,12 @@ graphToDiagram gr = position (map drawNode (nodes gr)) <> mconcat (map drawEdge 
                  , circle (_size nattr) # lwO 0 # fcA (_nodeColour nattr) )
       where
         nattr = nodeLab gr x
-    drawEdge (from, to) = arrowBetween'
+    drawEdge (from, to) = {-arrowBetween'
         ( with & arrowTail .~ noTail
                & arrowHead .~ arrowH
                & headLength .~ output (_edgeArrowLength eattr)
-        ) start end
+        ) start end-}
+        fromVertices [start, end]
         # lwO (_edgeWeight eattr) # lcA (_edgeColour eattr)
       where
         eattr = edgeLab gr (from, to)
@@ -34,6 +35,6 @@ graphToDiagram gr = position (map drawNode (nodes gr)) <> mconcat (map drawEdge 
         end = _positionX nattr2 ^& _positionY nattr2
         nattr1 = nodeLab gr from
         nattr2 = nodeLab gr to
-    arrowH | isDirected gr = dart
-           | otherwise = noHead
+    --arrowH | isDirected gr = dart
+    --       | otherwise = noHead
 {-# INLINE graphToDiagram #-}

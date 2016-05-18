@@ -1,8 +1,7 @@
-flags: {}
+flags:
+    haskell-igraph:
+        graphics: true
 packages:
-- '.'
+    - '.'
 extra-deps: []
 resolver: lts-5.5
-
-extra-lib-dirs:
-    - "/home/kai/opt/lib"

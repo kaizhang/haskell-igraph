@@ -25,3 +25,14 @@ import Foreign.C.Types
 , id `Ptr VectorPtr'
 , id `Ptr VectorPtr'
 } -> `Int' #}
+
+{# fun igraph_layout_lgl as ^ { `IGraphPtr'
+, `MatrixPtr'
+, `Int'
+, `Double'
+, `Double'
+, `Double'
+, `Double'
+, `Double'
+, `Int'
+} -> `Int' #}
