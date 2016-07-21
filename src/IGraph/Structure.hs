@@ -84,7 +84,7 @@ eigenvectorCentrality gr ws = unsafePerformIO $ do
 -- | Google's PageRank
 pagerank :: Graph d
          => LGraph d v e
-         -> Maybe [Double]
+         -> Maybe [Double]  -- ^ edge weights
          -> Double  -- ^ damping factor, usually around 0.85
          -> [Double]
 pagerank gr ws d = unsafePerformIO $ alloca $ \p -> do

@@ -132,13 +132,13 @@ mkGraph (n, vattr) (es,eattr) = runST $ do
     zip' a b | length a /= length b = error "incorrect length"
              | otherwise = zipWith (\(x,y) z -> (x,y,z)) a b
 
-fromLabeledEdges :: (Graph d, Hashable v, Read v, Eq v, Show v)
-                 => [(v, v)] -> LGraph d v ()
-fromLabeledEdges es = mkGraph (n, Just labels) (es', Nothing)
+fromLabeledEdges :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e)
+                 => [((v, v), e)] -> LGraph d v e
+fromLabeledEdges es = mkGraph (n, Just labels) (es', Just $ snd $ unzip es)
   where
-    es' = map (f *** f) es
+    es' = map (f *** f) $ fst $ unzip es
       where f x = M.lookupDefault undefined x labelToId
-    labels = nub $ concat [ [a,b] | (a,b) <- es ]
+    labels = nub $ concat [ [a,b] | ((a,b),_) <- es ]
     labelToId = M.fromList $ zip labels [0..]
     n = M.size labelToId
 

@@ -21,6 +21,7 @@ data NodeAttr = NodeAttr
     , _nodeLabel :: String
     , _positionX :: Double
     , _positionY :: Double
+    , _nodeZindex :: Int
     } deriving (Show, Read, Eq)
 
 instance Hashable NodeAttr where
@@ -33,6 +34,7 @@ defaultNodeAttributes = NodeAttr
     , _nodeLabel = ""
     , _positionX = 0
     , _positionY = 0
+    , _nodeZindex = 1
     }
 
 data EdgeAttr = EdgeAttr
@@ -40,6 +42,7 @@ data EdgeAttr = EdgeAttr
     , _edgeColour :: AlphaColour Double
     , _edgeWeight :: Double
     , _edgeArrowLength :: Double
+    , _edgeZindex :: Int
     } deriving (Show, Read, Eq)
 
 instance Hashable EdgeAttr where
@@ -51,6 +54,7 @@ defaultEdgeAttributes = EdgeAttr
     , _edgeColour = opaque black
     , _edgeWeight = 1.0
     , _edgeArrowLength = 5.0
+    , _edgeZindex = 0
     }
 
 genXMLTree :: (ArrowXml a, Graph d) => LGraph d NodeAttr EdgeAttr -> a XmlTree XmlTree
