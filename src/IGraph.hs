@@ -1,5 +1,5 @@
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleContexts #-}
 module IGraph
     ( LGraph(..)
     , U(..)
@@ -24,30 +24,47 @@ module IGraph
     , emap
     ) where
 
-import Control.Arrow ((***))
-import Control.Monad (liftM, forM_)
-import Control.Monad.ST (runST)
-import Control.Monad.Primitive
-import qualified Data.HashMap.Strict as M
-import Data.List (nub)
-import Data.Hashable (Hashable)
-import Data.Maybe
-import System.IO.Unsafe (unsafePerformIO)
+import           Control.Arrow             ((***))
+import           Control.Monad             (forM_, liftM)
+import           Control.Monad.Primitive
+import           Control.Monad.ST          (runST)
+import           Data.Hashable             (Hashable)
+import qualified Data.HashMap.Strict       as M
+import           Data.List                 (nub)
+import           Data.Maybe
+import Data.Binary
+import           System.IO.Unsafe          (unsafePerformIO)
 
-import IGraph.Mutable
-import IGraph.Internal.Graph
-import IGraph.Internal.Constants
-import IGraph.Internal.Attribute
-import IGraph.Internal.Selector
+import           IGraph.Internal.Attribute
+import           IGraph.Internal.Constants
+import           IGraph.Internal.Graph
+import           IGraph.Internal.Selector
+import           IGraph.Mutable
 
 type Node = Int
 type Edge = (Node, Node)
 
 -- | graph with labeled nodes and edges
 data LGraph d v e = LGraph
-    { _graph :: IGraphPtr
+    { _graph       :: IGraphPtr
     , _labelToNode :: M.HashMap v [Node]
     }
+
+instance ( Binary v, Hashable v, Read v, Show v, Eq v
+         , Binary e, Read e, Show e, Graph d) => Binary (LGraph d v e) where
+    put gr = do
+        put nlabs
+        put es
+        put elabs
+      where
+        nlabs = map (nodeLab gr) $ nodes gr
+        es = edges gr
+        elabs = map (edgeLab gr) es
+    get = do
+        nlabs <- get
+        es <- get
+        elabs <- get
+        return $ mkGraph nlabs $ zip es elabs
 
 class MGraph d => Graph d where
     isDirected :: LGraph d v e -> Bool
@@ -118,29 +135,23 @@ instance Graph D where
     isD = const True
 
 mkGraph :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e)
-        => (Node, Maybe [v]) -> ([Edge], Maybe [e]) -> LGraph d v e
-mkGraph (n, vattr) (es,eattr) = runST $ do
+        => [v] -> [(Edge, e)] -> LGraph d v e
+mkGraph vattr es = runST $ do
     g <- new 0
-    let addV | isNothing vattr = addNodes n g
-             | otherwise = addLNodes n (fromJust vattr) g
-        addE | isNothing eattr = addEdges es g
-             | otherwise = addLEdges (zip' es (fromJust eattr)) g
-    addV
-    addE
+    addLNodes n vattr g
+    addLEdges (map (\((fr,to),x) -> (fr,to,x)) es) g
     unsafeFreeze g
   where
-    zip' a b | length a /= length b = error "incorrect length"
-             | otherwise = zipWith (\(x,y) z -> (x,y,z)) a b
+    n = length vattr
 
 fromLabeledEdges :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e)
                  => [((v, v), e)] -> LGraph d v e
-fromLabeledEdges es = mkGraph (n, Just labels) (es', Just $ snd $ unzip es)
+fromLabeledEdges es = mkGraph labels es'
   where
-    es' = map (f *** f) $ fst $ unzip es
+    es' = flip map es $ \((fr, to), x) -> ((f fr, f to), x)
       where f x = M.lookupDefault undefined x labelToId
     labels = nub $ concat [ [a,b] | ((a,b),_) <- es ]
     labelToId = M.fromList $ zip labels [0..]
-    n = M.size labelToId
 
 unsafeFreeze :: (Hashable v, Eq v, Read v, PrimMonad m) => MLGraph (PrimState m) d v e -> m (LGraph d v e)
 unsafeFreeze (MLGraph g) = return $ LGraph g labToId

@@ -26,7 +26,7 @@ fromAdjMatrix bs =
         ncol = length $ head mat
     in if nrow /= ncol
          then error "fromAdjMatrix: nrow != ncol"
-         else mkGraph (nrow, Just $ B.words header) (es, Nothing)
+         else mkGraph (B.words header) $ zip es $ repeat ()
   where
     f ((i,j),v) = i < j && v /= 0
 {-# INLINE fromAdjMatrix #-}
@@ -41,6 +41,6 @@ readAdjMatrixWeighted fl = do
         ncol = length $ head mat
     if nrow /= ncol
        then error "nrow != ncol"
-       else return $ mkGraph (nrow, Just $ B.words header) (es, Just ws)
+       else return $ mkGraph (B.words header) $ zip es ws
   where
     f ((i,j),v) = i < j && v /= 0

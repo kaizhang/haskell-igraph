@@ -42,4 +42,4 @@ triad = map make xs
          ]
 
 make :: [(Int, Int)] -> LGraph D () ()
-make xs = mkGraph (length xs, Nothing) (xs, Nothing)
+make xs = mkGraph (replicate (length xs) ()) $ zip xs $ repeat ()
