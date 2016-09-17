@@ -28,14 +28,14 @@ graphCreation = testGroup "Graph creation"
     ]
   where
     edgeList = sort $ unsafePerformIO $ randEdges 1000 100
-    gr = mkGraph (100,Nothing) (edgeList, Nothing) :: LGraph D () ()
-    simple = mkGraph (3,Nothing) ([(0,1),(1,2),(2,0)],Nothing) :: LGraph D () ()
+    gr = mkGraph (replicate 100 ()) $ zip edgeList $ repeat () :: LGraph D () ()
+    simple = mkGraph (replicate 3 ()) $ zip [(0,1),(1,2),(2,0)] $ repeat () :: LGraph D () ()
 
 graphEdit :: TestTree
 graphEdit = testGroup "Graph editing"
     [ testCase "" $ [(1,2)] @=? (sort $ edges simple') ]
   where
-    simple = mkGraph (3,Nothing) ([(0,1),(1,2),(2,0)],Nothing) :: LGraph U () ()
+    simple = mkGraph (replicate 3 ()) $ zip [(0,1),(1,2),(2,0)] $ repeat () :: LGraph U () ()
     simple' = runST $ do
         g <- thaw simple
         delEdges [(0,1),(0,2)] g

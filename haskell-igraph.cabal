@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                haskell-igraph
-version:             0.1.0
+version:             0.2.0
 synopsis:            Imcomplete igraph bindings
 description:         This is an attempt to create a complete bindings for the
                      igraph<"http://igraph.org/c/"> library. Related work:
@@ -11,11 +11,10 @@ license:             MIT
 license-file:        LICENSE
 author:              Kai Zhang
 maintainer:          kai@kzhang.org
-copyright:           (c) 2015 Kai Zhang
+copyright:           (c) 2016 Kai Zhang
 category:            Math
 build-type:          Simple
-extra-source-files:  cbits/haskelligraph.c
-cabal-version:       >=1.22
+cabal-version:       >=1.24
 
 Flag graphics
   Description: Enable graphics output
@@ -72,8 +71,6 @@ library
   build-tools:         c2hs >=0.25.0
   C-Sources:
     cbits/haskelligraph.c
-    cbits/Selector.chs.c
-    cbits/Structure.chs.c
 
 test-suite tests
   type: exitcode-stdio-1.0
