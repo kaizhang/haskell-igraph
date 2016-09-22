@@ -10,7 +10,7 @@ import System.IO.Unsafe (unsafePerformIO)
 import Data.List (transpose)
 import Data.List.Split (chunksOf)
 
-#include "cbits/haskelligraph.c"
+#include "haskelligraph.h"
 
 {#pointer *igraph_vector_t as VectorPtr foreign finalizer igraph_vector_destroy newtype#}
 

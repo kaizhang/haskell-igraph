@@ -9,7 +9,7 @@ import Foreign.C.Types
 {#import IGraph.Internal.Data #}
 {#import IGraph.Internal.Constants #}
 
-#include "cbits/haskelligraph.c"
+#include "haskelligraph.h"
 
 {#fun igraph_community_spinglass as ^
 { `IGraphPtr'

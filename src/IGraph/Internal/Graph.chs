@@ -10,7 +10,7 @@ import System.IO.Unsafe (unsafePerformIO)
 {#import IGraph.Internal.Data #}
 {#import IGraph.Internal.Constants #}
 
-#include "cbits/haskelligraph.c"
+#include "haskelligraph.h"
 
 {#pointer *igraph_t as IGraphPtr foreign finalizer igraph_destroy newtype#}
 

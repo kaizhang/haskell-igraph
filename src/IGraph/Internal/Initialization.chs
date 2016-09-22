@@ -1,7 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Internal.Initialization where
 
-#include "cbits/haskelligraph.c"
+#include "haskelligraph.h"
 
 data HasInit
 
