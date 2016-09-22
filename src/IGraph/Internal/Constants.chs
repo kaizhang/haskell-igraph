@@ -3,7 +3,7 @@ module IGraph.Internal.Constants where
 
 import Foreign
 
-#include "haskelligraph.h"
+#include "igraph/igraph.h"
 
 {#enum igraph_neimode_t as Neimode {underscoreToCase}
     deriving (Show, Eq) #}
