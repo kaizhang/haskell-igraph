@@ -16,27 +16,27 @@ import           IGraph.Internal.Clique
 import           IGraph.Internal.Data
 import           IGraph.Internal.Layout
 
-data LayoutMethod = KamadaKawai
-    { kk_seed      :: !(Maybe [(Double, Double)])
-    , kk_nIter     :: !Int
-    , kk_sigma     :: (Int -> Double) -- ^ The base standard deviation of position
-                                  -- change proposals
-    , kk_startTemp :: !Double  -- ^ The initial temperature for the annealing
-    , kk_coolFact  :: !Double  -- ^ The cooling factor for the simulated annealing
-    , kk_const     :: (Int -> Double)  -- ^ The Kamada-Kawai vertex attraction constant
-    }
-                  | LGL   -- ^ the Large Graph Layout algorithm
-    { lgl_nIter      :: !Int
-    , lgl_maxdelta   :: (Int -> Double)  -- ^ The maximum length of the move allowed for
-                               -- a vertex in a single iteration.
-                               -- A reasonable default is the number of vertices.
-    , lgl_area       :: (Int -> Double)  -- ^ This parameter gives the area of the square
-                           -- on which the vertices will be placed. A reasonable
-                           -- default value is the number of vertices squared.
-    , lgl_coolexp    :: !Double  -- ^ The cooling exponent. A reasonable default value is 1.5.
-    , lgl_repulserad :: (Int -> Double) -- ^ Determines the radius at which vertex-vertex repulsion cancels out attraction of adjacent vertices. A reasonable default value is area times the number of vertices.
-    , lgl_cellsize   :: (Int -> Double)
-    }
+data LayoutMethod =
+    KamadaKawai { kk_seed      :: !(Maybe [(Double, Double)])
+                , kk_nIter     :: !Int
+                , kk_sigma     :: (Int -> Double) -- ^ The base standard deviation of
+                -- position change proposals
+                , kk_startTemp :: !Double  -- ^ The initial temperature for the annealing
+                , kk_coolFact  :: !Double  -- ^ The cooling factor for the simulated annealing
+                , kk_const     :: (Int -> Double)  -- ^ The Kamada-Kawai vertex attraction constant
+                }
+  | LGL { lgl_nIter      :: !Int
+        , lgl_maxdelta   :: (Int -> Double)  -- ^ The maximum length of the move allowed
+        -- for a vertex in a single iteration. A reasonable default is the number of vertices.
+        , lgl_area       :: (Int -> Double)  -- ^ This parameter gives the area
+        -- of the square on which the vertices will be placed. A reasonable
+        -- default value is the number of vertices squared.
+        , lgl_coolexp    :: !Double  -- ^ The cooling exponent. A reasonable default value is 1.5.
+        , lgl_repulserad :: (Int -> Double) -- ^ Determines the radius at which
+        -- vertex-vertex repulsion cancels out attraction of adjacent vertices.
+        -- A reasonable default value is area times the number of vertices.
+        , lgl_cellsize   :: (Int -> Double)
+        }
 
 defaultKamadaKawai :: LayoutMethod
 defaultKamadaKawai = KamadaKawai
