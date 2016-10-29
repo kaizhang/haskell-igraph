@@ -2,11 +2,10 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                haskell-igraph
-version:             0.2.1
+version:             0.2.2
 synopsis:            Imcomplete igraph bindings
 description:         This is an attempt to create a complete bindings for the
-                     igraph<"http://igraph.org/c/"> library. Related work:
-                     https://hackage.haskell.org/package/igraph.
+                     igraph<"http://igraph.org/c/"> library.
 license:             MIT
 license-file:        LICENSE
 author:              Kai Zhang
@@ -71,7 +70,7 @@ library
   default-language:    Haskell2010
   build-tools:         c2hs >=0.25.0
   c-sources:           cbits/haskelligraph.c
-  includes:            cbits/haskelligraph.h
+  include-dirs:        cbits
 
 test-suite tests
   type: exitcode-stdio-1.0
