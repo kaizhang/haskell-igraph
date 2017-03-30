@@ -1,7 +1,14 @@
 module IGraph.Motif
-    (triad) where
+    ( triad
+    , triadCensus
+    ) where
+
+import Data.Hashable (Hashable)
+import System.IO.Unsafe (unsafePerformIO)
 
 import IGraph
+import IGraph.Internal.Motif
+import IGraph.Internal.Data
 
 -- | Every triple of vertices in a directed graph
 -- 003: A, B, C, the empty graph.
@@ -40,6 +47,11 @@ triad = map make xs
          , [(0,1), (1,2), (2,1), (0,2), (2,0)]
          , [(0,1), (1,2), (1,2), (2,1), (0,2), (2,0)]
          ]
+    make :: [(Int, Int)] -> LGraph D () ()
+    make xs = mkGraph (replicate (length xs) ()) $ zip xs $ repeat ()
 
-make :: [(Int, Int)] -> LGraph D () ()
-make xs = mkGraph (replicate (length xs) ()) $ zip xs $ repeat ()
+triadCensus :: (Hashable v, Eq v, Read v) => LGraph d v e -> [Int]
+triadCensus gr = unsafePerformIO $ do
+    vptr <- igraphVectorNew 0
+    igraphTriadCensus (_graph gr) vptr
+    map truncate <$> vectorPtrToList vptr

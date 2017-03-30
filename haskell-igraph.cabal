@@ -31,6 +31,7 @@ library
     IGraph.Internal.Isomorphism
     IGraph.Internal.Selector
     IGraph.Internal.Structure
+    IGraph.Internal.Motif
     IGraph.Internal.Clique
     IGraph.Internal.Community
     IGraph.Internal.Layout
