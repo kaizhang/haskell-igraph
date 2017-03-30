@@ -28,11 +28,11 @@ import           Control.Arrow             ((***))
 import           Control.Monad             (forM_, liftM)
 import           Control.Monad.Primitive
 import           Control.Monad.ST          (runST)
+import           Data.Binary
 import           Data.Hashable             (Hashable)
 import qualified Data.HashMap.Strict       as M
-import           Data.List                 (nub)
+import qualified Data.HashSet as S
 import           Data.Maybe
-import Data.Binary
 import           System.IO.Unsafe          (unsafePerformIO)
 
 import           IGraph.Internal.Attribute
@@ -150,7 +150,7 @@ fromLabeledEdges es = mkGraph labels es'
   where
     es' = flip map es $ \((fr, to), x) -> ((f fr, f to), x)
       where f x = M.lookupDefault undefined x labelToId
-    labels = nub $ concat [ [a,b] | ((a,b),_) <- es ]
+    labels = S.toList $ S.fromList $ concat [ [a,b] | ((a,b),_) <- es ]
     labelToId = M.fromList $ zip labels [0..]
 
 unsafeFreeze :: (Hashable v, Eq v, Read v, PrimMonad m) => MLGraph (PrimState m) d v e -> m (LGraph d v e)
