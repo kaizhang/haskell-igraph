@@ -19,7 +19,7 @@ import IGraph.Internal.Data
 -- 021C: A->B->C, the directed line.
 -- 111D: A<->B<-C.
 -- 111U: A<->B->C.
--- 030T: A->B<-C, A->C.
+-- 030T: A->B<-C, A->C. Feed forward loop.
 -- 030C: A<-B<-C, A->C.
 -- 201: A<->B<->C.
 -- 120D: A<-B->C, A<->C.
@@ -28,9 +28,10 @@ import IGraph.Internal.Data
 -- 210: A->B<->C, A<->C.
 -- 300: A<->B<->C, A<->C, the complete graph.
 triad :: [LGraph D () ()]
-triad = map make xs
+triad = map make edgeList
   where
-    xs = [ []
+    edgeList =
+         [ []
          , [(0,1)]
          , [(0,1), (1,0)]
          , [(1,0), (1,2)]
@@ -45,10 +46,10 @@ triad = map make xs
          , [(0,1), (2,1), (0,2), (2,0)]
          , [(0,1), (1,2), (0,2), (2,0)]
          , [(0,1), (1,2), (2,1), (0,2), (2,0)]
-         , [(0,1), (1,2), (1,2), (2,1), (0,2), (2,0)]
+         , [(0,1), (1,0), (1,2), (2,1), (0,2), (2,0)]
          ]
     make :: [(Int, Int)] -> LGraph D () ()
-    make xs = mkGraph (replicate (length xs) ()) $ zip xs $ repeat ()
+    make xs = mkGraph (replicate 3 ()) $ zip xs $ repeat ()
 
 triadCensus :: (Hashable v, Eq v, Read v) => LGraph d v e -> [Int]
 triadCensus gr = unsafePerformIO $ do

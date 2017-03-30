@@ -80,6 +80,7 @@ test-suite tests
   other-modules:
     Test.Basic
     Test.Structure
+    Test.Motif
     Test.Utils
 
   default-language:    Haskell2010
@@ -87,6 +88,7 @@ test-suite tests
       base
     , haskell-igraph
     , data-ordlist
+    , matrices
     , tasty
     , tasty-golden
     , tasty-hunit
