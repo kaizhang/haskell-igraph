@@ -53,4 +53,7 @@ igraphEdge g i = alloca $ \fr -> alloca $ \to -> do
 
 {#fun igraph_full as ^ { +, `Int', `Bool', `Bool' } -> `IGraphPtr' #}
 
-{#fun igraph_erdos_renyi_game as ^ {+, `ErdosRenyi', `Int', `Double', `Bool', `Bool'} -> `IGraphPtr' #}
+{#fun igraph_erdos_renyi_game as ^ { +, `ErdosRenyi', `Int', `Double', `Bool'
+    , `Bool'} -> `IGraphPtr' #}
+    
+{#fun igraph_isoclass_create as ^ { +, `Int', `Int', `Bool' } -> `IGraphPtr' #}

@@ -56,3 +56,5 @@ triadCensus gr = unsafePerformIO $ do
     vptr <- igraphVectorNew 0
     igraphTriadCensus (_graph gr) vptr
     map truncate <$> vectorPtrToList vptr
+
+-- motifsRandesu

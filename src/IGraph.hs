@@ -17,8 +17,10 @@ module IGraph
     , pre
     , suc
 
-    , filterNode
-    , filterEdge
+    , mapNodes
+    , mapEdges
+    , filterNodes
+    , filterEdges
 
     , nmap
     , emap
@@ -193,18 +195,39 @@ pre gr i = unsafePerformIO $ do
     vitToList vit
 
 -- | Keep nodes that satisfy the constraint
-filterNode :: (Hashable v, Eq v, Read v, Graph d)
-           => (LGraph d v e -> Node -> Bool) -> LGraph d v e -> LGraph d v e
-filterNode f gr = runST $ do
+filterNodes :: (Hashable v, Eq v, Read v, Graph d)
+            => (LGraph d v e -> Node -> Bool) -> LGraph d v e -> LGraph d v e
+filterNodes f gr = runST $ do
     let deleted = filter (not . f gr) $ nodes gr
     gr' <- thaw gr
     delNodes deleted gr'
     unsafeFreeze gr'
 
+-- | Apply a function to change nodes' labels.
+mapNodes :: (Graph d, Read v1, Show v2, Hashable v2, Eq v2, Read v2)
+         => (Node -> v1 -> v2) -> LGraph d v1 e -> LGraph d v2 e
+mapNodes f gr = runST $ do
+    (MLGraph gptr) <- thaw gr
+    let gr' = MLGraph gptr
+    forM_ (nodes gr) $ \x -> setNodeAttr x (f x $ nodeLab gr x) gr'
+    unsafeFreeze gr'
+
+-- | Apply a function to change edges' labels.
+mapEdges :: (Graph d, Read e1, Show e2, Hashable v, Eq v, Read v)
+         => (Edge -> e1 -> e2) -> LGraph d v e1 -> LGraph d v e2
+mapEdges f gr = runST $ do
+    (MLGraph gptr) <- thaw gr
+    let gr' = MLGraph gptr
+    forM_ [0 .. nEdges gr - 1] $ \x -> do
+        e <- unsafePrimToPrim $ igraphEdge (_graph gr) x
+        setEdgeAttr x (f e $ edgeLabByEid gr x) gr'
+    unsafeFreeze gr'
+
+
 -- | Keep nodes that satisfy the constraint
-filterEdge :: (Hashable v, Eq v, Read v, Graph d)
-           => (LGraph d v e -> Edge -> Bool) -> LGraph d v e -> LGraph d v e
-filterEdge f gr = runST $ do
+filterEdges :: (Hashable v, Eq v, Read v, Graph d)
+            => (LGraph d v e -> Edge -> Bool) -> LGraph d v e -> LGraph d v e
+filterEdges f gr = runST $ do
     let deleted = filter (not . f gr) $ edges gr
     gr' <- thaw gr
     delEdges deleted gr'

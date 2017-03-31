@@ -1,4 +1,10 @@
+flags:
+  haskell-igraph:
+    graphics: true
+
 packages:
     - '.'
+
 extra-deps: []
+
 resolver: lts-8.5

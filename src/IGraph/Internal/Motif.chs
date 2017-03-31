@@ -15,3 +15,6 @@ import Foreign.C.Types
 
 {#fun igraph_triad_census as ^ { `IGraphPtr'
                                , `VectorPtr' } -> `Int' #}
+
+{#fun igraph_motifs_randesu as ^ { `IGraphPtr', `VectorPtr', `Int'
+                                 , `VectorPtr' } -> `Int' #}

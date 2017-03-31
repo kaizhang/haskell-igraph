@@ -53,8 +53,8 @@ defaultEdgeAttributes = EdgeAttr
     { _edgeLabel = ""
     , _edgeColour = opaque black
     , _edgeWeight = 1.0
-    , _edgeArrowLength = 5.0
-    , _edgeZindex = 0
+    , _edgeArrowLength = 10
+    , _edgeZindex = 2
     }
 
 genXMLTree :: (ArrowXml a, Graph d) => LGraph d NodeAttr EdgeAttr -> a XmlTree XmlTree

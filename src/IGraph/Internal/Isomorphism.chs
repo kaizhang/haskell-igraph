@@ -14,3 +14,5 @@ import Foreign.C.Types
     id `FunPtr (Ptr IGraphPtr -> Ptr IGraphPtr -> CInt -> CInt -> Ptr () -> IO CInt)',
     id `FunPtr (Ptr IGraphPtr -> Ptr IGraphPtr -> CInt -> CInt -> Ptr () -> IO CInt)',
     id `Ptr ()'} -> `Int' #}
+
+{#fun igraph_isomorphic as ^ { `IGraphPtr', `IGraphPtr', id `Ptr CInt' } -> `Int' #}

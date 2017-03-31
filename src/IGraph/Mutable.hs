@@ -1,14 +1,16 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 module IGraph.Mutable where
 
-import Foreign
-import Control.Monad.Primitive
+import           Control.Monad                  (when)
+import           Control.Monad.Primitive
+import qualified Data.ByteString.Char8          as B
+import           Foreign
 
-import IGraph.Internal.Graph
-import IGraph.Internal.Selector
-import IGraph.Internal.Data
-import IGraph.Internal.Attribute
-import IGraph.Internal.Initialization
+import           IGraph.Internal.Attribute
+import           IGraph.Internal.Data
+import           IGraph.Internal.Graph
+import           IGraph.Internal.Initialization
+import           IGraph.Internal.Selector
 
 -- constants
 vertexAttr :: String
@@ -110,3 +112,21 @@ instance MGraph D where
         return ()
       where
         eids = flip map es $ \(fr, to) -> igraphGetEid g fr to True True
+
+setNodeAttr :: (PrimMonad m, Show v)
+            => Int   -- ^ Node id
+            -> v
+            -> MLGraph (PrimState m) d v e
+            -> m ()
+setNodeAttr nodeId x (MLGraph gr) = unsafePrimToPrim $ do
+    err <- igraphCattributeVASSet gr vertexAttr nodeId $ show x
+    when (err /= 0) $ error "Fail to set node attribute!"
+
+setEdgeAttr :: (PrimMonad m, Show v)
+            => Int   -- ^ Edge id
+            -> v
+            -> MLGraph (PrimState m) d v e
+            -> m ()
+setEdgeAttr edgeId x (MLGraph gr) = unsafePrimToPrim $ do
+    err <- igraphCattributeEASSet gr edgeAttr edgeId $ show x
+    when (err /= 0) $ error "Fail to set edge attribute!"

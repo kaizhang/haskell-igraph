@@ -26,19 +26,24 @@ graphToDiagram gr = mconcat $ fst $ unzip $ sortBy (flip (comparing snd)) $
                  , _nodeZindex nattr )
       where
         nattr = nodeLab gr x
-    drawEdge (from, to) = {-arrowBetween'
+    drawEdge (from, to) = ( arrowBetween'
         ( with & arrowTail .~ noTail
                & arrowHead .~ arrowH
+               & headStyle %~ fc red
                & headLength .~ output (_edgeArrowLength eattr)
-        ) start end-}
-        ( fromVertices [start, end]
-        # lwO (_edgeWeight eattr) # lcA (_edgeColour eattr), _edgeZindex eattr )
+        ) start end # lwO (_edgeWeight eattr) # lcA (_edgeColour eattr), _edgeZindex eattr )
       where
         eattr = edgeLab gr (from, to)
-        start = _positionX nattr1 ^& _positionY nattr1
-        end = _positionX nattr2 ^& _positionY nattr2
+        start = x1 ^& y1
+        end = (alpha * x1 + (1 - alpha) * x2) ^& (alpha * y1 + (1 - alpha) * y2)
+        x1 = _positionX nattr1
+        y1 = _positionY nattr1
+        x2 = _positionX nattr2
+        y2 = _positionY nattr2
+        alpha = r / sqrt ((x1 - x2)**2 + (y1 - y2)**2)
+        r = _size nattr2
         nattr1 = nodeLab gr from
         nattr2 = nodeLab gr to
-    --arrowH | isDirected gr = dart
-    --       | otherwise = noHead
+        arrowH | isDirected gr = dart
+               | otherwise = noHead
 {-# INLINE graphToDiagram #-}
