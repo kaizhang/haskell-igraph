@@ -28,3 +28,9 @@ import Foreign
 
 {#enum igraph_erdos_renyi_t as ErdosRenyi {underscoreToCase}
     deriving (Show, Read, Eq) #}
+
+{#enum igraph_rewiring_t as Rewiring {underscoreToCase}
+    deriving (Show, Read, Eq) #}
+
+{#enum igraph_degseq_t as Degseq {underscoreToCase}
+    deriving (Show, Read, Eq) #}

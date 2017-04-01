@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                haskell-igraph
-version:             0.3.0
+version:             0.3.1-dev
 synopsis:            Imcomplete igraph bindings
 description:         This is an attempt to create a complete bindings for the
                      igraph<"http://igraph.org/c/"> library.
@@ -10,7 +10,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Kai Zhang
 maintainer:          kai@kzhang.org
-copyright:           (c) 2016 Kai Zhang
+copyright:           (c) 2016-2017 Kai Zhang
 category:            Math
 build-type:          Simple
 cabal-version:       >=1.24
