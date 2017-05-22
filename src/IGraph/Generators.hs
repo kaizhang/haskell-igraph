@@ -38,7 +38,7 @@ degreeSequenceGame :: [Int]   -- ^ Out degree
 degreeSequenceGame out_deg in_deg = do
     out_deg' <- listToVector $ map fromIntegral out_deg
     in_deg' <- listToVector $ map fromIntegral in_deg
-    gp <- igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimpleNoMultiple
+    gp <- igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
     unsafeFreeze $ MLGraph gp
 
 -- | Randomly rewires a graph while preserving the degree distribution.
