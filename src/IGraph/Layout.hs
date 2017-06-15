@@ -41,7 +41,7 @@ data LayoutMethod =
 defaultKamadaKawai :: LayoutMethod
 defaultKamadaKawai = KamadaKawai
     { kk_seed = Nothing
-    , kk_nIter = 1000
+    , kk_nIter = 10
     , kk_sigma = \x -> fromIntegral x / 4
     , kk_startTemp = 10
     , kk_coolFact = 0.99
@@ -50,7 +50,7 @@ defaultKamadaKawai = KamadaKawai
 
 defaultLGL :: LayoutMethod
 defaultLGL = LGL
-    { lgl_nIter = 150
+    { lgl_nIter = 100
     , lgl_maxdelta = \x -> fromIntegral x
     , lgl_area = area
     , lgl_coolexp = 1.5

@@ -29,7 +29,7 @@ graphToDiagram gr = mconcat $ fst $ unzip $ sortBy (flip (comparing snd)) $
     drawEdge (from, to) = ( arrowBetween'
         ( with & arrowTail .~ noTail
                & arrowHead .~ arrowH
-               & headStyle %~ fc red
+               & headStyle %~ fcA (_edgeColour eattr)
                & headLength .~ output (_edgeArrowLength eattr)
         ) start end # lwO (_edgeWeight eattr) # lcA (_edgeColour eattr), _edgeZindex eattr )
       where
