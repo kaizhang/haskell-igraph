@@ -87,15 +87,22 @@ pagerank :: Graph d
          -> Maybe [Double]  -- ^ edge weights
          -> Double  -- ^ damping factor, usually around 0.85
          -> [Double]
-pagerank gr ws d = unsafePerformIO $ alloca $ \p -> do
-    vptr <- igraphVectorNew 0
-    vsptr <- igraphVsAll
-    ws' <- case ws of
-        Just w -> listToVector w
-        _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
-    igraphPagerank (_graph gr) IgraphPagerankAlgoPrpack vptr p vsptr
-        (isDirected gr) d ws' nullPtr
-    vectorPtrToList vptr
+pagerank gr ws d
+    | n == 0 = []
+    | otherwise = unsafePerformIO $ alloca $ \p -> do
+        vptr <- igraphVectorNew 0
+        vsptr <- igraphVsAll
+        ws' <- case ws of
+            Just w -> if length w /= m
+                then error "pagerank: incorrect length of edge weight vector"
+                else listToVector w
+            _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+        igraphPagerank (_graph gr) IgraphPagerankAlgoPrpack vptr p vsptr
+            (isDirected gr) d ws' nullPtr
+        vectorPtrToList vptr
+  where
+    n = nNodes gr
+    m = nEdges gr
 
 personalizedPagerank :: Graph d
                      => LGraph d v e
@@ -103,13 +110,21 @@ personalizedPagerank :: Graph d
                      -> Maybe [Double]
                      -> Double
                      -> [Double]
-personalizedPagerank gr reset ws d = unsafePerformIO $ alloca $ \p -> do
-    vptr <- igraphVectorNew 0
-    vsptr <- igraphVsAll
-    ws' <- case ws of
-        Just w -> listToVector w
-        _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
-    reset' <- listToVector reset
-    igraphPersonalizedPagerank (_graph gr) IgraphPagerankAlgoPrpack vptr p vsptr
-        (isDirected gr) d reset' ws' nullPtr
-    vectorPtrToList vptr
+personalizedPagerank gr reset ws d
+    | n == 0 = []
+    | length reset /= n = error "personalizedPagerank: incorrect length of reset vector"
+    | otherwise = unsafePerformIO $ alloca $ \p -> do
+        vptr <- igraphVectorNew 0
+        vsptr <- igraphVsAll
+        ws' <- case ws of
+            Just w -> if length w /= m
+                then error "pagerank: incorrect length of edge weight vector"
+                else listToVector w
+            _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+        reset' <- listToVector reset
+        igraphPersonalizedPagerank (_graph gr) IgraphPagerankAlgoPrpack vptr p vsptr
+            (isDirected gr) d reset' ws' nullPtr
+        vectorPtrToList vptr
+  where
+    n = nNodes gr
+    m = nEdges gr

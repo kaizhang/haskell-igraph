@@ -5,6 +5,7 @@ module IGraph
     , U(..)
     , D(..)
     , Graph(..)
+    , empty
     , mkGraph
     , fromLabeledEdges
 
@@ -135,6 +136,10 @@ instance Graph U where
 instance Graph D where
     isDirected = const True
     isD = const True
+
+empty :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e)
+      => LGraph d v e
+empty = runST $ new 0 >>= unsafeFreeze
 
 mkGraph :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e)
         => [v] -> [(Edge, e)] -> LGraph d v e
