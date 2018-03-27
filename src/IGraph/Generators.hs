@@ -7,6 +7,7 @@ module IGraph.Generators
 
 import           Control.Monad                  (when)
 import           Data.Hashable                  (Hashable)
+import           Data.Serialize                 (Serialize)
 
 import           IGraph
 import           IGraph.Internal.Constants
@@ -42,7 +43,7 @@ degreeSequenceGame out_deg in_deg = do
     unsafeFreeze $ MLGraph gp
 
 -- | Randomly rewires a graph while preserving the degree distribution.
-rewire :: (Graph d, Hashable v, Read v, Eq v, Show v, Show e)
+rewire :: (Graph d, Hashable v, Serialize v, Eq v, Serialize e)
        => Int    -- ^ Number of rewiring trials to perform.
        -> LGraph d v e
        -> IO (LGraph d v e)

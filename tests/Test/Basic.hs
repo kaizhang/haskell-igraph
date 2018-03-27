@@ -42,11 +42,11 @@ graphCreationLabeled = testGroup "Graph creation -- with labels"
         (nodeLab gr fr, nodeLab gr to)) $ edges gr)
     ]
   where
-    edgeList = sort $ map (\(a,b) -> (show a, show b)) $ unsafePerformIO $ randEdges 10000 1000
+    edgeList = sort $ map (\(a,b) -> (show a, show b)) $ unsafePerformIO $
+        randEdges 10000 1000
     n = length $ nubSort $ concatMap (\(a,b) -> [a,b]) edgeList
     m = length edgeList
     gr = fromLabeledEdges $ zip edgeList $ repeat () :: LGraph D String ()
-
 
 graphEdit :: TestTree
 graphEdit = testGroup "Graph editing"

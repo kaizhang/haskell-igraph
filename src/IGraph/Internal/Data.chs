@@ -10,7 +10,12 @@ import System.IO.Unsafe (unsafePerformIO)
 import Data.List (transpose)
 import Data.List.Split (chunksOf)
 
-#include "haskelligraph.h"
+#include "haskell_igraph.h"
+#include "bytestring.h"
+
+--------------------------------------------------------------------------------
+-- Igraph vector
+--------------------------------------------------------------------------------
 
 {#pointer *igraph_vector_t as VectorPtr foreign finalizer igraph_vector_destroy newtype#}
 
@@ -82,6 +87,10 @@ vectorPPtrToList vpptr = do
         vectorPtrToList $ VectorPtr fptr
 
 
+--------------------------------------------------------------------------------
+-- Igraph string vector
+--------------------------------------------------------------------------------
+
 {#pointer *igraph_strvector_t as StrVectorPtr foreign finalizer igraph_strvector_destroy newtype#}
 
 {#fun igraph_strvector_init as igraphStrvectorNew { +, `Int' } -> `StrVectorPtr' #}
@@ -100,6 +109,46 @@ listToStrVector :: [B.ByteString] -> IO StrVectorPtr
 listToStrVector xs = do
     vec <- igraphStrvectorNew n
     forM_ (zip [0..] xs) $ \(i,x) -> B.useAsCString x (igraphStrvectorSet vec i)
+    return vec
+  where
+    n = length xs
+
+
+--------------------------------------------------------------------------------
+-- Customized string vector
+--------------------------------------------------------------------------------
+
+newtype BSLen = BSLen CStringLen
+
+instance Storable BSLen where
+    sizeOf _ = {#sizeof bytestring_t #}
+    alignment _ = {#alignof bytestring_t #}
+    peek p = do
+        n <- ({#get bytestring_t->len #} p)
+        ptr <- {#get bytestring_t->value #} p
+        return $ BSLen (ptr, fromIntegral n)
+    poke p (BSLen (ptr, n)) = {#set bytestring_t.len #} p (fromIntegral n) >>
+        {#set bytestring_t.value #} p ptr
+
+{#pointer *bsvector_t as BSVectorPtr foreign finalizer bsvector_destroy newtype#}
+
+{#fun bsvector_init as bsvectorNew { +, `Int' } -> `BSVectorPtr' #}
+
+--{#fun bsvector_get as bsVectorGet { `BSVectorPtr', `Int', + } -> `Ptr (Ptr BSLen)' id #}
+
+{-
+bsVectorGet :: BSVectorPtr -> Int -> BSLen
+bsVectorGet vec i = unsafePerformIO $ do
+    ptrptr <- bsVectorGet vec i
+    peek ptrptr >>= peek
+    -}
+
+{#fun bsvector_set as ^ { `BSVectorPtr', `Int', `Ptr ()'} -> `()' #}
+
+listToBSVector :: [BSLen] -> IO BSVectorPtr
+listToBSVector xs = do
+    vec <- bsvectorNew n
+    forM_ (zip [0..] xs) $ \(i, x) -> with x $ \ptr -> bsvectorSet vec i $ castPtr ptr
     return vec
   where
     n = length xs

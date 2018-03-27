@@ -2,6 +2,7 @@ import qualified Test.Basic       as Basic
 import qualified Test.Isomorphism as Isomorphism
 import qualified Test.Motif       as Motif
 import qualified Test.Structure   as Structure
+import qualified Test.Attributes as Attributes
 import           Test.Tasty
 
 main :: IO ()
@@ -10,4 +11,5 @@ main = defaultMain $ testGroup "Haskell-igraph Tests"
     , Structure.tests
     , Motif.tests
     , Isomorphism.tests
+    , Attributes.tests
     ]

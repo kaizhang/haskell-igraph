@@ -7,4 +7,4 @@ packages:
 
 extra-deps: []
 
-resolver: lts-8.17
+resolver: lts-10.10

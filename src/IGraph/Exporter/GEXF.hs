@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleInstances #-}
 module IGraph.Exporter.GEXF
     ( NodeAttr(..)
     , defaultNodeAttributes
@@ -7,22 +9,34 @@ module IGraph.Exporter.GEXF
     , writeGEXF
     ) where
 
-import Data.Hashable
-import Data.Colour (AlphaColour, black, over, alphaChannel, opaque)
-import Data.Colour.SRGB (toSRGB24, channelRed, channelBlue, channelGreen)
-import Text.XML.HXT.Core
-import Data.Tree.NTree.TypeDefs
-import Text.XML.HXT.DOM.TypeDefs
-import IGraph
+import           Data.Colour               (AlphaColour, alphaChannel, black,
+                                            opaque, over)
+import           Data.Colour.SRGB          (channelBlue, channelGreen,
+                                            channelRed, toSRGB24)
+import           Data.Hashable
+import           Data.Serialize
+import           Data.Tree.NTree.TypeDefs
+import           GHC.Generics
+import           IGraph
+import           Text.XML.HXT.Core
+import           Text.XML.HXT.DOM.TypeDefs
+
+instance Serialize (AlphaColour Double) where
+    get = do
+        x <- get
+        return $ read x
+    put x = put $ show x
 
 data NodeAttr = NodeAttr
-    { _size :: Double
+    { _size       :: Double
     , _nodeColour :: AlphaColour Double
-    , _nodeLabel :: String
-    , _positionX :: Double
-    , _positionY :: Double
+    , _nodeLabel  :: String
+    , _positionX  :: Double
+    , _positionY  :: Double
     , _nodeZindex :: Int
-    } deriving (Show, Read, Eq)
+    } deriving (Show, Read, Eq, Generic)
+
+instance Serialize NodeAttr
 
 instance Hashable NodeAttr where
     hashWithSalt salt at = hashWithSalt salt $ _nodeLabel at
@@ -38,12 +52,14 @@ defaultNodeAttributes = NodeAttr
     }
 
 data EdgeAttr = EdgeAttr
-    { _edgeLabel :: String
-    , _edgeColour :: AlphaColour Double
-    , _edgeWeight :: Double
+    { _edgeLabel       :: String
+    , _edgeColour      :: AlphaColour Double
+    , _edgeWeight      :: Double
     , _edgeArrowLength :: Double
-    , _edgeZindex :: Int
-    } deriving (Show, Read, Eq)
+    , _edgeZindex      :: Int
+    } deriving (Show, Read, Eq, Generic)
+
+instance Serialize EdgeAttr
 
 instance Hashable EdgeAttr where
     hashWithSalt salt at = hashWithSalt salt $ _edgeLabel at

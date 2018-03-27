@@ -7,24 +7,25 @@ module IGraph.Structure
     , personalizedPagerank
     ) where
 
-import Control.Monad
-import Foreign
-import Foreign.C.Types
-import System.IO.Unsafe (unsafePerformIO)
-import qualified Data.HashMap.Strict as M
-import Data.Hashable (Hashable)
+import           Control.Monad
+import           Data.Hashable             (Hashable)
+import qualified Data.HashMap.Strict       as M
+import           Data.Serialize            (Serialize)
+import           Foreign
+import           Foreign.C.Types
+import           System.IO.Unsafe          (unsafePerformIO)
 
-import IGraph
-import IGraph.Mutable
-import IGraph.Internal.Graph
-import IGraph.Internal.Data
-import IGraph.Internal.Selector
-import IGraph.Internal.Structure
-import IGraph.Internal.Arpack
-import IGraph.Internal.Constants
-import IGraph.Internal.Attribute
+import           IGraph
+import           IGraph.Internal.Arpack
+import           IGraph.Internal.Attribute
+import           IGraph.Internal.Constants
+import           IGraph.Internal.Data
+import           IGraph.Internal.Graph
+import           IGraph.Internal.Selector
+import           IGraph.Internal.Structure
+import           IGraph.Mutable
 
-inducedSubgraph :: (Hashable v, Eq v, Read v) => LGraph d v e -> [Int] -> LGraph d v e
+inducedSubgraph :: (Hashable v, Eq v, Serialize v) => LGraph d v e -> [Int] -> LGraph d v e
 inducedSubgraph gr vs = unsafePerformIO $ do
     vs' <- listToVector $ map fromIntegral vs
     vsptr <- igraphVsVector vs'
@@ -33,7 +34,8 @@ inducedSubgraph gr vs = unsafePerformIO $ do
         let g' = IGraphPtr gptr
             labToId = M.fromListWith (++) $ zip labels $ map return [0..nV-1]
             nV = igraphVcount g'
-            labels = map (read . igraphCattributeVAS g' vertexAttr) [0 .. nV-1]
+            labels = unsafePerformIO $ forM [0 .. nV - 1] $ \i ->
+                igraphHaskellAttributeVAS g' vertexAttr i >>= fromBS
         return $ LGraph g' labToId
 
 -- | closeness centrality
@@ -49,7 +51,7 @@ closeness vs gr ws mode normal = unsafePerformIO $ do
     vptr <- igraphVectorNew 0
     ws' <- case ws of
         Just w -> listToVector w
-        _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+        _      -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
     igraphCloseness (_graph gr) vptr vsptr mode ws' normal
     vectorPtrToList vptr
 
@@ -64,7 +66,7 @@ betweenness vs gr ws = unsafePerformIO $ do
     vptr <- igraphVectorNew 0
     ws' <- case ws of
         Just w -> listToVector w
-        _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+        _      -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
     igraphBetweenness (_graph gr) vptr vsptr True ws' False
     vectorPtrToList vptr
 
@@ -76,7 +78,7 @@ eigenvectorCentrality gr ws = unsafePerformIO $ do
     vptr <- igraphVectorNew 0
     ws' <- case ws of
         Just w -> listToVector w
-        _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+        _      -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
     arparck <- igraphArpackNew
     igraphEigenvectorCentrality (_graph gr) vptr nullPtr True True ws' arparck
     vectorPtrToList vptr

@@ -4,6 +4,7 @@ module IGraph.Mutable where
 import           Control.Monad                  (when)
 import           Control.Monad.Primitive
 import qualified Data.ByteString.Char8          as B
+import           Data.Serialize                 (Serialize)
 import           Foreign
 
 import           IGraph.Internal.Attribute
@@ -30,16 +31,14 @@ class MGraph d where
     addNodes :: PrimMonad m => Int -> MLGraph(PrimState m) d v e -> m ()
     addNodes n (MLGraph g) = unsafePrimToPrim $ igraphAddVertices g n nullPtr
 
-    addLNodes :: (Show v, PrimMonad m)
-                 => Int  -- ^ the number of new vertices add to the graph
-                 -> [v]  -- ^ vertices' labels
-                 -> MLGraph (PrimState m) d v e -> m ()
+    addLNodes :: (Serialize v, PrimMonad m)
+              => Int  -- ^ the number of new vertices add to the graph
+              -> [v]  -- ^ vertices' labels
+              -> MLGraph (PrimState m) d v e -> m ()
     addLNodes n labels (MLGraph g)
         | n /= length labels = error "addLVertices: incorrect number of labels"
         | otherwise = unsafePrimToPrim $ do
-            let attr = makeAttributeRecord vertexAttr labels
-            alloca $ \ptr -> do
-                poke ptr attr
+            with (makeAttributeRecord vertexAttr labels) $ \ptr -> do
                 vptr <- listToVectorP [castPtr ptr]
                 withVectorPPtr vptr $ \p -> igraphAddVertices g n $ castPtr p
 
@@ -52,7 +51,7 @@ class MGraph d where
 
     addEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
 
-    addLEdges :: (PrimMonad m, Show e) => [LEdge e] -> MLGraph (PrimState m) d v e -> m ()
+    addLEdges :: (PrimMonad m, Serialize e) => [LEdge e] -> MLGraph (PrimState m) d v e -> m ()
 
     delEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
 
@@ -113,20 +112,24 @@ instance MGraph D where
       where
         eids = flip map es $ \(fr, to) -> igraphGetEid g fr to True True
 
-setNodeAttr :: (PrimMonad m, Show v)
+setNodeAttr :: (PrimMonad m, Serialize v)
             => Int   -- ^ Node id
             -> v
             -> MLGraph (PrimState m) d v e
             -> m ()
 setNodeAttr nodeId x (MLGraph gr) = unsafePrimToPrim $ do
-    err <- igraphCattributeVASSet gr vertexAttr nodeId $ show x
-    when (err /= 0) $ error "Fail to set node attribute!"
+    v <- unsafeToBS x
+    with v $ \vptr -> do
+        err <- igraphHaskellAttributeVASSet gr vertexAttr nodeId vptr
+        when (err /= 0) $ error "Fail to set node attribute!"
 
-setEdgeAttr :: (PrimMonad m, Show v)
+setEdgeAttr :: (PrimMonad m, Serialize v)
             => Int   -- ^ Edge id
             -> v
             -> MLGraph (PrimState m) d v e
             -> m ()
 setEdgeAttr edgeId x (MLGraph gr) = unsafePrimToPrim $ do
-    err <- igraphCattributeEASSet gr edgeAttr edgeId $ show x
-    when (err /= 0) $ error "Fail to set edge attribute!"
+    v <- unsafeToBS x
+    with v $ \vptr -> do
+        err <- igraphHaskellAttributeEASSet gr edgeAttr edgeId vptr
+        when (err /= 0) $ error "Fail to set edge attribute!"
