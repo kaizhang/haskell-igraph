@@ -1,8 +1,8 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Internal.Attribute where
 
-import qualified Data.ByteString.Char8 as B
-import Data.ByteString.Unsafe
+import Data.ByteString (packCStringLen)
+import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import Control.Monad
 import Control.Applicative
 import Data.Serialize (Serialize, decode, encode)
@@ -32,7 +32,7 @@ unsafeToBS x = unsafeUseAsCStringLen bs $ \(ptr, n) -> do
 fromBS :: Serialize a => Ptr BSLen -> IO a
 fromBS ptr = do
     BSLen x <- peek ptr
-    result <- decode <$> unsafePackCStringLen x
+    result <- decode <$> packCStringLen x
     case result of
         Left msg -> error msg
         Right r -> return r
