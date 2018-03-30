@@ -13,8 +13,8 @@ import Foreign.C.Types
 
 #include "igraph/igraph.h"
 
-{#fun igraph_triad_census as ^ { `IGraphPtr'
-                               , `VectorPtr' } -> `Int' #}
+{#fun igraph_triad_census as ^ { `IGraph'
+                               , `Vector' } -> `Int' #}
 
-{#fun igraph_motifs_randesu as ^ { `IGraphPtr', `VectorPtr', `Int'
-                                 , `VectorPtr' } -> `Int' #}
+{#fun igraph_motifs_randesu as ^ { `IGraph', `Vector', `Int'
+                                 , `Vector' } -> `Int' #}

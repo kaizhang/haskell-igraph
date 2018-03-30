@@ -12,50 +12,50 @@ import Foreign.C.Types
 
 #include "igraph/igraph.h"
 
-{#fun igraph_induced_subgraph as ^ { `IGraphPtr'
-                                   , id `Ptr (IGraphPtr)'
-                                   , %`IGraphVsPtr'
-                                   , `SubgraphImplementation' } -> `Int' #}
+{#fun igraph_induced_subgraph as ^ { `IGraph'
+                                   , +160
+                                   , %`IGraphVs'
+                                   , `SubgraphImplementation' } -> `IGraph' #}
 
-{#fun igraph_closeness as ^ { `IGraphPtr'
-                            , `VectorPtr'
-                            , %`IGraphVsPtr'
+{#fun igraph_closeness as ^ { `IGraph'
+                            , `Vector'
+                            , %`IGraphVs'
                             , `Neimode'
-                            , `VectorPtr'
+                            , `Vector'
                             , `Bool' } -> `Int' #}
 
-{#fun igraph_betweenness as ^ { `IGraphPtr'
-                              , `VectorPtr'
-                              , %`IGraphVsPtr'
+{#fun igraph_betweenness as ^ { `IGraph'
+                              , `Vector'
+                              , %`IGraphVs'
                               , `Bool'
-                              , `VectorPtr'
+                              , `Vector'
                               , `Bool' } -> `Int' #}
 
-{#fun igraph_eigenvector_centrality as ^ { `IGraphPtr'
-                                         , `VectorPtr'
+{#fun igraph_eigenvector_centrality as ^ { `IGraph'
+                                         , `Vector'
                                          , id `Ptr CDouble'
                                          , `Bool'
                                          , `Bool'
-                                         , `VectorPtr'
-                                         , `ArpackOptPtr' } -> `Int' #}
+                                         , `Vector'
+                                         , `ArpackOpt' } -> `Int' #}
 
-{#fun igraph_pagerank as ^ { `IGraphPtr'
+{#fun igraph_pagerank as ^ { `IGraph'
                            , `PagerankAlgo'
-                           , `VectorPtr'
+                           , `Vector'
                            , id `Ptr CDouble'
-                           , %`IGraphVsPtr'
+                           , %`IGraphVs'
                            , `Bool'
                            , `Double'
-                           , `VectorPtr'
+                           , `Vector'
                            , id `Ptr ()' } -> `Int' #}
 
-{#fun igraph_personalized_pagerank as ^ { `IGraphPtr'
+{#fun igraph_personalized_pagerank as ^ { `IGraph'
                                         , `PagerankAlgo'
-                                        , `VectorPtr'
+                                        , `Vector'
                                         , id `Ptr CDouble'
-                                        , %`IGraphVsPtr'
+                                        , %`IGraphVs'
                                         , `Bool'
                                         , `Double'
-                                        , `VectorPtr'
-                                        , `VectorPtr'
+                                        , `Vector'
+                                        , `Vector'
                                         , id `Ptr ()' } -> `Int' #}

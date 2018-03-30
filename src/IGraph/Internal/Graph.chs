@@ -6,6 +6,7 @@ import Foreign
 import Foreign.C.Types
 import System.IO.Unsafe (unsafePerformIO)
 
+import IGraph.Internal.C2HS
 {#import IGraph.Internal.Initialization #}
 {#import IGraph.Internal.Data #}
 {#import IGraph.Internal.Constants #}
@@ -16,59 +17,61 @@ import System.IO.Unsafe (unsafePerformIO)
 -- Graph Constructors and Destructors
 --------------------------------------------------------------------------------
 
-{#pointer *igraph_t as IGraphPtr foreign finalizer igraph_destroy newtype#}
+{#pointer *igraph_t as IGraph foreign finalizer igraph_destroy newtype#}
 
-{#fun igraph_empty as igraphNew' { +, `Int', `Bool' } -> `IGraphPtr' #}
+{#fun igraph_empty as igraphNew' { +, `Int', `Bool' } -> `IGraph' #}
 
-{#fun igraph_copy as ^ { +, `IGraphPtr' } -> `IGraphPtr' #}
+{#fun igraph_copy as ^ { +, `IGraph' } -> `IGraph' #}
 
 -- | Create a igraph object and attach a finalizer
-igraphNew :: Int -> Bool -> HasInit -> IO IGraphPtr
-igraphNew n directed _ = do
-    IGraphPtr ptr <- igraphNew' n directed
-    addForeignPtrFinalizer igraph_destroy ptr
-    return $ IGraphPtr ptr
-
+igraphNew :: Int -> Bool -> HasInit -> IO IGraph
+igraphNew n directed _ = igraphNew' n directed
 
 --------------------------------------------------------------------------------
 -- Basic Query Operations
 --------------------------------------------------------------------------------
 
-{#fun pure igraph_vcount as ^ { `IGraphPtr' } -> `Int' #}
+{#fun igraph_vcount as ^ { `IGraph' } -> `Int' #}
 
-{#fun pure igraph_ecount as ^ { `IGraphPtr' } -> `Int' #}
+{#fun igraph_ecount as ^ { `IGraph' } -> `Int' #}
 
-{#fun pure igraph_get_eid_ as igraphGetEid { `IGraphPtr', `Int', `Int', `Bool', `Bool' } -> `Int' #}
+{#fun igraph_get_eid as ^
+    { `IGraph'
+    , alloca- `Int' peekIntConv*
+    , `Int'
+    , `Int'
+    , `Bool'
+    , `Bool'
+    } -> `CInt' void-#}
 
-{#fun igraph_edge as igraphEdge' { `IGraphPtr', `Int', id `Ptr CInt', id `Ptr CInt' } -> `Int' #}
-igraphEdge :: IGraphPtr -> Int -> IO (Int, Int)
-igraphEdge g i = alloca $ \fr -> alloca $ \to -> do
-    igraphEdge' g i fr to
-    fr' <- peek fr
-    to' <- peek to
-    return (fromIntegral fr', fromIntegral to')
+{#fun igraph_edge as ^
+    { `IGraph'
+    , `Int'
+    , alloca- `Int' peekIntConv*
+    , alloca- `Int' peekIntConv*
+    } -> `CInt' void-#}
 
 -- Adding and Deleting Vertices and Edges
 
-{# fun igraph_add_vertices as ^ { `IGraphPtr', `Int', id `Ptr ()' } -> `()' #}
+{# fun igraph_add_vertices as ^ { `IGraph', `Int', id `Ptr ()' } -> `()' #}
 
-{# fun igraph_add_edge as ^ { `IGraphPtr', `Int', `Int' } -> `()' #}
+{# fun igraph_add_edge as ^ { `IGraph', `Int', `Int' } -> `()' #}
 
-{# fun igraph_add_edges as ^ { `IGraphPtr', `VectorPtr', id `Ptr ()' } -> `()' #}
+{# fun igraph_add_edges as ^ { `IGraph', `Vector', id `Ptr ()' } -> `()' #}
 
 
 -- generators
 
-{#fun igraph_full as ^ { +, `Int', `Bool', `Bool' } -> `IGraphPtr' #}
+{#fun igraph_full as ^ { +, `Int', `Bool', `Bool' } -> `IGraph' #}
 
 {#fun igraph_erdos_renyi_game as ^ { +, `ErdosRenyi', `Int', `Double', `Bool'
-    , `Bool' } -> `IGraphPtr' #}
+    , `Bool' } -> `IGraph' #}
 
-{#fun igraph_degree_sequence_game as ^ { +, `VectorPtr', `VectorPtr'
-    , `Degseq' } -> `IGraphPtr' #}
+{#fun igraph_degree_sequence_game as ^ { +, `Vector', `Vector'
+    , `Degseq' } -> `IGraph' #}
 
-{#fun igraph_rewire as ^ { `IGraphPtr', `Int', `Rewiring' } -> `Int' #}
+{#fun igraph_rewire as ^ { `IGraph', `Int', `Rewiring' } -> `Int' #}
 
 
 
-{#fun igraph_isoclass_create as ^ { +, `Int', `Int', `Bool' } -> `IGraphPtr' #}
+{#fun igraph_isoclass_create as ^ { +, `Int', `Int', `Bool' } -> `IGraph' #}

@@ -37,8 +37,8 @@ degreeSequenceGame :: [Int]   -- ^ Out degree
                    -> [Int]   -- ^ In degree
                    -> IO (LGraph D () ())
 degreeSequenceGame out_deg in_deg = do
-    out_deg' <- listToVector $ map fromIntegral out_deg
-    in_deg' <- listToVector $ map fromIntegral in_deg
+    out_deg' <- fromList $ map fromIntegral out_deg
+    in_deg' <- fromList $ map fromIntegral in_deg
     gp <- igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
     unsafeFreeze $ MLGraph gp
 

@@ -25,7 +25,7 @@ getSubisomorphisms g1 g2 = unsafePerformIO $ do
     vpptr <- igraphVectorPtrNew 0
     igraphGetSubisomorphismsVf2 gptr1 gptr2 nullPtr nullPtr nullPtr nullPtr vpptr
         nullFunPtr nullFunPtr nullPtr
-    (map.map) truncate <$> vectorPPtrToList vpptr
+    (map.map) truncate <$> toLists vpptr
   where
     gptr1 = _graph g1
     gptr2 = _graph g2

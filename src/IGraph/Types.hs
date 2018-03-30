@@ -13,10 +13,10 @@ data U = U
 data D = D
 
 -- | Mutable labeled graph
-newtype MLGraph m d v e = MLGraph IGraphPtr
+newtype MLGraph m d v e = MLGraph IGraph
 
 -- | graph with labeled nodes and edges
 data LGraph d v e = LGraph
-    { _graph       :: IGraphPtr
+    { _graph       :: IGraph
     , _labelToNode :: M.HashMap v [Node]
     }

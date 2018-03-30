@@ -17,7 +17,7 @@ cliques :: LGraph d v e
 cliques gr (lo, hi) = unsafePerformIO $ do
     vpptr <- igraphVectorPtrNew 0
     _ <- igraphCliques (_graph gr) vpptr lo hi
-    (map.map) truncate <$> vectorPPtrToList vpptr
+    (map.map) truncate <$> toLists vpptr
 
 maximalCliques :: LGraph d v e
                -> (Int, Int)  -- ^ Minimum and maximum size of the cliques to be returned.
@@ -26,4 +26,4 @@ maximalCliques :: LGraph d v e
 maximalCliques gr (lo, hi) = unsafePerformIO $ do
     vpptr <- igraphVectorPtrNew 0
     _ <- igraphMaximalCliques (_graph gr) vpptr lo hi
-    (map.map) truncate <$> vectorPPtrToList vpptr
+    (map.map) truncate <$> toLists vpptr

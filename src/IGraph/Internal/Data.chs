@@ -1,5 +1,50 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-module IGraph.Internal.Data where
+module IGraph.Internal.Data
+    ( Vector(..)
+    , withVector
+    , igraphVectorNew
+    , fromList
+    , toList
+    , igraphVectorNull
+    , igraphVectorFill
+    , igraphVectorE
+    , igraphVectorSet
+    , igraphVectorTail
+    , igraphVectorSize
+    , igraphVectorCopyTo
+
+    , VectorPtr(..)
+    , withVectorPtr
+    , igraphVectorPtrNew
+    , fromPtrs
+    , toLists
+
+    , StrVector(..)
+    , withStrVector
+    , igraphStrvectorNew
+    , igraphStrvectorGet
+    , toStrVector
+
+    , BSLen(..)
+    , BSVector(..)
+    , withBSVector
+    , bsvectorNew
+    , toBSVector
+
+    , Matrix(..)
+    , withMatrix
+    , igraphMatrixNew
+    , igraphMatrixNull
+    , igraphMatrixFill
+    , igraphMatrixE
+    , igraphMatrixSet
+    , igraphMatrixCopyTo
+    , igraphMatrixNrow
+    , igraphMatrixNcol
+    , fromRowLists
+    , toRowLists
+    , toColumnLists
+    ) where
 
 import Control.Monad
 import qualified Data.ByteString.Char8 as B
@@ -17,96 +62,102 @@ import Data.List.Split (chunksOf)
 -- Igraph vector
 --------------------------------------------------------------------------------
 
-{#pointer *igraph_vector_t as VectorPtr foreign finalizer igraph_vector_destroy newtype#}
+{#pointer *igraph_vector_t as Vector foreign finalizer
+    igraph_vector_destroy newtype#}
 
 -- Construtors and destructors
 
-{#fun igraph_vector_init as igraphVectorNew { +, `Int' } -> `VectorPtr' #}
+{#fun igraph_vector_init as igraphVectorNew { +, `Int' } -> `Vector' #}
 
-listToVector :: [Double] -> IO VectorPtr
-listToVector xs = do
-    vec <- igraphVectorNew n
-    forM_ (zip [0..] xs) $ \(i,x) -> igraphVectorSet vec i x
-    return vec
-  where
-    n = length xs
+{#fun igraph_vector_init_copy as ^ { +, id `Ptr CDouble', `Int' } -> `Vector' #}
 
-vectorPtrToList :: VectorPtr -> IO [Double]
-vectorPtrToList vptr = do
-    n <- igraphVectorSize vptr
+fromList :: [Double] -> IO Vector
+fromList xs = withArrayLen (map realToFrac xs) $ \n ptr ->
+    igraphVectorInitCopy ptr n
+{-# INLINE fromList #-}
+
+toList :: Vector -> IO [Double]
+toList vec = do
+    n <- igraphVectorSize vec
     allocaArray n $ \ptr -> do
-        igraphVectorCopyTo vptr ptr
+        igraphVectorCopyTo vec ptr
         liftM (map realToFrac) $ peekArray n ptr
+{-# INLINE toList #-}
 
 -- Initializing elements
 
-{#fun igraph_vector_null as ^ { `VectorPtr' } -> `()' #}
+{#fun igraph_vector_null as ^ { `Vector' } -> `()' #}
 
-{#fun igraph_vector_fill as ^ { `VectorPtr', `Double' } -> `()' #}
+{#fun igraph_vector_fill as ^ { `Vector', `Double' } -> `()' #}
 
 
 -- Accessing elements
 
-{#fun pure igraph_vector_e as ^ { `VectorPtr', `Int' } -> `Double' #}
+{#fun pure igraph_vector_e as ^ { `Vector', `Int' } -> `Double' #}
 
-{#fun igraph_vector_set as ^ { `VectorPtr', `Int', `Double' } -> `()' #}
+{#fun igraph_vector_set as ^ { `Vector', `Int', `Double' } -> `()' #}
 
-{#fun pure igraph_vector_tail as ^ { `VectorPtr' } -> `Double' #}
+{#fun pure igraph_vector_tail as ^ { `Vector' } -> `Double' #}
 
 
 -- Copying vectors
 
-{#fun igraph_vector_copy_to as ^ { `VectorPtr', id `Ptr CDouble' } -> `()' #}
+{#fun igraph_vector_copy_to as ^ { `Vector', id `Ptr CDouble' } -> `()' #}
 
 -- Vector properties
-{#fun igraph_vector_size as ^ { `VectorPtr' } -> `Int' #}
+{#fun igraph_vector_size as ^ { `Vector' } -> `Int' #}
 
 
-{#pointer *igraph_vector_ptr_t as VectorPPtr foreign finalizer igraph_vector_ptr_destroy_all newtype#}
+{#pointer *igraph_vector_ptr_t as VectorPtr foreign finalizer
+    igraph_vector_ptr_destroy_all newtype#}
 
-{#fun igraph_vector_ptr_init as igraphVectorPtrNew { +, `Int' } -> `VectorPPtr' #}
+{#fun igraph_vector_ptr_init as igraphVectorPtrNew { +, `Int' } -> `VectorPtr' #}
 
-{#fun igraph_vector_ptr_e as ^ { `VectorPPtr', `Int' } -> `Ptr ()' #}
-{#fun igraph_vector_ptr_set as ^ { `VectorPPtr', `Int', id `Ptr ()' } -> `()' #}
-{#fun igraph_vector_ptr_size as ^ { `VectorPPtr' } -> `Int' #}
+{#fun igraph_vector_ptr_e as ^ { `VectorPtr', `Int' } -> `Ptr ()' #}
+{#fun igraph_vector_ptr_set as ^ { `VectorPtr', `Int', id `Ptr ()' } -> `()' #}
+{#fun igraph_vector_ptr_size as ^ { `VectorPtr' } -> `Int' #}
 
-listToVectorP :: [Ptr ()] -> IO VectorPPtr
-listToVectorP xs = do
+fromPtrs :: [Ptr ()] -> IO VectorPtr
+fromPtrs xs = do
     vptr <- igraphVectorPtrNew n
     forM_ (zip [0..] xs) $ \(i,x) -> igraphVectorPtrSet vptr i x
     return vptr
   where
     n = length xs
+{-# INLINE fromPtrs #-}
 
-vectorPPtrToList :: VectorPPtr -> IO [[Double]]
-vectorPPtrToList vpptr = do
+toLists :: VectorPtr -> IO [[Double]]
+toLists vpptr = do
     n <- igraphVectorPtrSize vpptr
     forM [0..n-1] $ \i -> do
         vptr <- igraphVectorPtrE vpptr i
-        fptr <- newForeignPtr_ $ castPtr vptr
-        vectorPtrToList $ VectorPtr fptr
-
+        vec <- newForeignPtr_ $ castPtr vptr
+        toList $ Vector vec
+{-# INLINE toLists #-}
 
 --------------------------------------------------------------------------------
 -- Igraph string vector
 --------------------------------------------------------------------------------
 
-{#pointer *igraph_strvector_t as StrVectorPtr foreign finalizer igraph_strvector_destroy newtype#}
+{#pointer *igraph_strvector_t as StrVector foreign finalizer igraph_strvector_destroy newtype#}
 
-{#fun igraph_strvector_init as igraphStrvectorNew { +, `Int' } -> `StrVectorPtr' #}
+{#fun igraph_strvector_init as igraphStrvectorNew { +, `Int' } -> `StrVector' #}
 
-{#fun igraph_strvector_get_ as igraphStrvectorGet' { `StrVectorPtr', `Int' } -> `Ptr CString' id #}
+{#fun igraph_strvector_get as ^
+    { `StrVector'
+    , `Int'
+    , alloca- `String' peekString*
+    } -> `CInt' void-#}
 
-igraphStrvectorGet :: StrVectorPtr -> Int -> String
-igraphStrvectorGet vec i = unsafePerformIO $ do
-    ptr <- igraphStrvectorGet' vec i
-    peek ptr >>= peekCString
+peekString :: Ptr CString -> IO String
+peekString ptr = peek ptr >>= peekCString
+{-# INLINE peekString #-}
 
-{#fun igraph_strvector_set as ^ { `StrVectorPtr', `Int', id `CString'} -> `()' #}
-{#fun igraph_strvector_set2 as ^ { `StrVectorPtr', `Int', id `CString', `Int'} -> `()' #}
+{#fun igraph_strvector_set as ^ { `StrVector', `Int', id `CString'} -> `()' #}
+{#fun igraph_strvector_set2 as ^ { `StrVector', `Int', id `CString', `Int'} -> `()' #}
 
-listToStrVector :: [B.ByteString] -> IO StrVectorPtr
-listToStrVector xs = do
+toStrVector :: [B.ByteString] -> IO StrVector
+toStrVector xs = do
     vec <- igraphStrvectorNew n
     forM_ (zip [0..] xs) $ \(i,x) -> B.useAsCString x (igraphStrvectorSet vec i)
     return vec
@@ -130,9 +181,9 @@ instance Storable BSLen where
     poke p (BSLen (ptr, n)) = {#set bytestring_t.len #} p (fromIntegral n) >>
         {#set bytestring_t.value #} p ptr
 
-{#pointer *bsvector_t as BSVectorPtr foreign finalizer bsvector_destroy newtype#}
+{#pointer *bsvector_t as BSVector foreign finalizer bsvector_destroy newtype#}
 
-{#fun bsvector_init as bsvectorNew { +, `Int' } -> `BSVectorPtr' #}
+{#fun bsvector_init as bsvectorNew { +, `Int' } -> `BSVector' #}
 
 --{#fun bsvector_get as bsVectorGet { `BSVectorPtr', `Int', + } -> `Ptr (Ptr BSLen)' id #}
 
@@ -143,10 +194,10 @@ bsVectorGet vec i = unsafePerformIO $ do
     peek ptrptr >>= peek
     -}
 
-{#fun bsvector_set as ^ { `BSVectorPtr', `Int', `Ptr ()'} -> `()' #}
+{#fun bsvector_set as ^ { `BSVector', `Int', `Ptr ()'} -> `()' #}
 
-listToBSVector :: [BSLen] -> IO BSVectorPtr
-listToBSVector xs = do
+toBSVector :: [BSLen] -> IO BSVector
+toBSVector xs = do
     vec <- bsvectorNew n
     forM_ (zip [0..] xs) $ \(i, x) -> with x $ \ptr -> bsvectorSet vec i $ castPtr ptr
     return vec
@@ -154,42 +205,44 @@ listToBSVector xs = do
     n = length xs
 
 
-{#pointer *igraph_matrix_t as MatrixPtr foreign finalizer igraph_matrix_destroy newtype#}
+{#pointer *igraph_matrix_t as Matrix foreign finalizer igraph_matrix_destroy newtype#}
 
-{#fun igraph_matrix_init as igraphMatrixNew { +, `Int', `Int' } -> `MatrixPtr' #}
+{#fun igraph_matrix_init as igraphMatrixNew { +, `Int', `Int' } -> `Matrix' #}
 
-{#fun igraph_matrix_null as ^ { `MatrixPtr' } -> `()' #}
+{#fun igraph_matrix_null as ^ { `Matrix' } -> `()' #}
 
-{#fun igraph_matrix_fill as ^ { `MatrixPtr', `Double' } -> `()' #}
+{#fun igraph_matrix_fill as ^ { `Matrix', `Double' } -> `()' #}
 
-{#fun igraph_matrix_e as ^ { `MatrixPtr', `Int', `Int' } -> `Double' #}
+{#fun igraph_matrix_e as ^ { `Matrix', `Int', `Int' } -> `Double' #}
 
-{#fun igraph_matrix_set as ^ { `MatrixPtr', `Int', `Int', `Double' } -> `()' #}
+{#fun igraph_matrix_set as ^ { `Matrix', `Int', `Int', `Double' } -> `()' #}
 
-{#fun igraph_matrix_copy_to as ^ { `MatrixPtr', id `Ptr CDouble' } -> `()' #}
+{#fun igraph_matrix_copy_to as ^ { `Matrix', id `Ptr CDouble' } -> `()' #}
 
-{#fun igraph_matrix_nrow as ^ { `MatrixPtr' } -> `Int' #}
+{#fun igraph_matrix_nrow as ^ { `Matrix' } -> `Int' #}
 
-{#fun igraph_matrix_ncol as ^ { `MatrixPtr' } -> `Int' #}
+{#fun igraph_matrix_ncol as ^ { `Matrix' } -> `Int' #}
 
 -- row lists to matrix
-listsToMatrixPtr :: [[Double]] -> IO MatrixPtr
-listsToMatrixPtr xs = do
-    mptr <- igraphMatrixNew r c
-    forM_ (zip [0..] xs) $ \(i, row) ->
-        forM_ (zip [0..] row) $ \(j,v) ->
-            igraphMatrixSet mptr i j v
-    return mptr
+fromRowLists :: [[Double]] -> IO Matrix
+fromRowLists xs
+    | all (==c) $ map length xs = do
+        mptr <- igraphMatrixNew r c
+        forM_ (zip [0..] xs) $ \(i, row) ->
+            forM_ (zip [0..] row) $ \(j,v) ->
+                igraphMatrixSet mptr i j v
+        return mptr
+    | otherwise = error "Not a matrix."
   where
     r = length xs
-    c = maximum $ map length xs
+    c = length $ head xs
 
 -- to row lists
-matrixPtrToLists :: MatrixPtr -> IO [[Double]]
-matrixPtrToLists = liftM transpose . matrixPtrToColumnLists
+toRowLists :: Matrix -> IO [[Double]]
+toRowLists = liftM transpose . toColumnLists
 
-matrixPtrToColumnLists :: MatrixPtr -> IO [[Double]]
-matrixPtrToColumnLists mptr = do
+toColumnLists :: Matrix -> IO [[Double]]
+toColumnLists mptr = do
     r <- igraphMatrixNrow mptr
     c <- igraphMatrixNcol mptr
     xs <- allocaArray (r*c) $ \ptr -> do

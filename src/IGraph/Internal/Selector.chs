@@ -10,28 +10,22 @@ import System.IO.Unsafe (unsafePerformIO)
 {#import IGraph.Internal.Graph #}
 {#import IGraph.Internal.Data #}
 
-#include "igraph/igraph.h"
+#include "haskell_igraph.h"
 
-{#pointer *igraph_vs_t as IGraphVsPtr foreign finalizer igraph_vs_destroy newtype #}
+{#pointer *igraph_vs_t as IGraphVs foreign finalizer igraph_vs_destroy newtype #}
 
-{#fun igraph_vs_all as ^ { + } -> `IGraphVsPtr' #}
+{#fun igraph_vs_all as ^ { + } -> `IGraphVs' #}
 
-{#fun igraph_vs_adj as ^ { +, `Int', `Neimode' } -> `IGraphVsPtr' #}
+{#fun igraph_vs_adj as ^ { +, `Int', `Neimode' } -> `IGraphVs' #}
 
-{#fun igraph_vs_vector as ^ { +, `VectorPtr' } -> `IGraphVsPtr' #}
+{#fun igraph_vs_vector as ^ { +, `Vector' } -> `IGraphVs' #}
 
 
 -- Vertex iterator
 
-{#pointer *igraph_vit_t as IGraphVitPtr foreign finalizer igraph_vit_destroy newtype #}
+{#pointer *igraph_vit_t as IGraphVit foreign finalizer igraph_vit_destroy newtype #}
 
 #c
-igraph_vit_t* igraph_vit_new(const igraph_t *graph, igraph_vs_t vs) {
-  igraph_vit_t* vit = (igraph_vit_t*) malloc (sizeof (igraph_vit_t));
-  igraph_vit_create(graph, vs, vit);
-  return vit;
-}
-
 igraph_bool_t igraph_vit_end(igraph_vit_t *vit) {
   return IGRAPH_VIT_END(*vit);
 }
@@ -45,15 +39,15 @@ igraph_integer_t igraph_vit_get(igraph_vit_t *vit) {
 }
 #endc
 
-{#fun igraph_vit_new as ^ { `IGraphPtr', %`IGraphVsPtr' } -> `IGraphVitPtr' #}
+{#fun igraph_vit_create as igraphVitNew { `IGraph', %`IGraphVs', + } -> `IGraphVit' #}
 
-{#fun igraph_vit_end as ^ { `IGraphVitPtr' } -> `Bool' #}
+{#fun igraph_vit_end as ^ { `IGraphVit' } -> `Bool' #}
 
-{#fun igraph_vit_next as ^ { `IGraphVitPtr' } -> `()' #}
+{#fun igraph_vit_next as ^ { `IGraphVit' } -> `()' #}
 
-{#fun igraph_vit_get as ^ { `IGraphVitPtr' } -> `Int' #}
+{#fun igraph_vit_get as ^ { `IGraphVit' } -> `Int' #}
 
-vitToList :: IGraphVitPtr -> IO [Int]
+vitToList :: IGraphVit -> IO [Int]
 vitToList vit = do
     isEnd <- igraphVitEnd vit
     if isEnd
@@ -67,24 +61,18 @@ vitToList vit = do
 
 -- Edge Selector
 
-{#pointer *igraph_es_t as IGraphEsPtr foreign finalizer igraph_es_destroy newtype #}
+{#pointer *igraph_es_t as IGraphEs foreign finalizer igraph_es_destroy newtype #}
 
-{#fun igraph_es_all as ^ { +, `EdgeOrderType' } -> `IGraphEsPtr' #}
+{#fun igraph_es_all as ^ { +, `EdgeOrderType' } -> `IGraphEs' #}
 
-{# fun igraph_es_vector as ^ { +, `VectorPtr' } -> `IGraphEsPtr' #}
+{# fun igraph_es_vector as ^ { +, `Vector' } -> `IGraphEs' #}
 
 
 -- Edge iterator
 
-{#pointer *igraph_eit_t as IGraphEitPtr foreign finalizer igraph_eit_destroy newtype #}
+{#pointer *igraph_eit_t as IGraphEit foreign finalizer igraph_eit_destroy newtype #}
 
 #c
-igraph_eit_t* igraph_eit_new(const igraph_t *graph, igraph_es_t es) {
-  igraph_eit_t* eit = (igraph_eit_t*) malloc (sizeof (igraph_eit_t));
-  igraph_eit_create(graph, es, eit);
-  return eit;
-}
-
 igraph_bool_t igraph_eit_end(igraph_eit_t *eit) {
   return IGRAPH_EIT_END(*eit);
 }
@@ -98,15 +86,15 @@ igraph_integer_t igraph_eit_get(igraph_eit_t *eit) {
 }
 #endc
 
-{#fun igraph_eit_new as ^ { `IGraphPtr', %`IGraphEsPtr' } -> `IGraphEitPtr' #}
+{#fun igraph_eit_create as igraphEitNew { `IGraph', %`IGraphEs', + } -> `IGraphEit' #}
 
-{#fun igraph_eit_end as ^ { `IGraphEitPtr' } -> `Bool' #}
+{#fun igraph_eit_end as ^ { `IGraphEit' } -> `Bool' #}
 
-{#fun igraph_eit_next as ^ { `IGraphEitPtr' } -> `()' #}
+{#fun igraph_eit_next as ^ { `IGraphEit' } -> `()' #}
 
-{#fun igraph_eit_get as ^ { `IGraphEitPtr' } -> `Int' #}
+{#fun igraph_eit_get as ^ { `IGraphEit' } -> `Int' #}
 
-eitToList :: IGraphEitPtr -> IO [Int]
+eitToList :: IGraphEit -> IO [Int]
 eitToList eit = do
     isEnd <- igraphEitEnd eit
     if isEnd
@@ -119,9 +107,9 @@ eitToList eit = do
 
 -- delete vertices
 
-{# fun igraph_delete_vertices as ^ { `IGraphPtr', %`IGraphVsPtr' } -> `Int' #}
+{# fun igraph_delete_vertices as ^ { `IGraph', %`IGraphVs' } -> `Int' #}
 
 
 -- delete edges
 
-{# fun igraph_delete_edges as ^ { `IGraphPtr', %`IGraphEsPtr' } -> `Int' #}
+{# fun igraph_delete_edges as ^ { `IGraph', %`IGraphEs' } -> `Int' #}

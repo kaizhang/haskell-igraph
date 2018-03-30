@@ -12,12 +12,12 @@ import Foreign.C.Types
 #include "igraph/igraph.h"
 
 {#fun igraph_community_spinglass as ^
-{ `IGraphPtr'
-, `VectorPtr'
+{ `IGraph'
+, `Vector'
 , id `Ptr CDouble'
 , id `Ptr CDouble'
-, `VectorPtr'
-, id `Ptr VectorPtr'
+, `Vector'
+, id `Ptr Vector'
 , `Int'
 , `Bool'
 , `Double'
@@ -30,25 +30,25 @@ import Foreign.C.Types
 } -> `Int' #}
 
 {#fun igraph_community_leading_eigenvector as ^
-{ `IGraphPtr'
-, `VectorPtr'
-, id `Ptr MatrixPtr'
-, `VectorPtr'
+{ `IGraph'
+, `Vector'
+, id `Ptr Matrix'
+, `Vector'
 , `Int'
-, `ArpackOptPtr'
+, `ArpackOpt'
 , id `Ptr CDouble'
 , `Bool'
+, id `Ptr Vector'
 , id `Ptr VectorPtr'
-, id `Ptr VectorPPtr'
-, id `Ptr VectorPtr'
+, id `Ptr Vector'
 , id `T'
 , id `Ptr ()'
 } -> `Int' #}
 
-type T = FunPtr ( Ptr VectorPtr
+type T = FunPtr ( Ptr Vector
                 -> CLong
                 -> CDouble
-                -> Ptr VectorPtr
+                -> Ptr Vector
                 -> FunPtr (Ptr CDouble -> Ptr CDouble -> CInt -> Ptr () -> IO CInt)
                 -> Ptr ()
                 -> Ptr ()

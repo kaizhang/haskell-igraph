@@ -12,6 +12,6 @@ import Foreign.C.Types
 
 #include "igraph/igraph.h"
 
-{#fun igraph_cliques as ^ { `IGraphPtr', `VectorPPtr', `Int', `Int' } -> `Int' #}
+{#fun igraph_cliques as ^ { `IGraph', `VectorPtr', `Int', `Int' } -> `Int' #}
 
-{#fun igraph_maximal_cliques as ^ { `IGraphPtr', `VectorPPtr', `Int', `Int' } -> `Int' #}
+{#fun igraph_maximal_cliques as ^ { `IGraph', `VectorPtr', `Int', `Int' } -> `Int' #}

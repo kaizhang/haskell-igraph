@@ -51,7 +51,7 @@ class MGraph d => Graph d where
     isD :: d -> Bool
 
     nNodes :: LGraph d v e -> Int
-    nNodes (LGraph g _) = igraphVcount g
+    nNodes (LGraph g _) = unsafePerformIO $ igraphVcount g
     {-# INLINE nNodes #-}
 
     nodes :: LGraph d v e -> [Int]
@@ -59,7 +59,7 @@ class MGraph d => Graph d where
     {-# INLINE nodes #-}
 
     nEdges :: LGraph d v e -> Int
-    nEdges (LGraph g _) = igraphEcount g
+    nEdges (LGraph g _) = unsafePerformIO $ igraphEcount g
     {-# INLINE nEdges #-}
 
     edges :: LGraph d v e -> [Edge]
@@ -69,9 +69,9 @@ class MGraph d => Graph d where
     {-# INLINE edges #-}
 
     hasEdge :: LGraph d v e -> Edge -> Bool
-    hasEdge (LGraph g _) (fr, to)
-        | igraphGetEid g fr to True False < 0 = False
-        | otherwise = True
+    hasEdge (LGraph g _) (fr, to) = unsafePerformIO $ do
+        i <- igraphGetEid g fr to True False
+        return $ i >= 0
     {-# INLINE hasEdge #-}
 
     nodeLab :: Serialize v => LGraph d v e -> Node -> v
@@ -80,8 +80,9 @@ class MGraph d => Graph d where
     {-# INLINE nodeLab #-}
 
     nodeLabMaybe :: Serialize v => LGraph d v e -> Node -> Maybe v
-    nodeLabMaybe gr@(LGraph g _) i =
-        if igraphHaskellAttributeHasAttr g IgraphAttributeVertex vertexAttr
+    nodeLabMaybe gr@(LGraph g _) i = unsafePerformIO $ do
+        x <- igraphHaskellAttributeHasAttr g IgraphAttributeVertex vertexAttr
+        return $ if x
             then Just $ nodeLab gr i
             else Nothing
     {-# INLINE nodeLabMaybe #-}
@@ -92,13 +93,14 @@ class MGraph d => Graph d where
 
     edgeLab :: Serialize e => LGraph d v e -> Edge -> e
     edgeLab (LGraph g _) (fr,to) = unsafePerformIO $
-        igraphHaskellAttributeEAS g edgeAttr (igraphGetEid g fr to True True) >>=
-            fromBS
+        igraphGetEid g fr to True True >>=
+            igraphHaskellAttributeEAS g edgeAttr >>= fromBS
     {-# INLINE edgeLab #-}
 
     edgeLabMaybe :: Serialize e => LGraph d v e -> Edge -> Maybe e
-    edgeLabMaybe gr@(LGraph g _) i =
-        if igraphHaskellAttributeHasAttr g IgraphAttributeEdge edgeAttr
+    edgeLabMaybe gr@(LGraph g _) i = unsafePerformIO $ do
+        x <- igraphHaskellAttributeHasAttr g IgraphAttributeEdge edgeAttr
+        return $ if x
             then Just $ edgeLab gr i
             else Nothing
     {-# INLINE edgeLabMaybe #-}
@@ -157,12 +159,12 @@ fromLabeledEdges es = mkGraph labels es'
 
 unsafeFreeze :: (Hashable v, Eq v, Serialize v, PrimMonad m)
              => MLGraph (PrimState m) d v e -> m (LGraph d v e)
-unsafeFreeze (MLGraph g) = return $ LGraph g labToId
-  where
-    labToId = M.fromListWith (++) $ zip labels $ map return [0..nV-1]
-    nV = igraphVcount g
-    labels = unsafePerformIO $ forM [0 .. nV - 1] $ \i ->
+unsafeFreeze (MLGraph g) = unsafePrimToPrim $ do
+    nV <- igraphVcount g
+    labels <- forM [0 .. nV - 1] $ \i ->
         igraphHaskellAttributeVAS g vertexAttr i >>= fromBS
+    return $ LGraph g $ M.fromListWith (++) $ zip labels $ map return [0..nV-1]
+  where
 
 freeze :: (Hashable v, Eq v, Serialize v, PrimMonad m)
        => MLGraph (PrimState m) d v e -> m (LGraph d v e)
@@ -253,8 +255,8 @@ emap :: (Graph d, Serialize v, Hashable v, Eq v, Serialize e1, Serialize e2)
 emap fn gr = unsafePerformIO $ do
     (MLGraph g) <- thaw gr
     forM_ (edges gr) $ \(fr, to) -> do
+        i <- igraphGetEid g fr to True True
         let label = fn ((fr,to), edgeLabByEid gr i)
-            i = igraphGetEid g fr to True True
         asBS label $ \bs ->
             with bs (igraphHaskellAttributeEASSet g edgeAttr i)
     unsafeFreeze (MLGraph g)

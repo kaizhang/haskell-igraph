@@ -7,6 +7,7 @@ import Foreign.C.Types
 
 #include "haskell_igraph.h"
 
-{#pointer *igraph_arpack_options_t as ArpackOptPtr foreign finalizer igraph_arpack_destroy newtype#}
+{#pointer *igraph_arpack_options_t as ArpackOpt foreign newtype#}
 
-{#fun igraph_arpack_new as ^ { } -> `ArpackOptPtr' #}
+{#fun igraph_arpack_options_init as igraphArpackNew
+    { + } -> `ArpackOpt' #}

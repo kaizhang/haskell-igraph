@@ -12,22 +12,22 @@ import Foreign.C.Types
 
 #include "igraph/igraph.h"
 
-{#fun igraph_layout_kamada_kawai as ^ { `IGraphPtr'
-, `MatrixPtr'
+{#fun igraph_layout_kamada_kawai as ^ { `IGraph'
+, `Matrix'
 , `Int'
 , `Double'
 , `Double'
 , `Double'
 , `Double'
 , `Bool'
-, id `Ptr VectorPtr'
-, id `Ptr VectorPtr'
-, id `Ptr VectorPtr'
-, id `Ptr VectorPtr'
+, id `Ptr Vector'
+, id `Ptr Vector'
+, id `Ptr Vector'
+, id `Ptr Vector'
 } -> `Int' #}
 
-{# fun igraph_layout_lgl as ^ { `IGraphPtr'
-, `MatrixPtr'
+{# fun igraph_layout_lgl as ^ { `IGraph'
+, `Matrix'
 , `Int'
 , `Double'
 , `Double'

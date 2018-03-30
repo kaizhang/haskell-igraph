@@ -55,6 +55,6 @@ triadCensus :: (Hashable v, Eq v, Read v) => LGraph d v e -> [Int]
 triadCensus gr = unsafePerformIO $ do
     vptr <- igraphVectorNew 0
     igraphTriadCensus (_graph gr) vptr
-    map truncate <$> vectorPtrToList vptr
+    map truncate <$> toList vptr
 
 -- motifsRandesu

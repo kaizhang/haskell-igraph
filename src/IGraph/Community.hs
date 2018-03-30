@@ -50,8 +50,8 @@ findCommunity :: LGraph U v e -> CommunityOpt -> [[Int]]
 findCommunity gr opt = unsafePerformIO $ do
     result <- igraphVectorNew 0
     ws <- case _weights opt of
-        Just w -> listToVector w
-        _      -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+        Just w -> fromList w
+        _      -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
 
     case _method opt of
         LeadingEigenvector -> do
@@ -68,4 +68,4 @@ findCommunity gr opt = unsafePerformIO $ do
                                      IgraphSpincommImpOrig 1.0
 
     liftM ( map (fst . unzip) . groupBy ((==) `on` snd)
-          . sortBy (comparing snd) . zip [0..] ) $ vectorPtrToList result
+          . sortBy (comparing snd) . zip [0..] ) $ toList result

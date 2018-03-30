@@ -23,6 +23,7 @@ Flag graphics
 library
   exposed-modules:
     IGraph.Internal.Initialization
+    IGraph.Internal.C2HS
     IGraph.Internal.Constants
     IGraph.Internal.Arpack
     IGraph.Internal.Data

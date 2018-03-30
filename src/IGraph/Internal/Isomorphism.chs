@@ -9,10 +9,10 @@ import Foreign.C.Types
 
 #include "igraph/igraph.h"
 
-{#fun igraph_get_subisomorphisms_vf2 as ^ { `IGraphPtr', `IGraphPtr',
-    id `Ptr ()', id `Ptr ()', id `Ptr ()', id `Ptr ()', `VectorPPtr',
-    id `FunPtr (Ptr IGraphPtr -> Ptr IGraphPtr -> CInt -> CInt -> Ptr () -> IO CInt)',
-    id `FunPtr (Ptr IGraphPtr -> Ptr IGraphPtr -> CInt -> CInt -> Ptr () -> IO CInt)',
+{#fun igraph_get_subisomorphisms_vf2 as ^ { `IGraph', `IGraph',
+    id `Ptr ()', id `Ptr ()', id `Ptr ()', id `Ptr ()', `VectorPtr',
+    id `FunPtr (Ptr IGraph -> Ptr IGraph -> CInt -> CInt -> Ptr () -> IO CInt)',
+    id `FunPtr (Ptr IGraph -> Ptr IGraph -> CInt -> CInt -> Ptr () -> IO CInt)',
     id `Ptr ()'} -> `Int' #}
 
-{#fun igraph_isomorphic as ^ { `IGraphPtr', `IGraphPtr', id `Ptr CInt' } -> `Int' #}
+{#fun igraph_isomorphic as ^ { `IGraph', `IGraph', id `Ptr CInt' } -> `Int' #}

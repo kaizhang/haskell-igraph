@@ -27,16 +27,13 @@ import           IGraph.Mutable
 
 inducedSubgraph :: (Hashable v, Eq v, Serialize v) => LGraph d v e -> [Int] -> LGraph d v e
 inducedSubgraph gr vs = unsafePerformIO $ do
-    vs' <- listToVector $ map fromIntegral vs
+    vs' <- fromList $ map fromIntegral vs
     vsptr <- igraphVsVector vs'
-    mallocForeignPtrBytes 160 >>= \gptr -> withForeignPtr gptr $ \p -> do
-        igraphInducedSubgraph (_graph gr) p vsptr IgraphSubgraphCreateFromScratch
-        let g' = IGraphPtr gptr
-            labToId = M.fromListWith (++) $ zip labels $ map return [0..nV-1]
-            nV = igraphVcount g'
-            labels = unsafePerformIO $ forM [0 .. nV - 1] $ \i ->
-                igraphHaskellAttributeVAS g' vertexAttr i >>= fromBS
-        return $ LGraph g' labToId
+    g' <- igraphInducedSubgraph (_graph gr) vsptr IgraphSubgraphCreateFromScratch
+    nV <- igraphVcount g'
+    labels <- forM [0 .. nV - 1] $ \i ->
+        igraphHaskellAttributeVAS g' vertexAttr i >>= fromBS
+    return $ LGraph g' $ M.fromListWith (++) $ zip labels $ map return [0..nV-1]
 
 -- | closeness centrality
 closeness :: [Int]  -- ^ vertices
@@ -46,14 +43,14 @@ closeness :: [Int]  -- ^ vertices
           -> Bool   -- ^ whether to normalize
           -> [Double]
 closeness vs gr ws mode normal = unsafePerformIO $ do
-    vs' <- listToVector $ map fromIntegral vs
+    vs' <- fromList $ map fromIntegral vs
     vsptr <- igraphVsVector vs'
     vptr <- igraphVectorNew 0
     ws' <- case ws of
-        Just w -> listToVector w
-        _      -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+        Just w -> fromList w
+        _      -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
     igraphCloseness (_graph gr) vptr vsptr mode ws' normal
-    vectorPtrToList vptr
+    toList vptr
 
 -- | betweenness centrality
 betweenness :: [Int]
@@ -61,14 +58,14 @@ betweenness :: [Int]
             -> Maybe [Double]
             -> [Double]
 betweenness vs gr ws = unsafePerformIO $ do
-    vs' <- listToVector $ map fromIntegral vs
+    vs' <- fromList $ map fromIntegral vs
     vsptr <- igraphVsVector vs'
     vptr <- igraphVectorNew 0
     ws' <- case ws of
-        Just w -> listToVector w
-        _      -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+        Just w -> fromList w
+        _      -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
     igraphBetweenness (_graph gr) vptr vsptr True ws' False
-    vectorPtrToList vptr
+    toList vptr
 
 -- | eigenvector centrality
 eigenvectorCentrality :: LGraph d v e
@@ -77,11 +74,11 @@ eigenvectorCentrality :: LGraph d v e
 eigenvectorCentrality gr ws = unsafePerformIO $ do
     vptr <- igraphVectorNew 0
     ws' <- case ws of
-        Just w -> listToVector w
-        _      -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+        Just w -> fromList w
+        _      -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
     arparck <- igraphArpackNew
     igraphEigenvectorCentrality (_graph gr) vptr nullPtr True True ws' arparck
-    vectorPtrToList vptr
+    toList vptr
 
 -- | Google's PageRank
 pagerank :: Graph d
@@ -97,11 +94,11 @@ pagerank gr ws d
         ws' <- case ws of
             Just w -> if length w /= m
                 then error "pagerank: incorrect length of edge weight vector"
-                else listToVector w
-            _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
+                else fromList w
+            _ -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
         igraphPagerank (_graph gr) IgraphPagerankAlgoPrpack vptr p vsptr
             (isDirected gr) d ws' nullPtr
-        vectorPtrToList vptr
+        toList vptr
   where
     n = nNodes gr
     m = nEdges gr
@@ -121,12 +118,12 @@ personalizedPagerank gr reset ws d
         ws' <- case ws of
             Just w -> if length w /= m
                 then error "pagerank: incorrect length of edge weight vector"
-                else listToVector w
-            _ -> liftM VectorPtr $ newForeignPtr_ $ castPtr nullPtr
-        reset' <- listToVector reset
+                else fromList w
+            _ -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
+        reset' <- fromList reset
         igraphPersonalizedPagerank (_graph gr) IgraphPagerankAlgoPrpack vptr p vsptr
             (isDirected gr) d reset' ws' nullPtr
-        vectorPtrToList vptr
+        toList vptr
   where
     n = nNodes gr
     m = nEdges gr
