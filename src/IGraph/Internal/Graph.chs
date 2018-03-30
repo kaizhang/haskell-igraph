@@ -12,19 +12,27 @@ import System.IO.Unsafe (unsafePerformIO)
 
 #include "haskell_igraph.h"
 
-{#pointer *igraph_t as IGraphPtr foreign finalizer igraph_destroy newtype#}
-
--- | create a igraph object and attach a finalizer
-igraphNew :: Int -> Bool -> HasInit -> IO IGraphPtr
-igraphNew n directed _ = igraphNew' n directed
-
+--------------------------------------------------------------------------------
 -- Graph Constructors and Destructors
+--------------------------------------------------------------------------------
+
+{#pointer *igraph_t as IGraphPtr foreign finalizer igraph_destroy newtype#}
 
 {#fun igraph_empty as igraphNew' { +, `Int', `Bool' } -> `IGraphPtr' #}
 
 {#fun igraph_copy as ^ { +, `IGraphPtr' } -> `IGraphPtr' #}
 
+-- | Create a igraph object and attach a finalizer
+igraphNew :: Int -> Bool -> HasInit -> IO IGraphPtr
+igraphNew n directed _ = do
+    IGraphPtr ptr <- igraphNew' n directed
+    addForeignPtrFinalizer igraph_destroy ptr
+    return $ IGraphPtr ptr
+
+
+--------------------------------------------------------------------------------
 -- Basic Query Operations
+--------------------------------------------------------------------------------
 
 {#fun pure igraph_vcount as ^ { `IGraphPtr' } -> `Int' #}
 

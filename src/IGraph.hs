@@ -44,15 +44,7 @@ import           IGraph.Internal.Constants
 import           IGraph.Internal.Graph
 import           IGraph.Internal.Selector
 import           IGraph.Mutable
-
-type Node = Int
-type Edge = (Node, Node)
-
--- | graph with labeled nodes and edges
-data LGraph d v e = LGraph
-    { _graph       :: IGraphPtr
-    , _labelToNode :: M.HashMap v [Node]
-    }
+import           IGraph.Types
 
 class MGraph d => Graph d where
     isDirected :: LGraph d v e -> Bool
@@ -124,6 +116,21 @@ instance Graph U where
 instance Graph D where
     isDirected = const True
     isD = const True
+
+instance (Graph d, Serialize v, Serialize e, Hashable v, Eq v) => Serialize (LGraph d v e) where
+    put gr = do
+        put nlabs
+        put es
+        put elabs
+      where
+        nlabs = map (nodeLab gr) $ nodes gr
+        es = edges gr
+        elabs = map (edgeLab gr) es
+    get = do
+        nlabs <- get
+        es <- get
+        elabs <- get
+        return $ mkGraph nlabs $ zip es elabs
 
 empty :: (Graph d, Hashable v, Serialize v, Eq v, Serialize e)
       => LGraph d v e
@@ -236,8 +243,8 @@ nmap fn gr = unsafePerformIO $ do
     (MLGraph g) <- thaw gr
     forM_ (nodes gr) $ \i -> do
         let label = fn (i, nodeLab gr i)
-        bs <- unsafeToBS label
-        with bs (igraphHaskellAttributeVASSet g vertexAttr i)
+        asBS label $ \bs ->
+            with bs (igraphHaskellAttributeVASSet g vertexAttr i)
     unsafeFreeze (MLGraph g)
 
 -- | Map a function over the edge labels in a graph
@@ -248,6 +255,6 @@ emap fn gr = unsafePerformIO $ do
     forM_ (edges gr) $ \(fr, to) -> do
         let label = fn ((fr,to), edgeLabByEid gr i)
             i = igraphGetEid g fr to True True
-        bs <- unsafeToBS label
-        with bs (igraphHaskellAttributeEASSet g edgeAttr i)
+        asBS label $ \bs ->
+            with bs (igraphHaskellAttributeEASSet g edgeAttr i)
     unsafeFreeze (MLGraph g)

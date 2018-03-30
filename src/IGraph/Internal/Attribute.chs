@@ -20,14 +20,17 @@ import System.IO.Unsafe (unsafePerformIO)
 
 -- The returned object will not be trackced by Haskell's GC. It should be freed
 -- by foreign codes.
-unsafeToBS :: Serialize a => a -> IO BSLen
-unsafeToBS x = unsafeUseAsCStringLen bs $ \(ptr, n) -> do
-    newPtr <- mallocBytes n
-    copyBytes newPtr ptr n
-    return $ BSLen (newPtr, n)
+asBS :: Serialize a => a -> (BSLen -> IO b) -> IO b
+asBS x fn = unsafeUseAsCStringLen (encode x) (fn . BSLen)
+{-# INLINE asBS #-}
+
+asBSVector :: Serialize a => [a] -> (BSVectorPtr -> IO b) -> IO b
+asBSVector values fn = loop [] values
   where
-    bs = encode x
-{-# INLINE unsafeToBS #-}
+    loop acc (x:xs) = unsafeUseAsCStringLen (encode x) $ \ptr ->
+        loop (BSLen ptr : acc) xs
+    loop acc _ = listToBSVector (reverse acc) >>= fn
+{-# INLINE asBSVector #-}
 
 fromBS :: Serialize a => Ptr BSLen -> IO a
 fromBS ptr = do
@@ -38,15 +41,11 @@ fromBS ptr = do
         Right r -> return r
 {-# INLINE fromBS #-}
 
-makeAttributeRecord :: Serialize a
-                    => String    -- ^ name of the attribute
-                    -> [a]       -- ^ values of the attribute
-                    -> AttributeRecord
-makeAttributeRecord name xs = unsafePerformIO $ do
-    ptr <- newCAString name
-    value <- mapM unsafeToBS xs >>= listToBSVector
-    return $ AttributeRecord ptr 2 value
-{-# INLINE makeAttributeRecord #-}
+mkStrRec :: CString    -- ^ name of the attribute
+         -> BSVectorPtr       -- ^ values of the attribute
+         -> AttributeRecord
+mkStrRec name xs = AttributeRecord name 2 xs
+{-# INLINE mkStrRec #-}
 
 data AttributeRecord = AttributeRecord CString Int BSVectorPtr
 

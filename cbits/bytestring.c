@@ -45,7 +45,7 @@ int bsvector_set(bsvector_t *sv, long int idx, const bytestring_t *value) {
   assert(sv->data != 0);
 
   if (sv->data[idx] != 0) {
-    //destroy_bytestring(sv->data[idx]);
+    destroy_bytestring(sv->data[idx]);
   }
   sv->data[idx] = new_bytestring(value->len);
 
@@ -305,7 +305,6 @@ int bsvector_index(const bsvector_t *v, bsvector_t *newv,
 
 long int bsvector_size(const bsvector_t *sv) {
   assert(sv != 0);
-  assert(sv->data != 0);
   return sv->len;
 }
 

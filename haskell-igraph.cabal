@@ -36,6 +36,7 @@ library
     IGraph.Internal.Community
     IGraph.Internal.Layout
     IGraph
+    IGraph.Types
     IGraph.Mutable
     IGraph.Clique
     IGraph.Structure
@@ -92,6 +93,7 @@ test-suite tests
   build-depends:
       base
     , haskell-igraph
+    , cereal
     , data-ordlist
     , matrices
     , tasty

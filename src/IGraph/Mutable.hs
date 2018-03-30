@@ -1,29 +1,40 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
-module IGraph.Mutable where
+module IGraph.Mutable
+    ( MGraph(..)
+    , MLGraph(..)
+    , setEdgeAttr
+    , setNodeAttr
+    , edgeAttr
+    , vertexAttr
+    )where
 
 import           Control.Monad                  (when)
 import           Control.Monad.Primitive
 import qualified Data.ByteString.Char8          as B
 import           Data.Serialize                 (Serialize)
 import           Foreign
+import           Foreign.C.String               (CString, withCString)
 
 import           IGraph.Internal.Attribute
 import           IGraph.Internal.Data
 import           IGraph.Internal.Graph
 import           IGraph.Internal.Initialization
 import           IGraph.Internal.Selector
+import           IGraph.Types
 
--- constants
 vertexAttr :: String
 vertexAttr = "vertex_attribute"
 
 edgeAttr :: String
 edgeAttr = "edge_attribute"
 
-type LEdge a = (Int, Int, a)
+withVertexAttr :: (CString -> IO a) -> IO a
+withVertexAttr = withCString vertexAttr
+{-# INLINE withVertexAttr #-}
 
--- | Mutable labeled graph
-newtype MLGraph m d v e = MLGraph IGraphPtr
+withEdgeAttr :: (CString -> IO a) -> IO a
+withEdgeAttr = withCString edgeAttr
+{-# INLINE withEdgeAttr #-}
 
 class MGraph d where
     new :: PrimMonad m => Int -> m (MLGraph (PrimState m) d v e)
@@ -37,10 +48,10 @@ class MGraph d where
               -> MLGraph (PrimState m) d v e -> m ()
     addLNodes n labels (MLGraph g)
         | n /= length labels = error "addLVertices: incorrect number of labels"
-        | otherwise = unsafePrimToPrim $ do
-            with (makeAttributeRecord vertexAttr labels) $ \ptr -> do
+        | otherwise = unsafePrimToPrim $ withVertexAttr $ \vattr ->
+            asBSVector labels $ \bsvec -> with (mkStrRec vattr bsvec) $ \ptr -> do
                 vptr <- listToVectorP [castPtr ptr]
-                withVectorPPtr vptr $ \p -> igraphAddVertices g n $ castPtr p
+                withVectorPPtr vptr (igraphAddVertices g n . castPtr)
 
     delNodes :: PrimMonad m => [Int] -> MLGraph (PrimState m) d v e -> m ()
     delNodes ns (MLGraph g) = unsafePrimToPrim $ do
@@ -50,32 +61,25 @@ class MGraph d where
         return ()
 
     addEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
-
-    addLEdges :: (PrimMonad m, Serialize e) => [LEdge e] -> MLGraph (PrimState m) d v e -> m ()
-
-    delEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
-
-data U = U
-data D = D
-
-instance MGraph U where
-    new n = unsafePrimToPrim $ igraphInit >>= igraphNew n False >>= return . MLGraph
-
     addEdges es (MLGraph g) = unsafePrimToPrim $ do
         vec <- listToVector xs
         igraphAddEdges g vec nullPtr
       where
         xs = concatMap ( \(a,b) -> [fromIntegral a, fromIntegral b] ) es
 
-    addLEdges es (MLGraph g) = unsafePrimToPrim $ do
-        vec <- listToVector $ concat xs
-        let attr = makeAttributeRecord edgeAttr vs
-        alloca $ \ptr -> do
-            poke ptr attr
+    addLEdges :: (PrimMonad m, Serialize e) => [LEdge e] -> MLGraph (PrimState m) d v e -> m ()
+    addLEdges es (MLGraph g) = unsafePrimToPrim $ withEdgeAttr $ \eattr ->
+        asBSVector vs $ \bsvec -> with (mkStrRec eattr bsvec) $ \ptr -> do
+            vec <- listToVector $ concat xs
             vptr <- listToVectorP [castPtr ptr]
-            withVectorPPtr vptr $ \p -> igraphAddEdges g vec $ castPtr p
+            withVectorPPtr vptr (igraphAddEdges g vec . castPtr)
       where
         (xs, vs) = unzip $ map ( \(a,b,v) -> ([fromIntegral a, fromIntegral b], v) ) es
+
+    delEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
+
+instance MGraph U where
+    new n = unsafePrimToPrim $ igraphInit >>= igraphNew n False >>= return . MLGraph
 
     delEdges es (MLGraph g) = unsafePrimToPrim $ do
         vptr <- listToVector $ map fromIntegral eids
@@ -87,22 +91,6 @@ instance MGraph U where
 
 instance MGraph D where
     new n = unsafePrimToPrim $ igraphInit >>= igraphNew n True >>= return . MLGraph
-
-    addEdges es (MLGraph g) = unsafePrimToPrim $ do
-        vec <- listToVector xs
-        igraphAddEdges g vec nullPtr
-      where
-        xs = concatMap ( \(a,b) -> [fromIntegral a, fromIntegral b] ) es
-
-    addLEdges es (MLGraph g) = unsafePrimToPrim $ do
-        vec <- listToVector $ concat xs
-        let attr = makeAttributeRecord edgeAttr vs
-        alloca $ \ptr -> do
-            poke ptr attr
-            vptr <- listToVectorP [castPtr ptr]
-            withVectorPPtr vptr $ \p -> igraphAddEdges g vec $ castPtr p
-      where
-        (xs, vs) = unzip $ map ( \(a,b,v) -> ([fromIntegral a, fromIntegral b], v) ) es
 
     delEdges es (MLGraph g) = unsafePrimToPrim $ do
         vptr <- listToVector $ map fromIntegral eids
@@ -117,10 +105,9 @@ setNodeAttr :: (PrimMonad m, Serialize v)
             -> v
             -> MLGraph (PrimState m) d v e
             -> m ()
-setNodeAttr nodeId x (MLGraph gr) = unsafePrimToPrim $ do
-    v <- unsafeToBS x
-    with v $ \vptr -> do
-        err <- igraphHaskellAttributeVASSet gr vertexAttr nodeId vptr
+setNodeAttr nodeId x (MLGraph gr) = unsafePrimToPrim $ asBS x $ \bs ->
+    with bs $ \bsptr -> do
+        err <- igraphHaskellAttributeVASSet gr vertexAttr nodeId bsptr
         when (err /= 0) $ error "Fail to set node attribute!"
 
 setEdgeAttr :: (PrimMonad m, Serialize v)
@@ -128,8 +115,7 @@ setEdgeAttr :: (PrimMonad m, Serialize v)
             -> v
             -> MLGraph (PrimState m) d v e
             -> m ()
-setEdgeAttr edgeId x (MLGraph gr) = unsafePrimToPrim $ do
-    v <- unsafeToBS x
-    with v $ \vptr -> do
-        err <- igraphHaskellAttributeEASSet gr edgeAttr edgeId vptr
+setEdgeAttr edgeId x (MLGraph gr) = unsafePrimToPrim $ asBS x $ \bs ->
+    with bs $ \bsptr -> do
+        err <- igraphHaskellAttributeEASSet gr edgeAttr edgeId bsptr
         when (err /= 0) $ error "Fail to set edge attribute!"
