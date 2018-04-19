@@ -10,6 +10,7 @@ import           System.IO.Unsafe
 import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Test.Utils
+import Conduit
 
 import           IGraph
 import           IGraph.Mutable
@@ -39,14 +40,17 @@ graphCreationLabeled :: TestTree
 graphCreationLabeled = testGroup "Graph creation -- with labels"
     [ testCase "" $ assertBool "" $ nNodes gr == n && nEdges gr == m
     , testCase "" $ edgeList @=? (sort $ map (\(fr,to) ->
-        (nodeLab gr fr, nodeLab gr to)) $ edges gr)
+        ((nodeLab gr fr, nodeLab gr to), edgeLab gr (fr, to))) $ edges gr)
+    , testCase "" $ edgeList @=? (sort $ map (\(fr,to) ->
+       ((nodeLab gr' fr, nodeLab gr' to), edgeLab gr' (fr, to))) $ edges gr')
     ]
   where
-    edgeList = sort $ map (\(a,b) -> (show a, show b)) $ unsafePerformIO $
-        randEdges 10000 1000
-    n = length $ nubSort $ concatMap (\(a,b) -> [a,b]) edgeList
+    edgeList = zip (sort $ map (\(a,b) -> (show a, show b)) $ unsafePerformIO $
+        randEdges 10000 1000) $ repeat 1
+    n = length $ nubSort $ concatMap (\((a,b),_) -> [a,b]) edgeList
     m = length edgeList
-    gr = fromLabeledEdges $ zip edgeList $ repeat () :: LGraph D String ()
+    gr = fromLabeledEdges edgeList :: LGraph D String Int
+    gr' = runST $ fromLabeledEdges' 10 edgeList yieldMany :: LGraph D String Int
 
 graphEdit :: TestTree
 graphEdit = testGroup "Graph editing"

@@ -43,15 +43,14 @@ class MGraph d where
     addNodes n (MLGraph g) = unsafePrimToPrim $ igraphAddVertices g n nullPtr
 
     addLNodes :: (Serialize v, PrimMonad m)
-              => Int  -- ^ the number of new vertices add to the graph
-              -> [v]  -- ^ vertices' labels
+              => [v]  -- ^ vertices' labels
               -> MLGraph (PrimState m) d v e -> m ()
-    addLNodes n labels (MLGraph g)
-        | n /= length labels = error "addLVertices: incorrect number of labels"
-        | otherwise = unsafePrimToPrim $ withVertexAttr $ \vattr ->
-            asBSVector labels $ \bsvec -> with (mkStrRec vattr bsvec) $ \ptr -> do
-                vptr <- fromPtrs [castPtr ptr]
-                withVectorPtr vptr (igraphAddVertices g n . castPtr)
+    addLNodes labels (MLGraph g) = unsafePrimToPrim $ withVertexAttr $
+        \vattr -> asBSVector labels $ \bsvec -> with (mkStrRec vattr bsvec) $
+            \ptr -> do vptr <- fromPtrs [castPtr ptr]
+                       withVectorPtr vptr (igraphAddVertices g n . castPtr)
+      where
+        n = length labels
 
     delNodes :: PrimMonad m => [Int] -> MLGraph (PrimState m) d v e -> m ()
     delNodes ns (MLGraph g) = unsafePrimToPrim $ do
@@ -74,7 +73,7 @@ class MGraph d where
             vptr <- fromPtrs [castPtr ptr]
             withVectorPtr vptr (igraphAddEdges g vec . castPtr)
       where
-        (xs, vs) = unzip $ map ( \(a,b,v) -> ([fromIntegral a, fromIntegral b], v) ) es
+        (xs, vs) = unzip $ map ( \((a,b),v) -> ([fromIntegral a, fromIntegral b], v) ) es
 
     delEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
 

@@ -7,7 +7,7 @@ import           IGraph.Internal.Graph
 
 type Node = Int
 type Edge = (Node, Node)
-type LEdge a = (Int, Int, a)
+type LEdge a = (Edge, a)
 
 data U = U
 data D = D
