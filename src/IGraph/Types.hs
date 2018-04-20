@@ -9,14 +9,8 @@ type Node = Int
 type Edge = (Node, Node)
 type LEdge a = (Edge, a)
 
-data U = U
-data D = D
+-- | Undirected graph.
+data U
 
--- | Mutable labeled graph
-newtype MLGraph m d v e = MLGraph IGraph
-
--- | graph with labeled nodes and edges
-data LGraph d v e = LGraph
-    { _graph       :: IGraph
-    , _labelToNode :: M.HashMap v [Node]
-    }
+-- | Directed graph.
+data D

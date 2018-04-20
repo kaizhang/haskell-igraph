@@ -35,7 +35,7 @@ inducedSubgraph gr vs = unsafePerformIO $ do
         igraphHaskellAttributeVAS g' vertexAttr i >>= fromBS
     return $ LGraph g' $ M.fromListWith (++) $ zip labels $ map return [0..nV-1]
 
--- | closeness centrality
+-- | Closeness centrality
 closeness :: [Int]  -- ^ vertices
           -> LGraph d v e
           -> Maybe [Double]  -- ^ optional edge weights
@@ -52,7 +52,7 @@ closeness vs gr ws mode normal = unsafePerformIO $ do
     igraphCloseness (_graph gr) vptr vsptr mode ws' normal
     toList vptr
 
--- | betweenness centrality
+-- | Betweenness centrality
 betweenness :: [Int]
             -> LGraph d v e
             -> Maybe [Double]
@@ -67,7 +67,7 @@ betweenness vs gr ws = unsafePerformIO $ do
     igraphBetweenness (_graph gr) vptr vsptr True ws' False
     toList vptr
 
--- | eigenvector centrality
+-- | Eigenvector centrality
 eigenvectorCentrality :: LGraph d v e
                       -> Maybe [Double]
                       -> [Double]
@@ -103,6 +103,7 @@ pagerank gr ws d
     n = nNodes gr
     m = nEdges gr
 
+-- | Personalized PageRank.
 personalizedPagerank :: Graph d
                      => LGraph d v e
                      -> [Double]   -- ^ reset probability

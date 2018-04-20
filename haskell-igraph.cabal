@@ -1,8 +1,9 @@
 name:                haskell-igraph
-version:             0.4.0-dev
-synopsis:            Imcomplete igraph bindings
-description:         This is an attempt to create a complete bindings for the
-                     igraph<"http://igraph.org/c/"> library.
+version:             0.4.0
+synopsis:            Haskell interface of the igraph library.
+description:         igraph<"http://igraph.org/c/"> is a library for creating
+                     and manipulating large graphs. This package provides the Haskell
+                     interface of igraph.
 license:             MIT
 license-file:        LICENSE
 author:              Kai Zhang
@@ -12,9 +13,11 @@ category:            Math
 build-type:          Simple
 cabal-version:       >=1.24
 extra-source-files:
-  cbits/haskell_igraph.h
-  cbits/bytestring.h
-  cbits/haskell_attributes.h
+  include/haskell_igraph.h
+  include/bytestring.h
+  include/haskell_attributes.h
+  README.md
+  ChangeLog.md
 
 Flag graphics
   Description: Enable graphics output
@@ -22,20 +25,6 @@ Flag graphics
 
 library
   exposed-modules:
-    IGraph.Internal.Initialization
-    IGraph.Internal.C2HS
-    IGraph.Internal.Constants
-    IGraph.Internal.Arpack
-    IGraph.Internal.Data
-    IGraph.Internal.Graph
-    IGraph.Internal.Attribute
-    IGraph.Internal.Isomorphism
-    IGraph.Internal.Selector
-    IGraph.Internal.Structure
-    IGraph.Internal.Motif
-    IGraph.Internal.Clique
-    IGraph.Internal.Community
-    IGraph.Internal.Layout
     IGraph
     IGraph.Types
     IGraph.Mutable
@@ -48,6 +37,22 @@ library
     IGraph.Layout
     IGraph.Generators
     IGraph.Exporter.GEXF
+    IGraph.Internal.Initialization
+    IGraph.Internal.Constants
+    IGraph.Internal.Arpack
+    IGraph.Internal.Data
+    IGraph.Internal.Graph
+    IGraph.Internal.Attribute
+    IGraph.Internal.Isomorphism
+    IGraph.Internal.Selector
+    IGraph.Internal.Structure
+    IGraph.Internal.Motif
+    IGraph.Internal.Clique
+    IGraph.Internal.Community
+    IGraph.Internal.Layout
+
+  other-modules:
+    IGraph.Internal.C2HS
 
   if flag(graphics)
     exposed-modules: IGraph.Exporter.Graphics
@@ -78,7 +83,7 @@ library
     cbits/haskell_igraph.c
     cbits/haskell_attributes.c
     cbits/bytestring.c
-  include-dirs:        cbits
+  include-dirs:        include
 
 test-suite tests
   type: exitcode-stdio-1.0
