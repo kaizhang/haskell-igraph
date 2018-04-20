@@ -10,7 +10,7 @@ import Foreign.C.Types
 {#import IGraph.Internal.Graph #}
 {#import IGraph.Internal.Data #}
 
-#include "igraph/igraph.h"
+#include "haskell_igraph.h"
 
 {#fun igraph_cliques as ^ { `IGraph', `VectorPtr', `Int', `Int' } -> `Int' #}
 

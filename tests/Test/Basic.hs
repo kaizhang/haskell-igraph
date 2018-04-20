@@ -50,7 +50,7 @@ graphCreationLabeled = testGroup "Graph creation -- with labels"
     n = length $ nubSort $ concatMap (\((a,b),_) -> [a,b]) edgeList
     m = length edgeList
     gr = fromLabeledEdges edgeList :: LGraph D String Int
-    gr' = runST $ fromLabeledEdges' 10 edgeList yieldMany :: LGraph D String Int
+    gr' = runST $ fromLabeledEdges' edgeList yieldMany :: LGraph D String Int
 
 graphEdit :: TestTree
 graphEdit = testGroup "Graph editing"

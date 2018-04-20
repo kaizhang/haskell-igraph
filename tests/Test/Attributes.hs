@@ -54,7 +54,7 @@ serializeTest = testCase "serialize test" $ do
             Left msg -> error msg
             Right r  -> r
         es' = map (\(a,b) -> ((nodeLab gr' a, nodeLab gr' b), edgeLab gr' (a,b))) $ edges gr'
-    gr'' <- runConduit $ encodeC gr .| decodeC :: IO (LGraph D NodeAttr EdgeAttr)
+    gr'' <- runConduit $ (yield $ encode gr) .| decodeC :: IO (LGraph D NodeAttr EdgeAttr)
     let es'' = map (\(a,b) -> ((nodeLab gr'' a, nodeLab gr'' b), edgeLab gr'' (a,b))) $ edges gr''
     assertBool "" $ sort (map show es) == sort (map show es') &&
         sort (map show es) == sort (map show es'')

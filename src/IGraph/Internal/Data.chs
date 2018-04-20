@@ -29,6 +29,7 @@ module IGraph.Internal.Data
     , BSVector(..)
     , withBSVector
     , bsvectorNew
+    , bsvectorSet
     , toBSVector
 
     , Matrix(..)

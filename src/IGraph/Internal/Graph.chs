@@ -57,7 +57,16 @@ igraphNew n directed _ = igraphNew' n directed
 
 {# fun igraph_add_edge as ^ { `IGraph', `Int', `Int' } -> `()' #}
 
-{# fun igraph_add_edges as ^ { `IGraph', `Vector', id `Ptr ()' } -> `()' #}
+-- | The edges are given in a vector, the first two elements define the first
+-- edge (the order is from , to for directed graphs). The vector should
+-- contain even number of integer numbers between zero and the number of
+-- vertices in the graph minus one (inclusive). If you also want to add
+-- new vertices, call igraph_add_vertices() first.
+{# fun igraph_add_edges as ^
+    { `IGraph'     -- ^ The graph to which the edges will be added.
+    , `Vector'     -- ^ The edges themselves.
+    , id `Ptr ()'  -- ^ The attributes of the new edges.
+    } -> `()' #}
 
 
 -- generators
@@ -71,7 +80,6 @@ igraphNew n directed _ = igraphNew' n directed
     , `Degseq' } -> `IGraph' #}
 
 {#fun igraph_rewire as ^ { `IGraph', `Int', `Rewiring' } -> `Int' #}
-
 
 
 {#fun igraph_isoclass_create as ^ { +, `Int', `Int', `Bool' } -> `IGraph' #}

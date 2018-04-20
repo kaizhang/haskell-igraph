@@ -5,8 +5,7 @@ module IGraph
     , U(..)
     , D(..)
     , Graph(..)
---    , encodeC
- --   , decodeC
+    , decodeC
     , empty
     , mkGraph
     , fromLabeledEdges
@@ -32,10 +31,13 @@ module IGraph
 
 import           Conduit
 import           Control.Arrow             ((***))
-import           Control.Monad             (forM, forM_, liftM, unless, replicateM)
+import           Control.Monad             (forM, forM_, liftM, replicateM,
+                                            unless)
 import           Control.Monad.Primitive
 import           Control.Monad.ST          (runST)
 import qualified Data.ByteString           as B
+import           Data.Conduit.Cereal
+import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import           Data.Hashable             (Hashable)
 import qualified Data.HashMap.Strict       as M
 import qualified Data.HashSet              as S
@@ -43,11 +45,12 @@ import           Data.List                 (sortBy)
 import           Data.Maybe
 import           Data.Ord                  (comparing)
 import           Data.Serialize
-import           Foreign                   (with)
+import           Foreign                   (with, castPtr)
 import           System.IO.Unsafe          (unsafePerformIO)
 
 import           IGraph.Internal.Attribute
 import           IGraph.Internal.Constants
+import           IGraph.Internal.Data
 import           IGraph.Internal.Graph
 import           IGraph.Internal.Selector
 import           IGraph.Mutable
@@ -146,20 +149,14 @@ instance (Graph d, Serialize v, Serialize e, Hashable v, Eq v)
             es <- replicateM ne get
             return $ mkGraph nds es
 
-        {-
-encodeC :: (Monad m, Graph d, Serialize v, Serialize e, Hashable v, Eq v)
-        => LGraph d v e -> ConduitT i B.ByteString m ()
-encodeC gr = do
-    sourcePut $ put (M.toList $ _labelToNode gr)
-    yieldMany (edges gr) .| mapC (\e -> (e, edgeLab gr e)) .| conduitPut put
-
 decodeC :: ( PrimMonad m, MonadThrow m, Graph d
            , Serialize v, Serialize e, Hashable v, Eq v )
         => ConduitT B.ByteString o m (LGraph d v e)
 decodeC = do
-    labelToId <- M.fromList <$> sinkGet get
-    conduitGet2 get .| deserializeGraphFromEdges 10000 labelToId
-    -}
+    nn <- sinkGet get
+    nds <- replicateM nn $ sinkGet get
+    ne <- sinkGet get
+    conduitGet2 get .| deserializeGraph nds ne
 
 empty :: (Graph d, Hashable v, Serialize v, Eq v, Serialize e)
       => LGraph d v e
@@ -186,19 +183,20 @@ fromLabeledEdges es = mkGraph labels es'
 
 -- | Deserialize a graph.
 fromLabeledEdges' :: (PrimMonad m, Graph d, Hashable v, Serialize v, Eq v, Serialize e)
-                  => Int -- ^ buffer size
-                  -> a    -- ^ Input, usually a file
+                  => a    -- ^ Input, usually a file
                   -> (a -> ConduitT () ((v, v), e) m ())  -- ^ deserialize the input into a stream of edges
                   -> m (LGraph d v e)
-fromLabeledEdges' bufferN input mkConduit = do
-    (labelToId, _) <- runConduit $ mkConduit input .| foldlC f (M.empty, 0::Int)
+fromLabeledEdges' input mkConduit = do
+    (labelToId, _, ne) <- runConduit $ mkConduit input .|
+        foldlC f (M.empty, 0::Int, 0::Int)
     let getId x = M.lookupDefault undefined x labelToId
     runConduit $ mkConduit input .|
         mapC (\((v1, v2), e) -> ((getId v1, getId v2), e)) .|
-        deserializeGraph bufferN
-            (fst $ unzip $ sortBy (comparing snd) $ M.toList labelToId)
+        deserializeGraph (fst $ unzip $ sortBy (comparing snd) $ M.toList labelToId) ne
   where
-    f acc ((v1, v2), _) = add v1 $ add v2 acc
+    f (vs, nn, ne) ((v1, v2), _) =
+        let (vs', nn') = add v1 $ add v2 (vs, nn)
+        in (vs', nn', ne+1)
       where
         add v (m, i) = if v `M.member` m
             then (m, i)
@@ -206,24 +204,25 @@ fromLabeledEdges' bufferN input mkConduit = do
 
 deserializeGraph :: ( PrimMonad m, Graph d, Hashable v, Serialize v
                     , Eq v, Serialize e )
-                 => Int -- ^ buffer size
-                 -> [v]
+                 => [v]
+                 -> Int   -- ^ The number of edges
                  -> ConduitT (LEdge e) o m (LGraph d v e)
-deserializeGraph bufferN nds = mkChunks bufferN .| buildGraph
-  where
-    buildGraph = do
-        gr <- new 0
-        addLNodes nds gr
-        mapM_C (\es -> addLEdges es gr)
-        unsafeFreeze gr
-    mkChunks n = do
-        isEmpty <- nullC
-        unless isEmpty $ do
-            go 0 >>= yield
-            mkChunks n
-      where
-        go i | i >= n = return []
-             | otherwise = await >>= maybe (return []) (\x -> fmap (x :) $ go (i+1))
+deserializeGraph nds ne = do
+    evec <- unsafePrimToPrim $ igraphVectorNew $ 2 * ne
+    bsvec <- unsafePrimToPrim $ bsvectorNew ne
+    let f i ((fr, to), attr) = unsafePrimToPrim $ do
+            igraphVectorSet evec (i*2) $ fromIntegral fr
+            igraphVectorSet evec (i*2+1) $ fromIntegral to
+            unsafeUseAsCStringLen (encode attr) $ \bs -> with (BSLen bs) $ \ptr ->
+                bsvectorSet bsvec i $ castPtr ptr
+            return $ i + 1
+    foldMC f 0
+    gr@(MLGraph g) <- new 0
+    addLNodes nds gr
+    unsafePrimToPrim $ withEdgeAttr $ \eattr -> with (mkStrRec eattr bsvec) $ \ptr -> do
+            vptr <- fromPtrs [castPtr ptr]
+            withVectorPtr vptr (igraphAddEdges g evec . castPtr)
+    unsafeFreeze gr
 {-# INLINE deserializeGraph #-}
 
 unsafeFreeze :: (Hashable v, Eq v, Serialize v, PrimMonad m)

@@ -6,6 +6,8 @@ module IGraph.Mutable
     , setNodeAttr
     , edgeAttr
     , vertexAttr
+    , withVertexAttr
+    , withEdgeAttr
     )where
 
 import           Control.Monad                  (when, forM)
@@ -86,7 +88,6 @@ instance MGraph U where
         esptr <- igraphEsVector vptr
         igraphDeleteEdges g esptr
         return ()
-      where
 
 instance MGraph D where
     new n = unsafePrimToPrim $ igraphInit >>= igraphNew n True >>= return . MLGraph
@@ -97,7 +98,6 @@ instance MGraph D where
         esptr <- igraphEsVector vptr
         igraphDeleteEdges g esptr
         return ()
-      where
 
 setNodeAttr :: (PrimMonad m, Serialize v)
             => Int   -- ^ Node id

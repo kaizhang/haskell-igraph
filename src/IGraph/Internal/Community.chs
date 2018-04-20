@@ -9,7 +9,7 @@ import Foreign.C.Types
 {#import IGraph.Internal.Data #}
 {#import IGraph.Internal.Constants #}
 
-#include "igraph/igraph.h"
+#include "haskell_igraph.h"
 
 {#fun igraph_community_spinglass as ^
 { `IGraph'

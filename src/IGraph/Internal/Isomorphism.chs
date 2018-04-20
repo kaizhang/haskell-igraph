@@ -7,7 +7,7 @@ import Foreign.C.Types
 {#import IGraph.Internal.Graph #}
 {#import IGraph.Internal.Data #}
 
-#include "igraph/igraph.h"
+#include "haskell_igraph.h"
 
 {#fun igraph_get_subisomorphisms_vf2 as ^ { `IGraph', `IGraph',
     id `Ptr ()', id `Ptr ()', id `Ptr ()', id `Ptr ()', `VectorPtr',

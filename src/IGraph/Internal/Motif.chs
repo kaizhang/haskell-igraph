@@ -11,7 +11,7 @@ import Foreign.C.Types
 {#import IGraph.Internal.Constants #}
 {#import IGraph.Internal.Data #}
 
-#include "igraph/igraph.h"
+#include "haskell_igraph.h"
 
 {#fun igraph_triad_census as ^ { `IGraph'
                                , `Vector' } -> `Int' #}
