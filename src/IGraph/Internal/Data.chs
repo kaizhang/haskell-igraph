@@ -68,9 +68,21 @@ import Data.List.Split (chunksOf)
 
 -- Construtors and destructors
 
-{#fun igraph_vector_init as igraphVectorNew { +, `Int' } -> `Vector' #}
+allocaVector :: (Ptr Vector -> IO a) -> IO a
+allocaVector f = mallocBytes {# sizeof igraph_vector_t #} >>= f
 
-{#fun igraph_vector_init_copy as ^ { +, id `Ptr CDouble', `Int' } -> `Vector' #}
+addVectorFinalizer :: Ptr Vector -> IO Vector
+addVectorFinalizer ptr = do
+    vec <- newForeignPtr igraph_vector_destroy ptr
+    return $ Vector vec
+
+{#fun igraph_vector_init as igraphVectorNew
+    { allocaVector- `Vector' addVectorFinalizer*
+    , `Int' } -> `CInt' void- #}
+
+{#fun igraph_vector_init_copy as ^
+    { allocaVector- `Vector' addVectorFinalizer*
+    , id `Ptr CDouble', `Int' } -> `CInt' void- #}
 
 fromList :: [Double] -> IO Vector
 fromList xs = withArrayLen (map realToFrac xs) $ \n ptr ->
