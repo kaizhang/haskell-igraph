@@ -8,9 +8,10 @@ module IGraph.Structure
     ) where
 
 import           Control.Monad
+import           Data.Either               (fromRight)
 import           Data.Hashable             (Hashable)
 import qualified Data.HashMap.Strict       as M
-import           Data.Serialize            (Serialize)
+import           Data.Serialize            (Serialize, decode)
 import           Foreign
 import           Foreign.C.Types
 import           System.IO.Unsafe          (unsafePerformIO)
@@ -32,7 +33,8 @@ inducedSubgraph gr vs = unsafePerformIO $ do
     g' <- igraphInducedSubgraph (_graph gr) vsptr IgraphSubgraphCreateFromScratch
     nV <- igraphVcount g'
     labels <- forM [0 .. nV - 1] $ \i ->
-        igraphHaskellAttributeVAS g' vertexAttr i >>= fromBS
+        igraphHaskellAttributeVAS g' vertexAttr i >>= bsToByteString >>=
+            return . fromRight (error "decode failed") . decode
     return $ LGraph g' $ M.fromListWith (++) $ zip labels $ map return [0..nV-1]
 
 -- | Closeness centrality

@@ -26,6 +26,8 @@ module IGraph.Internal.Data
     , toStrVector
 
     , BSLen(..)
+    , asBS
+    , bsToByteString
     , BSVector(..)
     , withBSVector
     , bsvectorNew
@@ -49,6 +51,8 @@ module IGraph.Internal.Data
 
 import Control.Monad
 import qualified Data.ByteString.Char8 as B
+import Data.ByteString (packCStringLen)
+import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import Foreign
 import Foreign.C.Types
 import Foreign.C.String
@@ -64,17 +68,19 @@ import Data.List.Split (chunksOf)
 --------------------------------------------------------------------------------
 
 {#pointer *igraph_vector_t as Vector foreign finalizer
-    igraph_vector_destroy newtype#}
+    my_igraph_vector_destroy newtype#}
 
 -- Construtors and destructors
 
 allocaVector :: (Ptr Vector -> IO a) -> IO a
 allocaVector f = mallocBytes {# sizeof igraph_vector_t #} >>= f
+{-# INLINE allocaVector #-}
 
 addVectorFinalizer :: Ptr Vector -> IO Vector
 addVectorFinalizer ptr = do
-    vec <- newForeignPtr igraph_vector_destroy ptr
+    vec <- newForeignPtr my_igraph_vector_destroy ptr
     return $ Vector vec
+{-# INLINE addVectorFinalizer #-}
 
 {#fun igraph_vector_init as igraphVectorNew
     { allocaVector- `Vector' addVectorFinalizer*
@@ -182,41 +188,54 @@ toStrVector xs = do
 -- Customized string vector
 --------------------------------------------------------------------------------
 
-newtype BSLen = BSLen CStringLen
+{#pointer *bytestring_t as BSLen foreign newtype#}
 
-instance Storable BSLen where
-    sizeOf _ = {#sizeof bytestring_t #}
-    alignment _ = {#alignof bytestring_t #}
-    peek p = do
-        n <- ({#get bytestring_t->len #} p)
-        ptr <- {#get bytestring_t->value #} p
-        return $ BSLen (ptr, fromIntegral n)
-    poke p (BSLen (ptr, n)) = {#set bytestring_t.len #} p (fromIntegral n) >>
-        {#set bytestring_t.value #} p ptr
+bsToByteString :: Ptr BSLen -> IO B.ByteString
+bsToByteString ptr = do
+    n <- {#get bytestring_t->len #} ptr
+    str <- {#get bytestring_t->value #} ptr
+    packCStringLen (str, fromIntegral n)
+{-# INLINE bsToByteString #-}
+
+asBS :: B.ByteString -> (Ptr BSLen -> IO a) -> IO a
+asBS x f = unsafeUseAsCStringLen x $ \(str, n) -> do
+    fptr <- mallocForeignPtrBytes {#sizeof bytestring_t #}
+    withForeignPtr fptr $ \ptr -> do
+        {#set bytestring_t.len #} ptr (fromIntegral n)
+        {#set bytestring_t.value #} ptr str
+        f ptr
+{-# INLINE asBS #-}
 
 {#pointer *bsvector_t as BSVector foreign finalizer bsvector_destroy newtype#}
 
-{#fun bsvector_init as bsvectorNew { +, `Int' } -> `BSVector' #}
+allocaBSVector :: (Ptr BSVector -> IO a) -> IO a
+allocaBSVector f = mallocBytes {# sizeof bsvector_t #} >>= f
+{-# INLINE allocaBSVector #-}
 
---{#fun bsvector_get as bsVectorGet { `BSVectorPtr', `Int', + } -> `Ptr (Ptr BSLen)' id #}
+addBSVectorFinalizer :: Ptr BSVector -> IO BSVector
+addBSVectorFinalizer ptr = do
+    vec <- newForeignPtr bsvector_destroy ptr
+    return $ BSVector vec
+{-# INLINE addBSVectorFinalizer #-}
 
-{-
-bsVectorGet :: BSVectorPtr -> Int -> BSLen
-bsVectorGet vec i = unsafePerformIO $ do
-    ptrptr <- bsVectorGet vec i
-    peek ptrptr >>= peek
-    -}
+{#fun bsvector_init as bsvectorNew
+    { allocaBSVector- `BSVector' addBSVectorFinalizer*
+    , `Int'
+    } -> `CInt' void- #}
 
-{#fun bsvector_set as ^ { `BSVector', `Int', `Ptr ()'} -> `()' #}
+{#fun bsvector_set as bsvectorSet' { `BSVector', `Int', castPtr `Ptr BSLen' } -> `()' #}
 
-toBSVector :: [BSLen] -> IO BSVector
+bsvectorSet :: BSVector -> Int -> B.ByteString -> IO ()
+bsvectorSet vec i bs = asBS bs (bsvectorSet' vec i)
+{-# INLINE bsvectorSet #-}
+
+toBSVector :: [B.ByteString] -> IO BSVector
 toBSVector xs = do
     vec <- bsvectorNew n
-    forM_ (zip [0..] xs) $ \(i, x) -> with x $ \ptr -> bsvectorSet vec i $ castPtr ptr
+    foldM_ (\i x -> bsvectorSet vec i x >> return (i+1)) 0 xs
     return vec
   where
     n = length xs
-
 
 {#pointer *igraph_matrix_t as Matrix foreign finalizer igraph_matrix_destroy newtype#}
 

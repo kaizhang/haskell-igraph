@@ -37,6 +37,7 @@ import           Control.Monad.Primitive
 import           Control.Monad.ST          (runST)
 import qualified Data.ByteString           as B
 import           Data.Conduit.Cereal
+import           Data.Either               (fromRight)
 import           Data.Hashable             (Hashable)
 import qualified Data.HashMap.Strict       as M
 import qualified Data.HashSet              as S
@@ -92,7 +93,8 @@ class MGraph d => Graph d where
     -- | Return the label of given node.
     nodeLab :: Serialize v => LGraph d v e -> Node -> v
     nodeLab (LGraph g _) i = unsafePerformIO $
-        igraphHaskellAttributeVAS g vertexAttr i >>= fromBS
+        igraphHaskellAttributeVAS g vertexAttr i >>= bsToByteString >>=
+            return . fromRight (error "decode failed") . decode
     {-# INLINE nodeLab #-}
 
     -- | Return all nodes that are associated with given label.
@@ -104,7 +106,8 @@ class MGraph d => Graph d where
     edgeLab :: Serialize e => LGraph d v e -> Edge -> e
     edgeLab (LGraph g _) (fr,to) = unsafePerformIO $
         igraphGetEid g fr to True True >>=
-            igraphHaskellAttributeEAS g edgeAttr >>= fromBS
+            igraphHaskellAttributeEAS g edgeAttr >>= bsToByteString >>=
+                return . fromRight (error "decode failed") . decode
     {-# INLINE edgeLab #-}
 
     -- | Find the edge by edge ID.
@@ -115,7 +118,8 @@ class MGraph d => Graph d where
     -- | Find the edge label by edge ID.
     edgeLabByEid :: Serialize e => LGraph d v e -> Int -> e
     edgeLabByEid (LGraph g _) i = unsafePerformIO $
-        igraphHaskellAttributeEAS g edgeAttr i >>= fromBS
+        igraphHaskellAttributeEAS g edgeAttr i >>= bsToByteString >>=
+            return . fromRight (error "decode failed") . decode
     {-# INLINE edgeLabByEid #-}
 
 instance Graph U where
@@ -220,12 +224,12 @@ deserializeGraph nds ne = do
     let f i ((fr, to), attr) = unsafePrimToPrim $ do
             igraphVectorSet evec (i*2) $ fromIntegral fr
             igraphVectorSet evec (i*2+1) $ fromIntegral to
-            asBS attr $ \bs -> with bs $ \ptr -> bsvectorSet bsvec i $ castPtr ptr
+            bsvectorSet bsvec i $ encode attr
             return $ i + 1
     foldMC f 0
     gr@(MLGraph g) <- new 0
     addLNodes nds gr
-    unsafePrimToPrim $ withEdgeAttr $ \eattr -> with (mkStrRec eattr bsvec) $ \ptr -> do
+    unsafePrimToPrim $ withAttr edgeAttr bsvec $ \ptr -> do
             vptr <- fromPtrs [castPtr ptr]
             withVectorPtr vptr (igraphAddEdges g evec . castPtr)
     unsafeFreeze gr
@@ -245,7 +249,8 @@ unsafeFreeze :: (Hashable v, Eq v, Serialize v, PrimMonad m)
 unsafeFreeze (MLGraph g) = unsafePrimToPrim $ do
     nV <- igraphVcount g
     labels <- forM [0 .. nV - 1] $ \i ->
-        igraphHaskellAttributeVAS g vertexAttr i >>= fromBS
+        igraphHaskellAttributeVAS g vertexAttr i >>= bsToByteString >>=
+            return . fromRight (error "decode failed") . decode
     return $ LGraph g $ M.fromListWith (++) $ zip labels $ map return [0..nV-1]
   where
 
@@ -323,8 +328,7 @@ nmap fn gr = unsafePerformIO $ do
     (MLGraph g) <- thaw gr
     forM_ (nodes gr) $ \i -> do
         let label = fn (i, nodeLab gr i)
-        asBS label $ \bs ->
-            with bs (igraphHaskellAttributeVASSet g vertexAttr i)
+        asBS (encode label) (igraphHaskellAttributeVASSet g vertexAttr i)
     unsafeFreeze (MLGraph g)
 
 -- | Map a function over the edge labels in a graph.
@@ -335,6 +339,5 @@ emap fn gr = unsafePerformIO $ do
     forM_ (edges gr) $ \(fr, to) -> do
         i <- igraphGetEid g fr to True True
         let label = fn ((fr,to), edgeLabByEid gr i)
-        asBS label $ \bs ->
-            with bs (igraphHaskellAttributeEASSet g edgeAttr i)
+        asBS (encode label) (igraphHaskellAttributeEASSet g edgeAttr i)
     unsafeFreeze (MLGraph g)

@@ -18,51 +18,18 @@ import System.IO.Unsafe (unsafePerformIO)
 #include "igraph/igraph.h"
 #include "haskell_attributes.h"
 
--- The returned object will not be trackced by Haskell's GC. It should be freed
--- by foreign codes.
-asBS :: Serialize a => a -> (BSLen -> IO b) -> IO b
-asBS x fn = unsafeUseAsCStringLen (encode x) (fn . BSLen)
-{-# INLINE asBS #-}
+{#pointer *igraph_attribute_record_t as AttributeRecord foreign newtype#}
 
-asBSVector :: Serialize a => [a] -> (BSVector -> IO b) -> IO b
-asBSVector values fn = loop [] values
-  where
-    loop acc (x:xs) = unsafeUseAsCStringLen (encode x) $ \ptr ->
-        loop (BSLen ptr : acc) xs
-    loop acc _ = toBSVector (reverse acc) >>= fn
-{-# INLINE asBSVector #-}
-
-fromBS :: Serialize a => Ptr BSLen -> IO a
-fromBS ptr = do
-    BSLen x <- peek ptr
-    result <- decode <$> packCStringLen x
-    case result of
-        Left msg -> error msg
-        Right r -> return r
-{-# INLINE fromBS #-}
-
-mkStrRec :: CString    -- ^ name of the attribute
-         -> BSVector       -- ^ values of the attribute
-         -> AttributeRecord
-mkStrRec name xs = AttributeRecord name 2 xs
-{-# INLINE mkStrRec #-}
-
-data AttributeRecord = AttributeRecord CString Int BSVector
-
-instance Storable AttributeRecord where
-    sizeOf _ = {#sizeof igraph_attribute_record_t #}
-    alignment _ = {#alignof igraph_attribute_record_t #}
-    peek p = AttributeRecord
-        <$> ({#get igraph_attribute_record_t->name #} p)
-        <*> liftM fromIntegral ({#get igraph_attribute_record_t->type #} p)
-        <*> ( do ptr <- {#get igraph_attribute_record_t->value #} p
-                 fptr <- newForeignPtr_ . castPtr $ ptr
-                 return $ BSVector fptr )
-    poke p (AttributeRecord name t vptr) = do
-        {#set igraph_attribute_record_t.name #} p name
-        {#set igraph_attribute_record_t.type #} p $ fromIntegral t
-        withBSVector vptr $ \ptr ->
-            {#set igraph_attribute_record_t.value #} p $ castPtr ptr
+withAttr :: String
+         -> BSVector -> (Ptr AttributeRecord -> IO a) -> IO a
+withAttr name bs f = withBSVector bs $ \ptr -> do
+    fptr <- mallocForeignPtrBytes {#sizeof igraph_attribute_record_t #}
+    withForeignPtr fptr $ \attr -> withCString name $ \name' -> do
+        {#set igraph_attribute_record_t.name #} attr name'
+        {#set igraph_attribute_record_t.type #} attr 2
+        {#set igraph_attribute_record_t.value #} attr $ castPtr ptr
+        f attr
+{-# INLINE withAttr #-}
 
 {#fun igraph_haskell_attribute_has_attr as ^ { `IGraph', `AttributeElemtype', `String' } -> `Bool' #}
 

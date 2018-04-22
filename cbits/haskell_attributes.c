@@ -466,6 +466,8 @@ int igraph_haskell_attribute_add_edges(igraph_t *graph, const igraph_vector_t *e
       }
       if (oldrec->type == IGRAPH_ATTRIBUTE_STRING) {
 				if (ne != bsvector_size(newstr)) {
+					printf("number of edges: %d\n", ne);
+					printf("number of attributes: %d\n", bsvector_size(newstr));
 					IGRAPH_ERROR("Invalid string attribute length", IGRAPH_EINVAL);
 				}
 				IGRAPH_CHECK(bsvector_append(oldstr, newstr));

@@ -5,4 +5,6 @@
 
 void haskelligraph_init();
 
+void my_igraph_vector_destroy(igraph_vector_t* v);
+
 #endif
