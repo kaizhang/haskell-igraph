@@ -68,7 +68,7 @@ import Data.List.Split (chunksOf)
 --------------------------------------------------------------------------------
 
 {#pointer *igraph_vector_t as Vector foreign finalizer
-    my_igraph_vector_destroy newtype#}
+    igraph_vector_destroy newtype#}
 
 -- Construtors and destructors
 
@@ -78,7 +78,7 @@ allocaVector f = mallocBytes {# sizeof igraph_vector_t #} >>= f
 
 addVectorFinalizer :: Ptr Vector -> IO Vector
 addVectorFinalizer ptr = do
-    vec <- newForeignPtr my_igraph_vector_destroy ptr
+    vec <- newForeignPtr igraph_vector_destroy ptr
     return $ Vector vec
 {-# INLINE addVectorFinalizer #-}
 
@@ -128,9 +128,21 @@ toList vec = do
 
 
 {#pointer *igraph_vector_ptr_t as VectorPtr foreign finalizer
-    igraph_vector_ptr_destroy_all newtype#}
+    igraph_vector_ptr_destroy newtype#}
 
-{#fun igraph_vector_ptr_init as igraphVectorPtrNew { +, `Int' } -> `VectorPtr' #}
+allocaVectorPtr :: (Ptr VectorPtr -> IO a) -> IO a
+allocaVectorPtr f = mallocBytes {# sizeof igraph_vector_ptr_t #} >>= f
+{-# INLINE allocaVectorPtr #-}
+
+addVectorPtrFinalizer :: Ptr VectorPtr -> IO VectorPtr
+addVectorPtrFinalizer ptr = do
+    vec <- newForeignPtr igraph_vector_ptr_destroy ptr
+    return $ VectorPtr vec
+{-# INLINE addVectorPtrFinalizer #-}
+
+{#fun igraph_vector_ptr_init as igraphVectorPtrNew
+    { allocaVectorPtr- `VectorPtr' addVectorPtrFinalizer*
+    , `Int' } -> `CInt' void- #}
 
 {#fun igraph_vector_ptr_e as ^ { `VectorPtr', `Int' } -> `Ptr ()' #}
 {#fun igraph_vector_ptr_set as ^ { `VectorPtr', `Int', id `Ptr ()' } -> `()' #}

@@ -21,11 +21,13 @@ import IGraph.Internal.C2HS
 
 allocaIGraph :: (Ptr IGraph -> IO a) -> IO a
 allocaIGraph f = mallocBytes {# sizeof igraph_t #} >>= f
+{-# INLINE allocaIGraph #-}
 
 addIGraphFinalizer :: Ptr IGraph -> IO IGraph
 addIGraphFinalizer ptr = do
     vec <- newForeignPtr igraph_destroy ptr
     return $ IGraph vec
+{-# INLINE addIGraphFinalizer #-}
 
 {#fun igraph_empty as igraphNew'
     { allocaIGraph- `IGraph' addIGraphFinalizer*

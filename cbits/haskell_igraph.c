@@ -1,11 +1,6 @@
 #include <igraph/igraph.h>
 #include "haskell_attributes.h"
 
-void my_igraph_vector_destroy(igraph_vector_t* v) {
-    printf("free vector\n");
-    igraph_vector_destroy(v);
-}
-
 const igraph_attribute_table_t igraph_haskell_attribute_table={
   &igraph_haskell_attribute_init, &igraph_haskell_attribute_destroy,
   &igraph_haskell_attribute_copy, &igraph_haskell_attribute_add_vertices,
