@@ -32,11 +32,18 @@ getSubisomorphisms g1 g2 = unsafePerformIO $ do
     gptr1 = _graph g1
     gptr2 = _graph g2
 {-# INLINE getSubisomorphisms #-}
-{#fun igraph_get_subisomorphisms_vf2 as ^ { `IGraph', `IGraph',
-    id `Ptr ()', id `Ptr ()', id `Ptr ()', id `Ptr ()', `VectorPtr',
-    id `FunPtr (Ptr IGraph -> Ptr IGraph -> CInt -> CInt -> Ptr () -> IO CInt)',
-    id `FunPtr (Ptr IGraph -> Ptr IGraph -> CInt -> CInt -> Ptr () -> IO CInt)',
-    id `Ptr ()'} -> `Int' #}
+{#fun igraph_get_subisomorphisms_vf2 as ^
+    { `IGraph'
+    , `IGraph'
+    , id `Ptr ()'
+    , id `Ptr ()'
+    , id `Ptr ()'
+    , id `Ptr ()'
+    , `VectorPtr'
+    , id `FunPtr (Ptr IGraph -> Ptr IGraph -> CInt -> CInt -> Ptr () -> IO CInt)'
+    , id `FunPtr (Ptr IGraph -> Ptr IGraph -> CInt -> CInt -> Ptr () -> IO CInt)'
+    , id `Ptr ()'
+    } -> `CInt' void- #}
 
 -- | Determine whether two graphs are isomorphic.
 isomorphic :: Graph d
@@ -47,7 +54,7 @@ isomorphic g1 g2 = unsafePerformIO $ alloca $ \ptr -> do
     _ <- igraphIsomorphic (_graph g1) (_graph g2) ptr
     x <- peek ptr
     return (x /= 0)
-{#fun igraph_isomorphic as ^ { `IGraph', `IGraph', id `Ptr CInt' } -> `Int' #}
+{#fun igraph_isomorphic as ^ { `IGraph', `IGraph', id `Ptr CInt' } -> `CInt' void- #}
 
 -- | Creates a graph from the given isomorphism class.
 -- This function is implemented only for graphs with three or four vertices.

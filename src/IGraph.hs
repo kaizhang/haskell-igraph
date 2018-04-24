@@ -3,8 +3,8 @@
 module IGraph
     ( Graph(..)
     , LGraph(..)
-    , U(..)
-    , D(..)
+    , U
+    , D
     , decodeC
     , empty
     , mkGraph
@@ -20,19 +20,16 @@ module IGraph
     , pre
     , suc
 
-    , mapNodes
-    , mapEdges
-    , filterNodes
-    , filterEdges
-
     , nmap
     , emap
+
+    , nfilter
+    , efilter
     ) where
 
 import           Conduit
-import           Control.Arrow             ((***))
-import           Control.Monad             (forM, forM_, liftM, replicateM,
-                                            unless)
+import           Control.Arrow             ((&&&))
+import           Control.Monad             (forM, forM_, liftM, replicateM)
 import           Control.Monad.Primitive
 import           Control.Monad.ST          (runST)
 import qualified Data.ByteString           as B
@@ -42,10 +39,9 @@ import           Data.Hashable             (Hashable)
 import qualified Data.HashMap.Strict       as M
 import qualified Data.HashSet              as S
 import           Data.List                 (sortBy)
-import           Data.Maybe
 import           Data.Ord                  (comparing)
 import           Data.Serialize
-import           Foreign                   (castPtr, with)
+import           Foreign                   (castPtr)
 import           System.IO.Unsafe          (unsafePerformIO)
 
 import           IGraph.Internal
@@ -68,6 +64,10 @@ class MGraph d => Graph d where
     nodes gr = [0 .. nNodes gr - 1]
     {-# INLINE nodes #-}
 
+    labNodes :: Serialize v => LGraph d v e -> [LNode v]
+    labNodes gr = map (\i -> (i, nodeLab gr i)) $ nodes gr
+    {-# INLINE labNodes #-}
+
     -- | Return the number of edges in a graph.
     nEdges :: LGraph d v e -> Int
     nEdges (LGraph g _) = unsafePerformIO $ igraphEcount g
@@ -75,10 +75,12 @@ class MGraph d => Graph d where
 
     -- | Return all edges.
     edges :: LGraph d v e -> [Edge]
-    edges gr@(LGraph g _) = unsafePerformIO $ mapM (igraphEdge g) [0..n-1]
-      where
-        n = nEdges gr
+    edges gr = map (getEdgeByEid gr) [0 .. nEdges gr - 1]
     {-# INLINE edges #-}
+
+    labEdges :: Serialize e => LGraph d v e -> [LEdge e]
+    labEdges gr = map (getEdgeByEid gr &&& getEdgeLabByEid gr) [0 .. nEdges gr - 1]
+    {-# INLINE labEdges #-}
 
     -- | Whether a edge exists in the graph.
     hasEdge :: LGraph d v e -> Edge -> Bool
@@ -109,15 +111,15 @@ class MGraph d => Graph d where
 
     -- | Find the edge by edge ID.
     getEdgeByEid :: LGraph d v e -> Int -> Edge
-    getEdgeByEid gr@(LGraph g _) i = unsafePerformIO $ igraphEdge g i
+    getEdgeByEid (LGraph g _) i = unsafePerformIO $ igraphEdge g i
     {-# INLINE getEdgeByEid #-}
 
     -- | Find the edge label by edge ID.
-    edgeLabByEid :: Serialize e => LGraph d v e -> Int -> e
-    edgeLabByEid (LGraph g _) i = unsafePerformIO $
+    getEdgeLabByEid :: Serialize e => LGraph d v e -> Int -> e
+    getEdgeLabByEid (LGraph g _) i = unsafePerformIO $
         igraphHaskellAttributeEAS g edgeAttr i >>= bsToByteString >>=
             return . fromRight (error "decode failed") . decode
-    {-# INLINE edgeLabByEid #-}
+    {-# INLINE getEdgeLabByEid #-}
 
 instance Graph U where
     isDirected = const False
@@ -139,7 +141,7 @@ instance (Graph d, Serialize v, Serialize e, Hashable v, Eq v)
             put $ nNodes gr
             go (nodeLab gr) (nNodes gr) 0
             put $ nEdges gr
-            go (\i -> (getEdgeByEid gr i, edgeLabByEid gr i)) (nEdges gr) 0
+            go (\i -> (getEdgeByEid gr i, getEdgeLabByEid gr i)) (nEdges gr) 0
           where
             go f n i | i >= n = return ()
                      | otherwise = put (f i) >> go f n (i+1)
@@ -176,8 +178,6 @@ mkGraph vattr es = runST $ do
     addLNodes vattr g
     addLEdges es g
     unsafeFreeze g
-  where
-    n = length vattr
 
 -- | Create a graph from labeled edges.
 fromLabeledEdges :: (Graph d, Hashable v, Serialize v, Eq v, Serialize e)
@@ -223,7 +223,7 @@ deserializeGraph nds ne = do
             igraphVectorSet evec (i*2+1) $ fromIntegral to
             bsvectorSet bsvec i $ encode attr
             return $ i + 1
-    foldMC f 0
+    _ <- foldMC f 0
     gr@(MLGraph g) <- new 0
     addLNodes nds gr
     unsafePrimToPrim $ withAttr edgeAttr bsvec $ \ptr -> do
@@ -280,61 +280,40 @@ pre gr i = unsafePerformIO $ do
     vit <- igraphVitNew (_graph gr) vs
     vitToList vit
 
--- | Keep nodes that satisfy the constraint
-filterNodes :: (Hashable v, Eq v, Serialize v, Graph d)
-            => (LGraph d v e -> Node -> Bool) -> LGraph d v e -> LGraph d v e
-filterNodes f gr = runST $ do
-    let deleted = filter (not . f gr) $ nodes gr
+-- | Apply a function to change nodes' labels.
+nmap :: (Graph d, Serialize v1, Serialize v2, Hashable v2, Eq v2)
+     => (LNode v1 -> v2) -> LGraph d v1 e -> LGraph d v2 e
+nmap f gr = runST $ do
+    (MLGraph gptr) <- thaw gr
+    let gr' = MLGraph gptr
+    forM_ (nodes gr) $ \x -> setNodeAttr x (f (x, nodeLab gr x)) gr'
+    unsafeFreeze gr'
+
+-- | Apply a function to change edges' labels.
+emap :: (Graph d, Serialize e1, Serialize e2, Hashable v, Eq v, Serialize v)
+     => (LEdge e1 -> e2) -> LGraph d v e1 -> LGraph d v e2
+emap f gr = runST $ do
+    (MLGraph gptr) <- thaw gr
+    let gr' = MLGraph gptr
+    forM_ [0 .. nEdges gr - 1] $ \i -> do
+        let lab = f (getEdgeByEid gr i, getEdgeLabByEid gr i)
+        setEdgeAttr i lab gr'
+    unsafeFreeze gr'
+
+-- | Keep nodes that satisfy the constraint.
+nfilter :: (Hashable v, Eq v, Serialize v, Graph d)
+        => (LNode v -> Bool) -> LGraph d v e -> LGraph d v e
+nfilter f gr = runST $ do
+    let deleted = fst $ unzip $ filter (not . f) $ labNodes gr
     gr' <- thaw gr
     delNodes deleted gr'
     unsafeFreeze gr'
 
--- | Apply a function to change nodes' labels.
-mapNodes :: (Graph d, Serialize v1, Serialize v2, Hashable v2, Eq v2)
-         => (Node -> v1 -> v2) -> LGraph d v1 e -> LGraph d v2 e
-mapNodes f gr = runST $ do
-    (MLGraph gptr) <- thaw gr
-    let gr' = MLGraph gptr
-    forM_ (nodes gr) $ \x -> setNodeAttr x (f x $ nodeLab gr x) gr'
-    unsafeFreeze gr'
-
--- | Apply a function to change edges' labels.
-mapEdges :: (Graph d, Serialize e1, Serialize e2, Hashable v, Eq v, Serialize v)
-         => (Edge -> e1 -> e2) -> LGraph d v e1 -> LGraph d v e2
-mapEdges f gr = runST $ do
-    (MLGraph gptr) <- thaw gr
-    let gr' = MLGraph gptr
-    forM_ [0 .. nEdges gr - 1] $ \x -> do
-        e <- unsafePrimToPrim $ igraphEdge (_graph gr) x
-        setEdgeAttr x (f e $ edgeLabByEid gr x) gr'
-    unsafeFreeze gr'
-
--- | Keep nodes that satisfy the constraint.
-filterEdges :: (Hashable v, Eq v, Serialize v, Graph d)
-            => (LGraph d v e -> Edge -> Bool) -> LGraph d v e -> LGraph d v e
-filterEdges f gr = runST $ do
-    let deleted = filter (not . f gr) $ edges gr
+-- | Keep edges that satisfy the constraint.
+efilter :: (Hashable v, Eq v, Serialize v, Serialize e, Graph d)
+        => (LEdge e -> Bool) -> LGraph d v e -> LGraph d v e
+efilter f gr = runST $ do
+    let deleted = fst $ unzip $ filter (not . f) $ labEdges gr
     gr' <- thaw gr
     delEdges deleted gr'
     unsafeFreeze gr'
-
--- | Map a function over the node labels in a graph.
-nmap :: (Graph d, Serialize v, Hashable u, Serialize u, Eq u)
-     => ((Node, v) -> u) -> LGraph d v e -> LGraph d u e
-nmap fn gr = unsafePerformIO $ do
-    (MLGraph g) <- thaw gr
-    forM_ (nodes gr) $ \i -> do
-        let label = fn (i, nodeLab gr i)
-        asBS (encode label) (igraphHaskellAttributeVASSet g vertexAttr i)
-    unsafeFreeze (MLGraph g)
-
--- | Map a function over the edge labels in a graph.
-emap :: (Graph d, Serialize v, Hashable v, Eq v, Serialize e1, Serialize e2)
-     => ((Edge, e1) -> e2) -> LGraph d v e1 -> LGraph d v e2
-emap fn gr = unsafePerformIO $ do
-    (MLGraph g) <- thaw gr
-    forM_ (edges gr) $ \(fr, to) -> do
-        i <- igraphGetEid g fr to True True
-        let label = fn ((fr,to), edgeLabByEid gr i)
-        asBS (encode label) (igraphHaskellAttributeEASSet g edgeAttr i)
-    unsafeFreeze (MLGraph g)

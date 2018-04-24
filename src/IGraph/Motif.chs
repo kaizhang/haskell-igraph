@@ -7,14 +7,10 @@ module IGraph.Motif
 import Data.Hashable (Hashable)
 import System.IO.Unsafe (unsafePerformIO)
 
-import qualified Foreign.Marshal.Utils as C2HSImp
 import qualified Foreign.Ptr as C2HSImp
-import Foreign
-import Foreign.C.Types
 
 import IGraph
 {#import IGraph.Internal #}
-{#import IGraph.Internal.Constants #}
 
 #include "haskell_igraph.h"
 
@@ -68,7 +64,7 @@ triadCensus gr = unsafePerformIO $ do
 -- motifsRandesu
 
 {#fun igraph_triad_census as ^ { `IGraph'
-                               , `Vector' } -> `Int' #}
+                               , `Vector' } -> `CInt' void- #}
 
 {#fun igraph_motifs_randesu as ^ { `IGraph', `Vector', `Int'
-                                 , `Vector' } -> `Int' #}
+                                 , `Vector' } -> `CInt' void- #}

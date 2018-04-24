@@ -92,10 +92,8 @@ import Control.Monad
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString (packCStringLen)
 import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
-import System.IO.Unsafe (unsafePerformIO)
 import Data.List (transpose)
 import Data.List.Split (chunksOf)
-import Data.Serialize (Serialize, decode, encode)
 
 import Foreign
 import Foreign.C.Types

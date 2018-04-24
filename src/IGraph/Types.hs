@@ -1,9 +1,9 @@
 
 module IGraph.Types where
 
-import qualified Data.HashMap.Strict   as M
-
 type Node = Int
+type LNode a = (Node, a)
+
 type Edge = (Node, Node)
 type LEdge a = (Edge, a)
 

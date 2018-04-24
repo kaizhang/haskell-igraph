@@ -6,16 +6,11 @@ module IGraph.Layout
     , defaultLGL
     ) where
 
-import           Control.Applicative    ((<$>))
-import           Data.Default.Class
 import           Data.Maybe             (isJust)
 import           Foreign                (nullPtr)
-import           System.IO.Unsafe       (unsafePerformIO)
 
-import qualified Foreign.Marshal.Utils as C2HSImp
 import qualified Foreign.Ptr as C2HSImp
 import Foreign
-import Foreign.C.Types
 
 import           IGraph
 {#import IGraph.Internal #}
@@ -91,27 +86,29 @@ getLayout gr method = do
     n = nNodes gr
     gptr = _graph gr
 
-{#fun igraph_layout_kamada_kawai as ^ { `IGraph'
-, `Matrix'
-, `Int'
-, `Double'
-, `Double'
-, `Double'
-, `Double'
-, `Bool'
-, id `Ptr Vector'
-, id `Ptr Vector'
-, id `Ptr Vector'
-, id `Ptr Vector'
-} -> `Int' #}
+{#fun igraph_layout_kamada_kawai as ^
+    { `IGraph'
+    , `Matrix'
+    , `Int'
+    , `Double'
+    , `Double'
+    , `Double'
+    , `Double'
+    , `Bool'
+    , id `Ptr Vector'
+    , id `Ptr Vector'
+    , id `Ptr Vector'
+    , id `Ptr Vector'
+    } -> `CInt' void- #}
 
-{# fun igraph_layout_lgl as ^ { `IGraph'
-, `Matrix'
-, `Int'
-, `Double'
-, `Double'
-, `Double'
-, `Double'
-, `Double'
-, `Int'
-} -> `Int' #}
+{# fun igraph_layout_lgl as ^
+    { `IGraph'
+    , `Matrix'
+    , `Int'
+    , `Double'
+    , `Double'
+    , `Double'
+    , `Double'
+    , `Double'
+    , `Int'
+    } -> `CInt' void- #}

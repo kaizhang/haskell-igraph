@@ -7,10 +7,7 @@ module IGraph.Clique
 import Control.Applicative ((<$>))
 import System.IO.Unsafe (unsafePerformIO)
 
-import qualified Foreign.Marshal.Utils as C2HSImp
 import qualified Foreign.Ptr as C2HSImp
-import Foreign
-import Foreign.C.Types
 
 import IGraph
 {#import IGraph.Internal #}

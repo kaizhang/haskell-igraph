@@ -11,7 +11,6 @@ import           Control.Monad                  (when)
 import           Data.Hashable                  (Hashable)
 import           Data.Serialize                 (Serialize)
 
-import qualified Foreign.Marshal.Utils as C2HSImp
 import qualified Foreign.Ptr as C2HSImp
 
 import           IGraph

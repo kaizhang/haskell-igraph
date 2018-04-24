@@ -13,8 +13,6 @@ import           Data.Either               (fromRight)
 import           Data.Hashable             (Hashable)
 import qualified Data.HashMap.Strict       as M
 import           Data.Serialize            (Serialize, decode)
-import           Foreign
-import           Foreign.C.Types
 import           System.IO.Unsafe          (unsafePerformIO)
 
 import Foreign
@@ -132,24 +130,26 @@ personalizedPagerank gr reset ws d
     n = nNodes gr
     m = nEdges gr
 
-{#fun igraph_induced_subgraph as ^ { `IGraph'
-                                   , +160
-                                   , %`IGraphVs'
-                                   , `SubgraphImplementation' } -> `IGraph' #}
+{#fun igraph_induced_subgraph as ^
+    { `IGraph'
+    , allocaIGraph- `IGraph' addIGraphFinalizer*
+    , %`IGraphVs'
+    , `SubgraphImplementation'
+    } -> `CInt' void- #}
 
 {#fun igraph_closeness as ^ { `IGraph'
                             , `Vector'
                             , %`IGraphVs'
                             , `Neimode'
                             , `Vector'
-                            , `Bool' } -> `Int' #}
+                            , `Bool' } -> `CInt' void- #}
 
 {#fun igraph_betweenness as ^ { `IGraph'
                               , `Vector'
                               , %`IGraphVs'
                               , `Bool'
                               , `Vector'
-                              , `Bool' } -> `Int' #}
+                              , `Bool' } -> `CInt' void- #}
 
 {#fun igraph_eigenvector_centrality as ^ { `IGraph'
                                          , `Vector'
@@ -157,25 +157,29 @@ personalizedPagerank gr reset ws d
                                          , `Bool'
                                          , `Bool'
                                          , `Vector'
-                                         , `ArpackOpt' } -> `Int' #}
+                                         , `ArpackOpt' } -> `CInt' void- #}
 
-{#fun igraph_pagerank as ^ { `IGraph'
-                           , `PagerankAlgo'
-                           , `Vector'
-                           , id `Ptr CDouble'
-                           , %`IGraphVs'
-                           , `Bool'
-                           , `Double'
-                           , `Vector'
-                           , id `Ptr ()' } -> `Int' #}
+{#fun igraph_pagerank as ^
+    { `IGraph'
+    , `PagerankAlgo'
+    , `Vector'
+    , id `Ptr CDouble'
+    , %`IGraphVs'
+    , `Bool'
+    , `Double'
+    , `Vector'
+    , id `Ptr ()'
+    } -> `CInt' void- #}
 
-{#fun igraph_personalized_pagerank as ^ { `IGraph'
-                                        , `PagerankAlgo'
-                                        , `Vector'
-                                        , id `Ptr CDouble'
-                                        , %`IGraphVs'
-                                        , `Bool'
-                                        , `Double'
-                                        , `Vector'
-                                        , `Vector'
-                                        , id `Ptr ()' } -> `Int' #}
+{#fun igraph_personalized_pagerank as ^
+    { `IGraph'
+    , `PagerankAlgo'
+    , `Vector'
+    , id `Ptr CDouble'
+    , %`IGraphVs'
+    , `Bool'
+    , `Double'
+    , `Vector'
+    , `Vector'
+    , id `Ptr ()'
+    } -> `CInt' void- #}

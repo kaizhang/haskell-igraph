@@ -20,6 +20,7 @@ module IGraph.Internal.Types
 
     -- * Bytestring
     , BSLen(..)
+    , withBSLen
 
     -- * Bytestring vector
     , BSVector(..)
@@ -65,6 +66,7 @@ module IGraph.Internal.Types
 
     -- * Igraph attribute record
     , AttributeRecord(..)
+    , withAttributeRecord
 
     -- * Igraph arpack options type
     , ArpackOpt(..)
@@ -72,20 +74,7 @@ module IGraph.Internal.Types
     , igraphArpackNew
     ) where
 
-import Control.Monad
-import qualified Data.ByteString.Char8 as B
-import Data.ByteString (packCStringLen)
-import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
-import System.IO.Unsafe (unsafePerformIO)
-import Data.List (transpose)
-import Data.List.Split (chunksOf)
-import Data.Serialize (Serialize, decode, encode)
-
 import Foreign
-import Foreign.C.Types
-import Foreign.C.String
-
-{#import IGraph.Internal.Constants #}
 
 #include "haskell_attributes.h"
 #include "haskell_igraph.h"

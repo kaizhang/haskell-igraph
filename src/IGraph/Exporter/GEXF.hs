@@ -15,11 +15,9 @@ import           Data.Colour.SRGB          (channelBlue, channelGreen,
                                             channelRed, toSRGB24)
 import           Data.Hashable
 import           Data.Serialize
-import           Data.Tree.NTree.TypeDefs
 import           GHC.Generics
 import           IGraph
 import           Text.XML.HXT.Core
-import           Text.XML.HXT.DOM.TypeDefs
 
 instance Serialize (AlphaColour Double) where
     get = do

@@ -5,12 +5,10 @@ module IGraph.Community
     , findCommunity
     ) where
 
-import           Control.Applicative       ((<$>))
-import           Control.Monad
 import           Data.Default.Class
 import           Data.Function             (on)
-import           Data.List
-import           Data.Ord
+import           Data.List (sortBy, groupBy)
+import           Data.Ord (comparing)
 import           System.IO.Unsafe          (unsafePerformIO)
 
 import           Foreign
@@ -53,9 +51,9 @@ findCommunity gr opt = unsafePerformIO $ do
     result <- igraphVectorNew 0
     ws <- case _weights opt of
         Just w -> fromList w
-        _      -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
+        _      -> fmap Vector $ newForeignPtr_ $ castPtr nullPtr
 
-    case _method opt of
+    _ <- case _method opt of
         LeadingEigenvector -> do
             ap <- igraphArpackNew
             igraphCommunityLeadingEigenvector (_graph gr) ws nullPtr result
@@ -69,7 +67,7 @@ findCommunity gr opt = unsafePerformIO $ do
                                      IgraphSpincommUpdateConfig (_gamma opt)
                                      IgraphSpincommImpOrig 1.0
 
-    liftM ( map (fst . unzip) . groupBy ((==) `on` snd)
+    fmap ( map (fst . unzip) . groupBy ((==) `on` snd)
           . sortBy (comparing snd) . zip [0..] ) $ toList result
 
 {#fun igraph_community_spinglass as ^

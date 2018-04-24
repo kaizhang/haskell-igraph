@@ -10,10 +10,8 @@ module IGraph.Mutable
 
 import           Control.Monad                  (when, forM)
 import           Control.Monad.Primitive
-import qualified Data.ByteString.Char8          as B
 import           Data.Serialize                 (Serialize, encode)
 import           Foreign
-import           Foreign.C.String               (CString, withCString)
 
 import           IGraph.Internal
 import           IGraph.Internal.Initialization
@@ -55,7 +53,7 @@ class MGraph d where
     delNodes ns (MLGraph g) = unsafePrimToPrim $ do
         vptr <- fromList $ map fromIntegral ns
         vsptr <- igraphVsVector vptr
-        igraphDeleteVertices g vsptr
+        _ <- igraphDeleteVertices g vsptr
         return ()
 
     -- | Add edges to the graph.
@@ -87,7 +85,7 @@ instance MGraph U where
         eids <- forM es $ \(fr, to) -> igraphGetEid g fr to False True
         vptr <- fromList $ map fromIntegral eids
         esptr <- igraphEsVector vptr
-        igraphDeleteEdges g esptr
+        _ <- igraphDeleteEdges g esptr
         return ()
 
 instance MGraph D where
