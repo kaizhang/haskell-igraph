@@ -15,11 +15,8 @@ import           Data.Serialize                 (Serialize, encode)
 import           Foreign
 import           Foreign.C.String               (CString, withCString)
 
-import           IGraph.Internal.Attribute
-import           IGraph.Internal.Data
-import           IGraph.Internal.Graph
+import           IGraph.Internal
 import           IGraph.Internal.Initialization
-import           IGraph.Internal.Selector
 import           IGraph.Types
 
 vertexAttr :: String

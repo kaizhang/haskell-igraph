@@ -27,11 +27,8 @@ library
   exposed-modules:
     IGraph.Internal.Initialization
     IGraph.Internal.Constants
-    IGraph.Internal.Arpack
-    IGraph.Internal.Data
-    IGraph.Internal.Graph
-    IGraph.Internal.Attribute
-    IGraph.Internal.Selector
+    IGraph.Internal.Types
+    IGraph.Internal
     IGraph
     IGraph.Types
     IGraph.Mutable

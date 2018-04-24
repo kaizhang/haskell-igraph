@@ -17,7 +17,7 @@ import           Test.Utils
 
 import           IGraph
 import           IGraph.Exporter.GEXF
-import           IGraph.Internal.Attribute
+import           IGraph.Internal
 import           IGraph.Mutable
 import           IGraph.Structure
 

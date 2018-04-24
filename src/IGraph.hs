@@ -48,11 +48,8 @@ import           Data.Serialize
 import           Foreign                   (castPtr, with)
 import           System.IO.Unsafe          (unsafePerformIO)
 
-import           IGraph.Internal.Attribute
+import           IGraph.Internal
 import           IGraph.Internal.Constants
-import           IGraph.Internal.Data
-import           IGraph.Internal.Graph
-import           IGraph.Internal.Selector
 import           IGraph.Mutable
 import           IGraph.Types
 

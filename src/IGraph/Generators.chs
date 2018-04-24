@@ -1,5 +1,7 @@
+{-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Generators
-    ( ErdosRenyiModel(..)
+    ( full
+    , ErdosRenyiModel(..)
     , erdosRenyiGame
     , degreeSequenceGame
     , rewire
@@ -9,12 +11,21 @@ import           Control.Monad                  (when)
 import           Data.Hashable                  (Hashable)
 import           Data.Serialize                 (Serialize)
 
+import qualified Foreign.Marshal.Utils as C2HSImp
+import qualified Foreign.Ptr as C2HSImp
+
 import           IGraph
-import           IGraph.Internal.Constants
-import           IGraph.Internal.Data
-import           IGraph.Internal.Graph
-import           IGraph.Internal.Initialization
 import           IGraph.Mutable
+{#import IGraph.Internal #}
+{#import IGraph.Internal.Constants #}
+{# import IGraph.Internal.Initialization #}
+
+#include "haskell_igraph.h"
+
+{#fun igraph_full as full
+    { allocaIGraph- `IGraph' addIGraphFinalizer*
+    , `Int', `Bool', `Bool'
+    } -> `CInt' void- #}
 
 data ErdosRenyiModel = GNP Int Double
                      | GNM Int Int
@@ -31,6 +42,10 @@ erdosRenyiGame (GNM n m) d self = do
     gp <- igraphInit >> igraphErdosRenyiGame IgraphErdosRenyiGnm n
         (fromIntegral m) (isD d) self
     unsafeFreeze $ MLGraph gp
+{#fun igraph_erdos_renyi_game as ^
+    { allocaIGraph- `IGraph' addIGraphFinalizer*
+    , `ErdosRenyi', `Int', `Double', `Bool', `Bool'
+    } -> `CInt' void- #}
 
 -- | Generates a random graph with a given degree sequence.
 degreeSequenceGame :: [Int]   -- ^ Out degree
@@ -41,6 +56,10 @@ degreeSequenceGame out_deg in_deg = do
     in_deg' <- fromList $ map fromIntegral in_deg
     gp <- igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
     unsafeFreeze $ MLGraph gp
+{#fun igraph_degree_sequence_game as ^
+    { allocaIGraph- `IGraph' addIGraphFinalizer*
+    , `Vector', `Vector', `Degseq'
+    } -> `CInt' void- #}
 
 -- | Randomly rewires a graph while preserving the degree distribution.
 rewire :: (Graph d, Hashable v, Serialize v, Eq v, Serialize e)
@@ -52,3 +71,4 @@ rewire n gr = do
     err <- igraphRewire gptr n IgraphRewiringSimple
     when (err /= 0) $ error "failed to rewire graph!"
     unsafeFreeze $ MLGraph gptr
+{#fun igraph_rewire as ^ { `IGraph', `Int', `Rewiring' } -> `Int' #}

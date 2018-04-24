@@ -15,8 +15,7 @@ import Foreign.C.Types
 import           IGraph
 import           IGraph.Internal.Initialization (igraphInit)
 import           IGraph.Mutable
-{#import IGraph.Internal.Graph #}
-{#import IGraph.Internal.Data #}
+{#import IGraph.Internal #}
 
 #include "haskell_igraph.h"
 
@@ -60,6 +59,10 @@ isoclassCreate :: Graph d
 isoclassCreate size idx d = unsafePerformIO $ do
     gp <- igraphInit >> igraphIsoclassCreate size idx (isD d)
     unsafeFreeze $ MLGraph gp
+{#fun igraph_isoclass_create as ^
+    { allocaIGraph- `IGraph' addIGraphFinalizer*
+    , `Int', `Int', `Bool'
+    } -> `CInt' void- #}
 
 isoclass3 :: Graph d => d -> [LGraph d () ()]
 isoclass3 d = map (flip (isoclassCreate 3) d) n

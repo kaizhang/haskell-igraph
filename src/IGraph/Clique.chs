@@ -13,8 +13,7 @@ import Foreign
 import Foreign.C.Types
 
 import IGraph
-{#import IGraph.Internal.Graph #}
-{#import IGraph.Internal.Data #}
+{#import IGraph.Internal #}
 
 #include "haskell_igraph.h"
 

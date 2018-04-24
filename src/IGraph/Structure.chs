@@ -22,12 +22,8 @@ import Foreign.C.Types
 
 import           IGraph
 import           IGraph.Mutable
-{#import IGraph.Internal.Graph #}
-{#import IGraph.Internal.Selector #}
+{#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
-{#import IGraph.Internal.Data #}
-{#import IGraph.Internal.Arpack #}
-{#import IGraph.Internal.Attribute #}
 
 #include "igraph/igraph.h"
 

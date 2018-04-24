@@ -17,9 +17,7 @@ import           Foreign
 import           Foreign.C.Types
 
 import           IGraph
-{#import IGraph.Internal.Arpack #}
-{#import IGraph.Internal.Graph #}
-{#import IGraph.Internal.Data #}
+{#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
 
 #include "haskell_igraph.h"
