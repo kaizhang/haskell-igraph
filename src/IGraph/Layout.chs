@@ -1,3 +1,4 @@
+{-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Layout
     ( getLayout
     , LayoutMethod(..)
@@ -11,10 +12,16 @@ import           Data.Maybe             (isJust)
 import           Foreign                (nullPtr)
 import           System.IO.Unsafe       (unsafePerformIO)
 
+import qualified Foreign.Marshal.Utils as C2HSImp
+import qualified Foreign.Ptr as C2HSImp
+import Foreign
+import Foreign.C.Types
+
 import           IGraph
-import           IGraph.Internal.Clique
-import           IGraph.Internal.Data
-import           IGraph.Internal.Layout
+{#import IGraph.Internal.Graph #}
+{#import IGraph.Internal.Data #}
+
+#include "igraph/igraph.h"
 
 data LayoutMethod =
     KamadaKawai { kk_seed      :: !(Maybe [(Double, Double)])
@@ -84,3 +91,28 @@ getLayout gr method = do
   where
     n = nNodes gr
     gptr = _graph gr
+
+{#fun igraph_layout_kamada_kawai as ^ { `IGraph'
+, `Matrix'
+, `Int'
+, `Double'
+, `Double'
+, `Double'
+, `Double'
+, `Bool'
+, id `Ptr Vector'
+, id `Ptr Vector'
+, id `Ptr Vector'
+, id `Ptr Vector'
+} -> `Int' #}
+
+{# fun igraph_layout_lgl as ^ { `IGraph'
+, `Matrix'
+, `Int'
+, `Double'
+, `Double'
+, `Double'
+, `Double'
+, `Double'
+, `Int'
+} -> `Int' #}

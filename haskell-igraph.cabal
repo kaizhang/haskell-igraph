@@ -25,6 +25,13 @@ Flag graphics
 
 library
   exposed-modules:
+    IGraph.Internal.Initialization
+    IGraph.Internal.Constants
+    IGraph.Internal.Arpack
+    IGraph.Internal.Data
+    IGraph.Internal.Graph
+    IGraph.Internal.Attribute
+    IGraph.Internal.Selector
     IGraph
     IGraph.Types
     IGraph.Mutable
@@ -37,19 +44,6 @@ library
     IGraph.Layout
     IGraph.Generators
     IGraph.Exporter.GEXF
-    IGraph.Internal.Initialization
-    IGraph.Internal.Constants
-    IGraph.Internal.Arpack
-    IGraph.Internal.Data
-    IGraph.Internal.Graph
-    IGraph.Internal.Attribute
-    IGraph.Internal.Isomorphism
-    IGraph.Internal.Selector
-    IGraph.Internal.Structure
-    IGraph.Internal.Motif
-    IGraph.Internal.Clique
-    IGraph.Internal.Community
-    IGraph.Internal.Layout
 
   other-modules:
     IGraph.Internal.C2HS

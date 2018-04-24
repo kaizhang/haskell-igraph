@@ -1,3 +1,4 @@
+{-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Isomorphism
     ( getSubisomorphisms
     , isomorphic
@@ -6,16 +7,18 @@ module IGraph.Isomorphism
     , isoclass4
     ) where
 
-import           Foreign
-import           Foreign.C.Types
 import           System.IO.Unsafe               (unsafePerformIO)
 
+import Foreign
+import Foreign.C.Types
+
 import           IGraph
-import           IGraph.Internal.Data
-import           IGraph.Internal.Graph
 import           IGraph.Internal.Initialization (igraphInit)
-import           IGraph.Internal.Isomorphism
 import           IGraph.Mutable
+{#import IGraph.Internal.Graph #}
+{#import IGraph.Internal.Data #}
+
+#include "haskell_igraph.h"
 
 getSubisomorphisms :: Graph d
                    => LGraph d v1 e1  -- ^ graph to be searched in
@@ -30,6 +33,11 @@ getSubisomorphisms g1 g2 = unsafePerformIO $ do
     gptr1 = _graph g1
     gptr2 = _graph g2
 {-# INLINE getSubisomorphisms #-}
+{#fun igraph_get_subisomorphisms_vf2 as ^ { `IGraph', `IGraph',
+    id `Ptr ()', id `Ptr ()', id `Ptr ()', id `Ptr ()', `VectorPtr',
+    id `FunPtr (Ptr IGraph -> Ptr IGraph -> CInt -> CInt -> Ptr () -> IO CInt)',
+    id `FunPtr (Ptr IGraph -> Ptr IGraph -> CInt -> CInt -> Ptr () -> IO CInt)',
+    id `Ptr ()'} -> `Int' #}
 
 -- | Determine whether two graphs are isomorphic.
 isomorphic :: Graph d
@@ -40,6 +48,7 @@ isomorphic g1 g2 = unsafePerformIO $ alloca $ \ptr -> do
     _ <- igraphIsomorphic (_graph g1) (_graph g2) ptr
     x <- peek ptr
     return (x /= 0)
+{#fun igraph_isomorphic as ^ { `IGraph', `IGraph', id `Ptr CInt' } -> `Int' #}
 
 -- | Creates a graph from the given isomorphism class.
 -- This function is implemented only for graphs with three or four vertices.

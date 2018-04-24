@@ -6,8 +6,6 @@ module IGraph.Mutable
     , setNodeAttr
     , edgeAttr
     , vertexAttr
-    , withVertexAttr
-    , withEdgeAttr
     )where
 
 import           Control.Monad                  (when, forM)
@@ -29,14 +27,6 @@ vertexAttr = "vertex_attribute"
 
 edgeAttr :: String
 edgeAttr = "edge_attribute"
-
-withVertexAttr :: (CString -> IO a) -> IO a
-withVertexAttr = withCString vertexAttr
-{-# INLINE withVertexAttr #-}
-
-withEdgeAttr :: (CString -> IO a) -> IO a
-withEdgeAttr = withCString edgeAttr
-{-# INLINE withEdgeAttr #-}
 
 -- | Mutable labeled graph.
 newtype MLGraph m d v e = MLGraph IGraph

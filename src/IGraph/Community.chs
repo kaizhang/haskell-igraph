@@ -1,3 +1,4 @@
+{-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Community
     ( CommunityOpt(..)
     , CommunityMethod(..)
@@ -10,15 +11,18 @@ import           Data.Default.Class
 import           Data.Function             (on)
 import           Data.List
 import           Data.Ord
-import           Foreign
-import           Foreign.C.Types
 import           System.IO.Unsafe          (unsafePerformIO)
 
+import           Foreign
+import           Foreign.C.Types
+
 import           IGraph
-import           IGraph.Internal.Arpack
-import           IGraph.Internal.Community
-import           IGraph.Internal.Constants
-import           IGraph.Internal.Data
+{#import IGraph.Internal.Arpack #}
+{#import IGraph.Internal.Graph #}
+{#import IGraph.Internal.Data #}
+{#import IGraph.Internal.Constants #}
+
+#include "haskell_igraph.h"
 
 data CommunityOpt = CommunityOpt
     { _method    :: CommunityMethod
@@ -69,3 +73,46 @@ findCommunity gr opt = unsafePerformIO $ do
 
     liftM ( map (fst . unzip) . groupBy ((==) `on` snd)
           . sortBy (comparing snd) . zip [0..] ) $ toList result
+
+{#fun igraph_community_spinglass as ^
+{ `IGraph'
+, `Vector'
+, id `Ptr CDouble'
+, id `Ptr CDouble'
+, `Vector'
+, id `Ptr Vector'
+, `Int'
+, `Bool'
+, `Double'
+, `Double'
+, `Double'
+, `SpincommUpdate'
+, `Double'
+, `SpinglassImplementation'
+, `Double'
+} -> `Int' #}
+
+{#fun igraph_community_leading_eigenvector as ^
+{ `IGraph'
+, `Vector'
+, id `Ptr Matrix'
+, `Vector'
+, `Int'
+, `ArpackOpt'
+, id `Ptr CDouble'
+, `Bool'
+, id `Ptr Vector'
+, id `Ptr VectorPtr'
+, id `Ptr Vector'
+, id `T'
+, id `Ptr ()'
+} -> `Int' #}
+
+type T = FunPtr ( Ptr Vector
+                -> CLong
+                -> CDouble
+                -> Ptr Vector
+                -> FunPtr (Ptr CDouble -> Ptr CDouble -> CInt -> Ptr () -> IO CInt)
+                -> Ptr ()
+                -> Ptr ()
+                -> IO CInt)

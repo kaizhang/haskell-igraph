@@ -1,3 +1,4 @@
+{-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Structure
     ( inducedSubgraph
     , closeness
@@ -16,15 +17,19 @@ import           Foreign
 import           Foreign.C.Types
 import           System.IO.Unsafe          (unsafePerformIO)
 
+import Foreign
+import Foreign.C.Types
+
 import           IGraph
-import           IGraph.Internal.Arpack
-import           IGraph.Internal.Attribute
-import           IGraph.Internal.Constants
-import           IGraph.Internal.Data
-import           IGraph.Internal.Graph
-import           IGraph.Internal.Selector
-import           IGraph.Internal.Structure
 import           IGraph.Mutable
+{#import IGraph.Internal.Graph #}
+{#import IGraph.Internal.Selector #}
+{#import IGraph.Internal.Constants #}
+{#import IGraph.Internal.Data #}
+{#import IGraph.Internal.Arpack #}
+{#import IGraph.Internal.Attribute #}
+
+#include "igraph/igraph.h"
 
 inducedSubgraph :: (Hashable v, Eq v, Serialize v) => LGraph d v e -> [Int] -> LGraph d v e
 inducedSubgraph gr vs = unsafePerformIO $ do
@@ -130,3 +135,51 @@ personalizedPagerank gr reset ws d
   where
     n = nNodes gr
     m = nEdges gr
+
+{#fun igraph_induced_subgraph as ^ { `IGraph'
+                                   , +160
+                                   , %`IGraphVs'
+                                   , `SubgraphImplementation' } -> `IGraph' #}
+
+{#fun igraph_closeness as ^ { `IGraph'
+                            , `Vector'
+                            , %`IGraphVs'
+                            , `Neimode'
+                            , `Vector'
+                            , `Bool' } -> `Int' #}
+
+{#fun igraph_betweenness as ^ { `IGraph'
+                              , `Vector'
+                              , %`IGraphVs'
+                              , `Bool'
+                              , `Vector'
+                              , `Bool' } -> `Int' #}
+
+{#fun igraph_eigenvector_centrality as ^ { `IGraph'
+                                         , `Vector'
+                                         , id `Ptr CDouble'
+                                         , `Bool'
+                                         , `Bool'
+                                         , `Vector'
+                                         , `ArpackOpt' } -> `Int' #}
+
+{#fun igraph_pagerank as ^ { `IGraph'
+                           , `PagerankAlgo'
+                           , `Vector'
+                           , id `Ptr CDouble'
+                           , %`IGraphVs'
+                           , `Bool'
+                           , `Double'
+                           , `Vector'
+                           , id `Ptr ()' } -> `Int' #}
+
+{#fun igraph_personalized_pagerank as ^ { `IGraph'
+                                        , `PagerankAlgo'
+                                        , `Vector'
+                                        , id `Ptr CDouble'
+                                        , %`IGraphVs'
+                                        , `Bool'
+                                        , `Double'
+                                        , `Vector'
+                                        , `Vector'
+                                        , id `Ptr ()' } -> `Int' #}

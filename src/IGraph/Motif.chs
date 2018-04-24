@@ -1,3 +1,4 @@
+{-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Motif
     ( triad
     , triadCensus
@@ -6,9 +7,18 @@ module IGraph.Motif
 import Data.Hashable (Hashable)
 import System.IO.Unsafe (unsafePerformIO)
 
+import qualified Foreign.Marshal.Utils as C2HSImp
+import qualified Foreign.Ptr as C2HSImp
+import Foreign
+import Foreign.C.Types
+
 import IGraph
-import IGraph.Internal.Motif
-import IGraph.Internal.Data
+{#import IGraph.Internal.Graph #}
+{#import IGraph.Internal.Selector #}
+{#import IGraph.Internal.Constants #}
+{#import IGraph.Internal.Data #}
+
+#include "haskell_igraph.h"
 
 -- | Every triple of vertices in a directed graph
 -- 003: A, B, C, the empty graph.
@@ -58,3 +68,9 @@ triadCensus gr = unsafePerformIO $ do
     map truncate <$> toList vptr
 
 -- motifsRandesu
+
+{#fun igraph_triad_census as ^ { `IGraph'
+                               , `Vector' } -> `Int' #}
+
+{#fun igraph_motifs_randesu as ^ { `IGraph', `Vector', `Int'
+                                 , `Vector' } -> `Int' #}
