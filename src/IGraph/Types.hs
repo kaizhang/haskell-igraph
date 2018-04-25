@@ -12,3 +12,9 @@ data U
 
 -- | Directed graph.
 data D
+
+vertexAttr :: String
+vertexAttr = "vertex_attribute"
+
+edgeAttr :: String
+edgeAttr = "edge_attribute"

@@ -4,8 +4,6 @@ module IGraph.Mutable
     , MLGraph(..)
     , setEdgeAttr
     , setNodeAttr
-    , edgeAttr
-    , vertexAttr
     )where
 
 import           Control.Monad                  (when, forM)
@@ -16,12 +14,6 @@ import           Foreign
 import           IGraph.Internal
 import           IGraph.Internal.Initialization
 import           IGraph.Types
-
-vertexAttr :: String
-vertexAttr = "vertex_attribute"
-
-edgeAttr :: String
-edgeAttr = "edge_attribute"
 
 -- | Mutable labeled graph.
 newtype MLGraph m d v e = MLGraph IGraph

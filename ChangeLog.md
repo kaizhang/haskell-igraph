@@ -1,10 +1,12 @@
 Revision history for haskell-igraph
 ===================================
 
-v0.4.* --
+v0.5.0 -- 2018-04-25
 -------------------
 
 * Fix memory leaks.
+* Interface change: `mapNodes`, `mapEdges`, `filterNodes`, `filterEdges` become
+`nmap`, `emap`, `nfilter`, `efilter`.
 
 
 v0.4.0 -- 2018-04-20

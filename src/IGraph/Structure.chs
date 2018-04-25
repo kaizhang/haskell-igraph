@@ -29,12 +29,8 @@ inducedSubgraph :: (Hashable v, Eq v, Serialize v) => LGraph d v e -> [Int] -> L
 inducedSubgraph gr vs = unsafePerformIO $ do
     vs' <- fromList $ map fromIntegral vs
     vsptr <- igraphVsVector vs'
-    g' <- igraphInducedSubgraph (_graph gr) vsptr IgraphSubgraphCreateFromScratch
-    nV <- igraphVcount g'
-    labels <- forM [0 .. nV - 1] $ \i ->
-        igraphHaskellAttributeVAS g' vertexAttr i >>= bsToByteString >>=
-            return . fromRight (error "decode failed") . decode
-    return $ LGraph g' $ M.fromListWith (++) $ zip labels $ map return [0..nV-1]
+    igraphInducedSubgraph (_graph gr) vsptr IgraphSubgraphCreateFromScratch >>=
+        unsafeFreeze . MLGraph
 
 -- | Closeness centrality
 closeness :: [Int]  -- ^ vertices
