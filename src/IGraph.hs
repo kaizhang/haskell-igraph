@@ -1,11 +1,11 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE GADTs #-}
 module IGraph
     ( Graph(..)
     , LGraph(..)
     , U
     , D
-    , decodeC
     , empty
     , mkGraph
     , fromLabeledEdges
@@ -32,7 +32,6 @@ import           Control.Arrow             ((&&&))
 import           Control.Monad             (forM, forM_, liftM, replicateM)
 import           Control.Monad.Primitive
 import           Control.Monad.ST          (runST)
-import qualified Data.ByteString           as B
 import           Data.Conduit.Cereal
 import           Data.Either               (fromRight)
 import           Data.Hashable             (Hashable)
@@ -41,7 +40,7 @@ import qualified Data.HashSet              as S
 import           Data.List                 (sortBy)
 import           Data.Ord                  (comparing)
 import           Data.Serialize
-import           Foreign                   (castPtr)
+import           Foreign                   (castPtr, Ptr)
 import           System.IO.Unsafe          (unsafePerformIO)
 
 import           IGraph.Internal
@@ -92,7 +91,7 @@ class MGraph d => Graph d where
     -- | Return the label of given node.
     nodeLab :: Serialize v => LGraph d v e -> Node -> v
     nodeLab (LGraph g _) i = unsafePerformIO $
-        igraphHaskellAttributeVAS g vertexAttr i >>= bsToByteString >>=
+        igraphHaskellAttributeVAS g vertexAttr i >>= toByteString >>=
             return . fromRight (error "decode failed") . decode
     {-# INLINE nodeLab #-}
 
@@ -105,7 +104,7 @@ class MGraph d => Graph d where
     edgeLab :: Serialize e => LGraph d v e -> Edge -> e
     edgeLab (LGraph g _) (fr,to) = unsafePerformIO $
         igraphGetEid g fr to True True >>=
-            igraphHaskellAttributeEAS g edgeAttr >>= bsToByteString >>=
+            igraphHaskellAttributeEAS g edgeAttr >>= toByteString >>=
                 return . fromRight (error "decode failed") . decode
     {-# INLINE edgeLab #-}
 
@@ -117,7 +116,7 @@ class MGraph d => Graph d where
     -- | Find the edge label by edge ID.
     getEdgeLabByEid :: Serialize e => LGraph d v e -> Int -> e
     getEdgeLabByEid (LGraph g _) i = unsafePerformIO $
-        igraphHaskellAttributeEAS g edgeAttr i >>= bsToByteString >>=
+        igraphHaskellAttributeEAS g edgeAttr i >>= toByteString >>=
             return . fromRight (error "decode failed") . decode
     {-# INLINE getEdgeLabByEid #-}
 
@@ -152,17 +151,6 @@ instance (Graph d, Serialize v, Serialize e, Hashable v, Eq v)
             es <- replicateM ne get
             return $ mkGraph nds es
 
--- | Decode a graph from a stream of inputs. This may be more memory efficient
--- than standard @decode@ function.
-decodeC :: ( PrimMonad m, MonadThrow m, Graph d
-           , Serialize v, Serialize e, Hashable v, Eq v )
-        => ConduitT B.ByteString o m (LGraph d v e)
-decodeC = do
-    nn <- sinkGet get
-    nds <- replicateM nn $ sinkGet get
-    ne <- sinkGet get
-    conduitGet2 get .| deserializeGraph nds ne
-
 -- | Create a empty graph.
 empty :: (Graph d, Hashable v, Serialize v, Eq v, Serialize e)
       => LGraph d v e
@@ -190,17 +178,18 @@ fromLabeledEdges es = mkGraph labels es'
     labelToId = M.fromList $ zip labels [0..]
 
 -- | Create a graph from a stream of labeled edges.
-fromLabeledEdges' :: (PrimMonad m, Graph d, Hashable v, Serialize v, Eq v, Serialize e)
+fromLabeledEdges' :: (Graph d, Hashable v, Serialize v, Eq v, Serialize e)
                   => a    -- ^ Input, usually a file
-                  -> (a -> ConduitT () ((v, v), e) m ())  -- ^ deserialize the input into a stream of edges
-                  -> m (LGraph d v e)
+                  -> (a -> ConduitT () ((v, v), e) IO ())  -- ^ deserialize the input into a stream of edges
+                  -> IO (LGraph d v e)
 fromLabeledEdges' input mkConduit = do
     (labelToId, _, ne) <- runConduit $ mkConduit input .|
         foldlC f (M.empty, 0::Int, 0::Int)
-    let getId x = M.lookupDefault undefined x labelToId
-    runConduit $ mkConduit input .|
-        mapC (\((v1, v2), e) -> ((getId v1, getId v2), e)) .|
-        deserializeGraph (fst $ unzip $ sortBy (comparing snd) $ M.toList labelToId) ne
+    allocaVectorN (2*ne) $ \evec -> allocaBSVectorN ne $ \bsvec -> do
+        let getId x = M.lookupDefault undefined x labelToId
+        runConduit $ mkConduit input .|
+            mapC (\((v1, v2), e) -> ((getId v1, getId v2), e)) .|
+            deserializeGraph (fst $ unzip $ sortBy (comparing snd) $ M.toList labelToId) evec bsvec
   where
     f (vs, nn, ne) ((v1, v2), _) =
         let (vs', nn') = add v1 $ add v2 (vs, nn)
@@ -210,26 +199,25 @@ fromLabeledEdges' input mkConduit = do
             then (m, i)
             else (M.insert v i m, i + 1)
 
-deserializeGraph :: ( PrimMonad m, Graph d, Hashable v, Serialize v
+deserializeGraph :: ( Graph d, Hashable v, Serialize v
                     , Eq v, Serialize e )
                  => [v]
-                 -> Int   -- ^ The number of edges
-                 -> ConduitT (LEdge e) o m (LGraph d v e)
-deserializeGraph nds ne = do
-    evec <- unsafePrimToPrim $ igraphVectorNew $ 2 * ne
-    bsvec <- unsafePrimToPrim $ bsvectorNew ne
-    let f i ((fr, to), attr) = unsafePrimToPrim $ do
+                 -> Ptr Vector  -- ^ a vector that is sufficient to hold all edges
+                 -> Ptr BSVector
+                 -> ConduitT (LEdge e) o IO (LGraph d v e)
+deserializeGraph nds evec bsvec = do
+    let f i ((fr, to), attr) = liftIO $ do
             igraphVectorSet evec (i*2) $ fromIntegral fr
             igraphVectorSet evec (i*2+1) $ fromIntegral to
             bsvectorSet bsvec i $ encode attr
             return $ i + 1
     _ <- foldMC f 0
     gr@(MLGraph g) <- new 0
-    addLNodes nds gr
-    unsafePrimToPrim $ withAttr edgeAttr bsvec $ \ptr -> do
-            vptr <- fromPtrs [castPtr ptr]
-            withVectorPtr vptr (igraphAddEdges g evec . castPtr)
-    unsafeFreeze gr
+    liftIO $ do
+        addLNodes nds gr
+        withBSAttr edgeAttr bsvec $ \ptr ->
+            withPtrs [ptr] (igraphAddEdges g evec . castPtr)
+        unsafeFreeze gr
 {-# INLINE deserializeGraph #-}
 
 -- | Convert a mutable graph to immutable graph.
@@ -246,7 +234,7 @@ unsafeFreeze :: (Hashable v, Eq v, Serialize v, PrimMonad m)
 unsafeFreeze (MLGraph g) = unsafePrimToPrim $ do
     nV <- igraphVcount g
     labels <- forM [0 .. nV - 1] $ \i ->
-        igraphHaskellAttributeVAS g vertexAttr i >>= bsToByteString >>=
+        igraphHaskellAttributeVAS g vertexAttr i >>= toByteString >>=
             return . fromRight (error "decode failed") . decode
     return $ LGraph g $ M.fromListWith (++) $ zip labels $ map return [0..nV-1]
   where
@@ -261,24 +249,18 @@ unsafeThaw (LGraph g _) = return $ MLGraph g
 
 -- | Find all neighbors of the given node.
 neighbors :: LGraph d v e -> Node -> [Node]
-neighbors gr i = unsafePerformIO $ do
-    vs <- igraphVsAdj i IgraphAll
-    vit <- igraphVitNew (_graph gr) vs
-    vitToList vit
+neighbors gr i = unsafePerformIO $ withVerticesAdj i IgraphAll $ \vs ->
+    iterateVerticesC (_graph gr) vs $ \source -> runConduit $ source .| sinkList
 
 -- | Find all nodes that have a link from the given node.
 suc :: LGraph D v e -> Node -> [Node]
-suc gr i = unsafePerformIO $ do
-    vs <- igraphVsAdj i IgraphOut
-    vit <- igraphVitNew (_graph gr) vs
-    vitToList vit
+suc gr i = unsafePerformIO $ withVerticesAdj i IgraphOut $ \vs ->
+    iterateVerticesC (_graph gr) vs $ \source -> runConduit $ source .| sinkList
 
 -- | Find all nodes that link to to the given node.
 pre :: LGraph D v e -> Node -> [Node]
-pre gr i = unsafePerformIO $ do
-    vs <- igraphVsAdj i IgraphIn
-    vit <- igraphVitNew (_graph gr) vs
-    vitToList vit
+pre gr i = unsafePerformIO $ withVerticesAdj i IgraphIn $ \vs ->
+    iterateVerticesC (_graph gr) vs $ \source -> runConduit $ source .| sinkList
 
 -- | Apply a function to change nodes' labels.
 nmap :: (Graph d, Serialize v1, Serialize v2, Hashable v2, Eq v2)

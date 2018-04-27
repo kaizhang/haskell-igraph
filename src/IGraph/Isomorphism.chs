@@ -23,8 +23,7 @@ getSubisomorphisms :: Graph d
                    => LGraph d v1 e1  -- ^ graph to be searched in
                    -> LGraph d v2 e2   -- ^ smaller graph
                    -> [[Int]]
-getSubisomorphisms g1 g2 = unsafePerformIO $ do
-    vpptr <- igraphVectorPtrNew 0
+getSubisomorphisms g1 g2 = unsafePerformIO $ allocaVectorPtr $ \vpptr -> do
     igraphGetSubisomorphismsVf2 gptr1 gptr2 nullPtr nullPtr nullPtr nullPtr vpptr
         nullFunPtr nullFunPtr nullPtr
     (map.map) truncate <$> toLists vpptr
@@ -39,7 +38,7 @@ getSubisomorphisms g1 g2 = unsafePerformIO $ do
     , id `Ptr ()'
     , id `Ptr ()'
     , id `Ptr ()'
-    , `VectorPtr'
+    , castPtr `Ptr VectorPtr'
     , id `FunPtr (Ptr IGraph -> Ptr IGraph -> CInt -> CInt -> Ptr () -> IO CInt)'
     , id `FunPtr (Ptr IGraph -> Ptr IGraph -> CInt -> CInt -> Ptr () -> IO CInt)'
     , id `Ptr ()'

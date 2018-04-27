@@ -27,7 +27,6 @@ library
   exposed-modules:
     IGraph.Internal.Initialization
     IGraph.Internal.Constants
-    IGraph.Internal.Types
     IGraph.Internal
     IGraph
     IGraph.Types
@@ -59,12 +58,13 @@ library
     , cereal-conduit
     , colour
     , conduit >= 1.3.0
+    , data-ordlist
+    , data-default-class
     , primitive
     , unordered-containers
     , hashable
     , hxt
     , split
-    , data-default-class
 
   extra-libraries:     igraph
   hs-source-dirs:      src

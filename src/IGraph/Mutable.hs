@@ -32,40 +32,31 @@ class MGraph d where
     addLNodes :: (Serialize v, PrimMonad m)
               => [v]  -- ^ vertices' labels
               -> MLGraph (PrimState m) d v e -> m ()
-    addLNodes labels (MLGraph g) = unsafePrimToPrim $ do
-        bsvec <- toBSVector $ map encode labels
-        withAttr vertexAttr bsvec $ \attr -> do
-            vptr <- fromPtrs [castPtr attr]
-            withVectorPtr vptr (igraphAddVertices g n . castPtr)
+    addLNodes labels (MLGraph g) = unsafePrimToPrim $
+        withAttr vertexAttr labels $ \attr ->
+            withPtrs [attr] (igraphAddVertices g n . castPtr)
       where
         n = length labels
 
     -- | Delete nodes from the graph.
     delNodes :: PrimMonad m => [Int] -> MLGraph (PrimState m) d v e -> m ()
-    delNodes ns (MLGraph g) = unsafePrimToPrim $ do
-        vptr <- fromList $ map fromIntegral ns
-        vsptr <- igraphVsVector vptr
-        _ <- igraphDeleteVertices g vsptr
-        return ()
+    delNodes ns (MLGraph g) = unsafePrimToPrim $ withVerticesList ns $ \vs ->
+        igraphDeleteVertices g vs
 
     -- | Add edges to the graph.
     addEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
-    addEdges es (MLGraph g) = unsafePrimToPrim $ do
-        vec <- fromList xs
+    addEdges es (MLGraph g) = unsafePrimToPrim $ withList xs $ \vec ->
         igraphAddEdges g vec nullPtr
       where
-        xs = concatMap ( \(a,b) -> [fromIntegral a, fromIntegral b] ) es
+        xs = concatMap ( \(a,b) -> [a, b] ) es
 
     -- | Add edges with labels to the graph.
     addLEdges :: (PrimMonad m, Serialize e) => [LEdge e] -> MLGraph (PrimState m) d v e -> m ()
-    addLEdges es (MLGraph g) = unsafePrimToPrim $ do
-        bsvec <- toBSVector $ map encode vs
-        withAttr edgeAttr bsvec $ \attr -> do
-            vec <- fromList $ concat xs
-            vptr <- fromPtrs [castPtr attr]
-            withVectorPtr vptr (igraphAddEdges g vec . castPtr)
+    addLEdges es (MLGraph g) = unsafePrimToPrim $
+        withAttr edgeAttr vs $ \attr -> withList (concat xs) $ \vec ->
+            withPtrs [attr] (igraphAddEdges g vec . castPtr)
       where
-        (xs, vs) = unzip $ map ( \((a,b),v) -> ([fromIntegral a, fromIntegral b], v) ) es
+        (xs, vs) = unzip $ map ( \((a,b),v) -> ([a, b], v) ) es
 
     -- | Delete edges from the graph.
     delEdges :: PrimMonad m => [(Int, Int)] -> MLGraph (PrimState m) d v e -> m ()
@@ -75,20 +66,14 @@ instance MGraph U where
 
     delEdges es (MLGraph g) = unsafePrimToPrim $ do
         eids <- forM es $ \(fr, to) -> igraphGetEid g fr to False True
-        vptr <- fromList $ map fromIntegral eids
-        esptr <- igraphEsVector vptr
-        _ <- igraphDeleteEdges g esptr
-        return ()
+        withEdgesList eids (igraphDeleteEdges g)
 
 instance MGraph D where
     new n = unsafePrimToPrim $ igraphInit >>= igraphNew n True >>= return . MLGraph
 
     delEdges es (MLGraph g) = unsafePrimToPrim $ do
         eids <- forM es $ \(fr, to) -> igraphGetEid g fr to True True
-        vptr <- fromList $ map fromIntegral eids
-        esptr <- igraphEsVector vptr
-        igraphDeleteEdges g esptr
-        return ()
+        withEdgesList eids (igraphDeleteEdges g)
 
 -- | Set node attribute.
 setNodeAttr :: (PrimMonad m, Serialize v)
@@ -96,9 +81,10 @@ setNodeAttr :: (PrimMonad m, Serialize v)
             -> v
             -> MLGraph (PrimState m) d v e
             -> m ()
-setNodeAttr nodeId x (MLGraph gr) = unsafePrimToPrim $ asBS (encode x) $ \bs -> do
-    err <- igraphHaskellAttributeVASSet gr vertexAttr nodeId bs
-    when (err /= 0) $ error "Fail to set node attribute!"
+setNodeAttr nodeId x (MLGraph gr) = unsafePrimToPrim $
+    withByteString (encode x) $ \bs -> do
+        err <- igraphHaskellAttributeVASSet gr vertexAttr nodeId bs
+        when (err /= 0) $ error "Fail to set node attribute!"
 
 -- | Set edge attribute.
 setEdgeAttr :: (PrimMonad m, Serialize e)
@@ -106,6 +92,7 @@ setEdgeAttr :: (PrimMonad m, Serialize e)
             -> e
             -> MLGraph (PrimState m) d v e
             -> m ()
-setEdgeAttr edgeId x (MLGraph gr) = unsafePrimToPrim $ asBS (encode x) $ \bs -> do
-    err <- igraphHaskellAttributeEASSet gr edgeAttr edgeId bs
-    when (err /= 0) $ error "Fail to set edge attribute!"
+setEdgeAttr edgeId x (MLGraph gr) = unsafePrimToPrim $
+    withByteString (encode x) $ \bs -> do
+        err <- igraphHaskellAttributeEASSet gr edgeAttr edgeId bs
+        when (err /= 0) $ error "Fail to set edge attribute!"

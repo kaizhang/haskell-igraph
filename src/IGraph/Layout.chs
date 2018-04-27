@@ -62,48 +62,48 @@ defaultLGL = LGL
     area x = fromIntegral $ x^2
 
 getLayout :: Graph d => LGraph d v e -> LayoutMethod -> IO [(Double, Double)]
-getLayout gr method = do
-    case method of
-        KamadaKawai seed niter sigma initemp coolexp kkconst -> do
-            mptr <- case seed of
-                Nothing -> igraphMatrixNew 0 0
-                Just xs -> if length xs /= nNodes gr
-                               then error "Seed error: incorrect size"
-                               else fromRowLists $ (\(x,y) -> [x,y]) $ unzip xs
-
-            igraphLayoutKamadaKawai gptr mptr niter (sigma n) initemp coolexp
+getLayout gr method = case method of
+    KamadaKawai seed niter sigma initemp coolexp kkconst -> case seed of
+        Nothing -> allocaMatrix $ \mat -> do
+            igraphLayoutKamadaKawai gptr mat niter (sigma n) initemp coolexp
                 (kkconst n) (isJust seed) nullPtr nullPtr nullPtr nullPtr
-            [x, y] <- toColumnLists mptr
+            [x, y] <- toColumnLists mat
             return $ zip x y
+        Just xs -> if length xs /= nNodes gr
+            then error "Seed error: incorrect size"
+            else withRowLists ((\(x,y) -> [x,y]) (unzip xs)) $ \mat -> do
+                igraphLayoutKamadaKawai gptr mat niter (sigma n) initemp coolexp
+                    (kkconst n) (isJust seed) nullPtr nullPtr nullPtr nullPtr
+                [x, y] <- toColumnLists mat
+                return $ zip x y
 
-        LGL niter delta area coolexp repulserad cellsize -> do
-            mptr <- igraphMatrixNew 0 0
-            igraphLayoutLgl gptr mptr niter (delta n) (area n) coolexp
-                (repulserad n) (cellsize n) (-1)
-            [x, y] <- toColumnLists mptr
-            return $ zip x y
+    LGL niter delta area coolexp repulserad cellsize -> allocaMatrix $ \mat -> do
+        igraphLayoutLgl gptr mat niter (delta n) (area n) coolexp
+            (repulserad n) (cellsize n) (-1)
+        [x, y] <- toColumnLists mat
+        return $ zip x y
   where
     n = nNodes gr
     gptr = _graph gr
 
 {#fun igraph_layout_kamada_kawai as ^
     { `IGraph'
-    , `Matrix'
+    , castPtr `Ptr Matrix'
     , `Int'
     , `Double'
     , `Double'
     , `Double'
     , `Double'
     , `Bool'
-    , id `Ptr Vector'
-    , id `Ptr Vector'
-    , id `Ptr Vector'
-    , id `Ptr Vector'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr Vector'
     } -> `CInt' void- #}
 
 {# fun igraph_layout_lgl as ^
     { `IGraph'
-    , `Matrix'
+    , castPtr `Ptr Matrix'
     , `Int'
     , `Double'
     , `Double'

@@ -7,6 +7,7 @@ module IGraph.Motif
 import Data.Hashable (Hashable)
 import System.IO.Unsafe (unsafePerformIO)
 
+import Foreign
 import qualified Foreign.Ptr as C2HSImp
 
 import IGraph
@@ -56,15 +57,14 @@ triad = map make edgeList
     make xs = mkGraph (replicate 3 ()) $ zip xs $ repeat ()
 
 triadCensus :: (Hashable v, Eq v, Read v) => LGraph d v e -> [Int]
-triadCensus gr = unsafePerformIO $ do
-    vptr <- igraphVectorNew 0
-    igraphTriadCensus (_graph gr) vptr
-    map truncate <$> toList vptr
+triadCensus gr = unsafePerformIO $ allocaVector $ \result -> do
+    igraphTriadCensus (_graph gr) result
+    map truncate <$> toList result
 
 -- motifsRandesu
 
 {#fun igraph_triad_census as ^ { `IGraph'
-                               , `Vector' } -> `CInt' void- #}
+                               , castPtr `Ptr Vector' } -> `CInt' void- #}
 
-{#fun igraph_motifs_randesu as ^ { `IGraph', `Vector', `Int'
-                                 , `Vector' } -> `CInt' void- #}
+{#fun igraph_motifs_randesu as ^ { `IGraph', castPtr `Ptr Vector', `Int'
+                                 , castPtr `Ptr Vector' } -> `CInt' void- #}

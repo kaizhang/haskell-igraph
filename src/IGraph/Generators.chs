@@ -12,6 +12,7 @@ import           Data.Hashable                  (Hashable)
 import           Data.Serialize                 (Serialize)
 
 import qualified Foreign.Ptr as C2HSImp
+import Foreign
 
 import           IGraph
 import           IGraph.Mutable
@@ -50,14 +51,13 @@ erdosRenyiGame (GNM n m) d self = do
 degreeSequenceGame :: [Int]   -- ^ Out degree
                    -> [Int]   -- ^ In degree
                    -> IO (LGraph D () ())
-degreeSequenceGame out_deg in_deg = do
-    out_deg' <- fromList $ map fromIntegral out_deg
-    in_deg' <- fromList $ map fromIntegral in_deg
-    gp <- igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
-    unsafeFreeze $ MLGraph gp
+degreeSequenceGame out_deg in_deg = withList out_deg $ \out_deg' ->
+    withList in_deg $ \in_deg' -> do
+        gp <- igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
+        unsafeFreeze $ MLGraph gp
 {#fun igraph_degree_sequence_game as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
-    , `Vector', `Vector', `Degseq'
+    , castPtr `Ptr Vector', castPtr `Ptr Vector', `Degseq'
     } -> `CInt' void- #}
 
 -- | Randomly rewires a graph while preserving the degree distribution.

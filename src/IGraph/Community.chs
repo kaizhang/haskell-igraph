@@ -1,13 +1,17 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE RecordWildCards #-}
 module IGraph.Community
-    ( CommunityOpt(..)
-    , CommunityMethod(..)
+    ( modularity
     , findCommunity
+    , CommunityMethod(..)
+    , defaultLeadingEigenvector
+    , defaultSpinglass
     ) where
 
 import           Data.Default.Class
 import           Data.Function             (on)
 import           Data.List (sortBy, groupBy)
+import Data.List.Ordered (nubSortBy)
 import           Data.Ord (comparing)
 import           System.IO.Unsafe          (unsafePerformIO)
 
@@ -15,99 +19,116 @@ import           Foreign
 import           Foreign.C.Types
 
 import           IGraph
+import IGraph.Internal.C2HS
 {#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
 
 #include "haskell_igraph.h"
 
-data CommunityOpt = CommunityOpt
-    { _method    :: CommunityMethod
-    , _weights   :: Maybe [Double]
-    , _nIter     :: Int  -- ^ [LeadingEigenvector] number of iterations, default is 10000
-    , _nSpins    :: Int  -- ^ [Spinglass] number of spins, default is 25
-    , _startTemp :: Double  -- ^ [Spinglass] the temperature at the start
-    , _stopTemp  :: Double  -- ^ [Spinglass] the algorithm stops at this temperature
-    , _coolFact  :: Double  -- ^ [Spinglass] the cooling factor for the simulated annealing
-    , _gamma     :: Double  -- ^ [Spinglass] the gamma parameter of the algorithm.
-    }
+modularity :: Graph d
+           => LGraph d v e
+           -> [[Int]]   -- ^ Communities.
+           -> Maybe [Double] -- ^ Weights
+           -> Double
+modularity gr clusters ws
+    | length nds /= length (concat clusters) = error "Duplicated nodes"
+    | nds /= nodes gr = error "Some nodes were not given community assignments"
+    | otherwise = unsafePerformIO $ withList membership $ \membership' ->
+        withListMaybe ws (igraphModularity (_graph gr) membership')
+  where
+    (membership, nds) = unzip $ nubSortBy (comparing snd) $ concat $
+        zipWith f [0 :: Int ..] clusters
+      where
+        f i xs = zip (repeat i) xs
+{#fun igraph_modularity as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+	, alloca- `Double' peekFloatConv*
+	, castPtr `Ptr Vector'
+    } -> `CInt' void- #}
 
-data CommunityMethod = LeadingEigenvector
-                     | Spinglass
-
-instance Default CommunityOpt where
-    def = CommunityOpt
-        { _method = LeadingEigenvector
-        , _weights = Nothing
-        , _nIter = 10000
-        , _nSpins = 25
-        , _startTemp = 1.0
-        , _stopTemp = 0.01
-        , _coolFact = 0.99
-        , _gamma = 1.0
+data CommunityMethod =
+      LeadingEigenvector
+        { _nIter     :: Int  -- ^ number of iterations, default is 10000
+        }
+    | Spinglass
+        { _nSpins    :: Int  -- ^ number of spins, default is 25
+        , _startTemp :: Double  -- ^ the temperature at the start
+        , _stopTemp  :: Double  -- ^ the algorithm stops at this temperature
+        , _coolFact  :: Double  -- ^ the cooling factor for the simulated annealing
+        , _gamma     :: Double  -- ^ the gamma parameter of the algorithm.
         }
 
-findCommunity :: LGraph U v e -> CommunityOpt -> [[Int]]
-findCommunity gr opt = unsafePerformIO $ do
-    result <- igraphVectorNew 0
-    ws <- case _weights opt of
-        Just w -> fromList w
-        _      -> fmap Vector $ newForeignPtr_ $ castPtr nullPtr
+defaultLeadingEigenvector :: CommunityMethod
+defaultLeadingEigenvector = LeadingEigenvector 10000
 
-    _ <- case _method opt of
-        LeadingEigenvector -> do
-            ap <- igraphArpackNew
-            igraphCommunityLeadingEigenvector (_graph gr) ws nullPtr result
-                                              (_nIter opt) ap nullPtr False
-                                              nullPtr nullPtr nullPtr
-                                              nullFunPtr nullPtr
-        Spinglass ->
-            igraphCommunitySpinglass (_graph gr) ws nullPtr nullPtr result
-                                     nullPtr (_nSpins opt) False (_startTemp opt)
-                                     (_stopTemp opt) (_coolFact opt)
-                                     IgraphSpincommUpdateConfig (_gamma opt)
+defaultSpinglass :: CommunityMethod
+defaultSpinglass = Spinglass
+    { _nSpins = 25
+    , _startTemp = 1.0
+    , _stopTemp = 0.01
+    , _coolFact = 0.99
+    , _gamma = 1.0 }
+
+findCommunity :: LGraph U v e
+              -> Maybe [Double]   -- ^ node weights
+              -> CommunityMethod  -- ^ Community finding algorithms
+              -> [[Int]]
+findCommunity gr ws method = unsafePerformIO $ allocaVector $ \result ->
+    withListMaybe ws $ \ws' -> do
+        case method of
+            LeadingEigenvector n -> allocaArpackOpt $ \arpack ->
+                igraphCommunityLeadingEigenvector (_graph gr) ws' nullPtr result
+                                                  n arpack nullPtr False
+                                                  nullPtr nullPtr nullPtr
+                                                  nullFunPtr nullPtr
+            Spinglass{..} -> igraphCommunitySpinglass (_graph gr) ws' nullPtr nullPtr result
+                                     nullPtr _nSpins False _startTemp
+                                     _stopTemp _coolFact
+                                     IgraphSpincommUpdateConfig _gamma
                                      IgraphSpincommImpOrig 1.0
 
-    fmap ( map (fst . unzip) . groupBy ((==) `on` snd)
-          . sortBy (comparing snd) . zip [0..] ) $ toList result
+        fmap ( map (fst . unzip) . groupBy ((==) `on` snd)
+              . sortBy (comparing snd) . zip [0..] ) $ toList result
 
 {#fun igraph_community_spinglass as ^
-{ `IGraph'
-, `Vector'
-, id `Ptr CDouble'
-, id `Ptr CDouble'
-, `Vector'
-, id `Ptr Vector'
-, `Int'
-, `Bool'
-, `Double'
-, `Double'
-, `Double'
-, `SpincommUpdate'
-, `Double'
-, `SpinglassImplementation'
-, `Double'
-} -> `Int' #}
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , id `Ptr CDouble'
+    , id `Ptr CDouble'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr Vector'
+    , `Int'
+    , `Bool'
+    , `Double'
+    , `Double'
+    , `Double'
+    , `SpincommUpdate'
+    , `Double'
+    , `SpinglassImplementation'
+    , `Double'
+    } -> `CInt' void- #}
 
 {#fun igraph_community_leading_eigenvector as ^
-{ `IGraph'
-, `Vector'
-, id `Ptr Matrix'
-, `Vector'
-, `Int'
-, `ArpackOpt'
-, id `Ptr CDouble'
-, `Bool'
-, id `Ptr Vector'
-, id `Ptr VectorPtr'
-, id `Ptr Vector'
-, id `T'
-, id `Ptr ()'
-} -> `Int' #}
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr Matrix'
+    , castPtr `Ptr Vector'
+    , `Int'
+    , castPtr `Ptr ArpackOpt'
+    , id `Ptr CDouble'
+    , `Bool'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr VectorPtr'
+    , castPtr `Ptr Vector'
+    , id `T'
+    , id `Ptr ()'
+    } -> `CInt' void- #}
 
-type T = FunPtr ( Ptr Vector
+type T = FunPtr ( Ptr ()
                 -> CLong
                 -> CDouble
-                -> Ptr Vector
+                -> Ptr ()
                 -> FunPtr (Ptr CDouble -> Ptr CDouble -> CInt -> Ptr () -> IO CInt)
                 -> Ptr ()
                 -> Ptr ()

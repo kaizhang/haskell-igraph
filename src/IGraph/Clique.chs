@@ -8,6 +8,7 @@ import Control.Applicative ((<$>))
 import System.IO.Unsafe (unsafePerformIO)
 
 import qualified Foreign.Ptr as C2HSImp
+import Foreign
 
 import IGraph
 {#import IGraph.Internal #}
@@ -18,18 +19,16 @@ cliques :: LGraph d v e
         -> (Int, Int)  -- ^ Minimum and maximum size of the cliques to be returned.
                        -- No bound will be used if negative or zero
         -> [[Int]]     -- ^ cliques represented by node ids
-cliques gr (lo, hi) = unsafePerformIO $ do
-    vpptr <- igraphVectorPtrNew 0
-    _ <- igraphCliques (_graph gr) vpptr lo hi
+cliques gr (lo, hi) = unsafePerformIO $ allocaVectorPtr $ \vpptr -> do
+    igraphCliques (_graph gr) vpptr lo hi
     (map.map) truncate <$> toLists vpptr
-{#fun igraph_cliques as ^ { `IGraph', `VectorPtr', `Int', `Int' } -> `Int' #}
+{#fun igraph_cliques as ^ { `IGraph', castPtr `Ptr VectorPtr', `Int', `Int' } -> `CInt' void- #}
 
 maximalCliques :: LGraph d v e
                -> (Int, Int)  -- ^ Minimum and maximum size of the cliques to be returned.
                               -- No bound will be used if negative or zero
                -> [[Int]]     -- ^ cliques represented by node ids
-maximalCliques gr (lo, hi) = unsafePerformIO $ do
-    vpptr <- igraphVectorPtrNew 0
-    _ <- igraphMaximalCliques (_graph gr) vpptr lo hi
+maximalCliques gr (lo, hi) = unsafePerformIO $ allocaVectorPtr $ \vpptr -> do
+    igraphMaximalCliques (_graph gr) vpptr lo hi
     (map.map) truncate <$> toLists vpptr
-{#fun igraph_maximal_cliques as ^ { `IGraph', `VectorPtr', `Int', `Int' } -> `Int' #}
+{#fun igraph_maximal_cliques as ^ { `IGraph', castPtr `Ptr VectorPtr', `Int', `Int' } -> `CInt' void- #}

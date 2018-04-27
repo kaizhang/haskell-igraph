@@ -14,6 +14,7 @@ import           Data.Hashable             (Hashable)
 import qualified Data.HashMap.Strict       as M
 import           Data.Serialize            (Serialize, decode)
 import           System.IO.Unsafe          (unsafePerformIO)
+import Data.Maybe
 
 import Foreign
 import Foreign.C.Types
@@ -26,10 +27,8 @@ import           IGraph.Mutable
 #include "igraph/igraph.h"
 
 inducedSubgraph :: (Hashable v, Eq v, Serialize v) => LGraph d v e -> [Int] -> LGraph d v e
-inducedSubgraph gr vs = unsafePerformIO $ do
-    vs' <- fromList $ map fromIntegral vs
-    vsptr <- igraphVsVector vs'
-    igraphInducedSubgraph (_graph gr) vsptr IgraphSubgraphCreateFromScratch >>=
+inducedSubgraph gr nds = unsafePerformIO $ withVerticesList nds $ \vs ->
+    igraphInducedSubgraph (_graph gr) vs IgraphSubgraphCreateFromScratch >>=
         unsafeFreeze . MLGraph
 
 -- | Closeness centrality
@@ -39,43 +38,29 @@ closeness :: [Int]  -- ^ vertices
           -> Neimode
           -> Bool   -- ^ whether to normalize
           -> [Double]
-closeness vs gr ws mode normal = unsafePerformIO $ do
-    vs' <- fromList $ map fromIntegral vs
-    vsptr <- igraphVsVector vs'
-    vptr <- igraphVectorNew 0
-    ws' <- case ws of
-        Just w -> fromList w
-        _      -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
-    igraphCloseness (_graph gr) vptr vsptr mode ws' normal
-    toList vptr
+closeness nds gr ws mode normal = unsafePerformIO $ allocaVector $ \result ->
+    withVerticesList nds $ \vs -> withListMaybe ws $ \ws' -> do
+        igraphCloseness (_graph gr) result vs mode ws' normal
+        toList result
 
 -- | Betweenness centrality
 betweenness :: [Int]
             -> LGraph d v e
             -> Maybe [Double]
             -> [Double]
-betweenness vs gr ws = unsafePerformIO $ do
-    vs' <- fromList $ map fromIntegral vs
-    vsptr <- igraphVsVector vs'
-    vptr <- igraphVectorNew 0
-    ws' <- case ws of
-        Just w -> fromList w
-        _      -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
-    igraphBetweenness (_graph gr) vptr vsptr True ws' False
-    toList vptr
+betweenness nds gr ws = unsafePerformIO $ allocaVector $ \result ->
+    withVerticesList nds $ \vs -> withListMaybe ws $ \ws' -> do
+        igraphBetweenness (_graph gr) result vs True ws' False
+        toList result
 
 -- | Eigenvector centrality
 eigenvectorCentrality :: LGraph d v e
                       -> Maybe [Double]
                       -> [Double]
-eigenvectorCentrality gr ws = unsafePerformIO $ do
-    vptr <- igraphVectorNew 0
-    ws' <- case ws of
-        Just w -> fromList w
-        _      -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
-    arparck <- igraphArpackNew
-    igraphEigenvectorCentrality (_graph gr) vptr nullPtr True True ws' arparck
-    toList vptr
+eigenvectorCentrality gr ws = unsafePerformIO $ allocaArpackOpt $ \arparck ->
+    allocaVector $ \result -> withListMaybe ws $ \ws' -> do
+        igraphEigenvectorCentrality (_graph gr) result nullPtr True True ws' arparck
+        toList result
 
 -- | Google's PageRank
 pagerank :: Graph d
@@ -85,17 +70,12 @@ pagerank :: Graph d
          -> [Double]
 pagerank gr ws d
     | n == 0 = []
-    | otherwise = unsafePerformIO $ alloca $ \p -> do
-        vptr <- igraphVectorNew 0
-        vsptr <- igraphVsAll
-        ws' <- case ws of
-            Just w -> if length w /= m
-                then error "pagerank: incorrect length of edge weight vector"
-                else fromList w
-            _ -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
-        igraphPagerank (_graph gr) IgraphPagerankAlgoPrpack vptr p vsptr
-            (isDirected gr) d ws' nullPtr
-        toList vptr
+    | isJust ws && length (fromJust ws) /= m = error "incorrect length of edge weight vector"
+    | otherwise = unsafePerformIO $ alloca $ \p -> allocaVector $ \result ->
+        withVerticesAll $ \vs -> withListMaybe ws $ \ws' -> do
+            igraphPagerank (_graph gr) IgraphPagerankAlgoPrpack result p vs
+                (isDirected gr) d ws' nullPtr
+            toList result
   where
     n = nNodes gr
     m = nEdges gr
@@ -109,19 +89,13 @@ personalizedPagerank :: Graph d
                      -> [Double]
 personalizedPagerank gr reset ws d
     | n == 0 = []
-    | length reset /= n = error "personalizedPagerank: incorrect length of reset vector"
-    | otherwise = unsafePerformIO $ alloca $ \p -> do
-        vptr <- igraphVectorNew 0
-        vsptr <- igraphVsAll
-        ws' <- case ws of
-            Just w -> if length w /= m
-                then error "pagerank: incorrect length of edge weight vector"
-                else fromList w
-            _ -> liftM Vector $ newForeignPtr_ $ castPtr nullPtr
-        reset' <- fromList reset
-        igraphPersonalizedPagerank (_graph gr) IgraphPagerankAlgoPrpack vptr p vsptr
-            (isDirected gr) d reset' ws' nullPtr
-        toList vptr
+    | length reset /= n = error "incorrect length of reset vector"
+    | isJust ws && length (fromJust ws) /= m = error "incorrect length of edge weight vector"
+    | otherwise = unsafePerformIO $ alloca $ \p -> allocaVector $ \result ->
+        withList reset $ \reset' -> withVerticesAll $ \vs -> withListMaybe ws $ \ws' -> do
+            igraphPersonalizedPagerank (_graph gr) IgraphPagerankAlgoPrpack result p vs
+                (isDirected gr) d reset' ws' nullPtr
+            toList result
   where
     n = nNodes gr
     m = nEdges gr
@@ -129,53 +103,56 @@ personalizedPagerank gr reset ws d
 {#fun igraph_induced_subgraph as ^
     { `IGraph'
     , allocaIGraph- `IGraph' addIGraphFinalizer*
-    , %`IGraphVs'
+    , castPtr %`Ptr VertexSelector'
     , `SubgraphImplementation'
     } -> `CInt' void- #}
 
-{#fun igraph_closeness as ^ { `IGraph'
-                            , `Vector'
-                            , %`IGraphVs'
-                            , `Neimode'
-                            , `Vector'
-                            , `Bool' } -> `CInt' void- #}
+{#fun igraph_closeness as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr %`Ptr VertexSelector'
+    , `Neimode'
+    , castPtr `Ptr Vector'
+    , `Bool' } -> `CInt' void- #}
 
-{#fun igraph_betweenness as ^ { `IGraph'
-                              , `Vector'
-                              , %`IGraphVs'
-                              , `Bool'
-                              , `Vector'
-                              , `Bool' } -> `CInt' void- #}
+{#fun igraph_betweenness as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr %`Ptr VertexSelector'
+    , `Bool'
+    , castPtr `Ptr Vector'
+    , `Bool' } -> `CInt' void- #}
 
-{#fun igraph_eigenvector_centrality as ^ { `IGraph'
-                                         , `Vector'
-                                         , id `Ptr CDouble'
-                                         , `Bool'
-                                         , `Bool'
-                                         , `Vector'
-                                         , `ArpackOpt' } -> `CInt' void- #}
+{#fun igraph_eigenvector_centrality as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , id `Ptr CDouble'
+    , `Bool'
+    , `Bool'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr ArpackOpt' } -> `CInt' void- #}
 
 {#fun igraph_pagerank as ^
     { `IGraph'
     , `PagerankAlgo'
-    , `Vector'
+    , castPtr `Ptr Vector'
     , id `Ptr CDouble'
-    , %`IGraphVs'
+    , castPtr %`Ptr VertexSelector'
     , `Bool'
     , `Double'
-    , `Vector'
+    , castPtr `Ptr Vector'
     , id `Ptr ()'
     } -> `CInt' void- #}
 
 {#fun igraph_personalized_pagerank as ^
     { `IGraph'
     , `PagerankAlgo'
-    , `Vector'
+    , castPtr `Ptr Vector'
     , id `Ptr CDouble'
-    , %`IGraphVs'
+    , castPtr %`Ptr VertexSelector'
     , `Bool'
     , `Double'
-    , `Vector'
-    , `Vector'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr Vector'
     , id `Ptr ()'
     } -> `CInt' void- #}
