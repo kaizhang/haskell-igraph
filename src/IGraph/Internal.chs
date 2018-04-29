@@ -72,8 +72,8 @@ module IGraph.Internal
       -- ** Igraph edge Selector
     , EdgeSelector
     , withEdgesAll
-    , withEdgesVector
-    , withEdgesList
+    , withEdgeIdsVector
+    , withEdgeIdsList
 
       -- ** Igraph edge iterator
     , EdgeIterator
@@ -488,16 +488,16 @@ withEdgesAll ord fun = allocaEdgeSelector $ \es -> igraphEsAll es ord >> fun es
 {-# INLINE withEdgesAll #-}
 {#fun igraph_es_all as ^ { castPtr `Ptr EdgeSelector', `EdgeOrderType'} -> `CInt' void- #}
 
-withEdgesVector :: Ptr Vector -> (Ptr EdgeSelector -> IO a) -> IO a
-withEdgesVector vec fun = allocaEdgeSelector $ \es ->
+withEdgeIdsVector :: Ptr Vector -> (Ptr EdgeSelector -> IO a) -> IO a
+withEdgeIdsVector vec fun = allocaEdgeSelector $ \es ->
     igraphEsVector es vec >> fun es
-{-# INLINE withEdgesVector #-}
+{-# INLINE withEdgeIdsVector #-}
 {# fun igraph_es_vector as ^
     { castPtr `Ptr EdgeSelector', castPtr `Ptr Vector' } -> `CInt' void- #}
 
-withEdgesList :: Real a => [a] -> (Ptr EdgeSelector -> IO b) -> IO b
-withEdgesList xs fun = withList xs $ \vec -> withEdgesVector vec fun
-{-# INLINE withEdgesList #-}
+withEdgeIdsList :: [Int] -> (Ptr EdgeSelector -> IO b) -> IO b
+withEdgeIdsList xs fun = withList xs $ \vec -> withEdgeIdsVector vec fun
+{-# INLINE withEdgeIdsList #-}
 
 
 --------------------------------------------------------------------------------

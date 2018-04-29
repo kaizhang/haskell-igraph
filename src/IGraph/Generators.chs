@@ -10,6 +10,7 @@ module IGraph.Generators
 import           Control.Monad                  (when)
 import           Data.Hashable                  (Hashable)
 import           Data.Serialize                 (Serialize)
+import System.IO.Unsafe (unsafePerformIO)
 
 import qualified Foreign.Ptr as C2HSImp
 import Foreign
@@ -22,7 +23,15 @@ import           IGraph.Mutable
 
 #include "haskell_igraph.h"
 
-{#fun igraph_full as full
+full :: Graph d
+     => Int   -- ^ The number of vertices in the graph.
+     -> Bool  -- ^ Whether to include self-edges (loops)
+     -> d     -- ^ U or D
+     -> LGraph d () ()
+full n hasLoop d = unsafePerformIO $ do
+    gr <- igraphFull n (isD d) hasLoop
+    unsafeFreeze $ MLGraph gr
+{#fun igraph_full as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , `Int', `Bool', `Bool'
     } -> `CInt' void- #}

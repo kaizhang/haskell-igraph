@@ -66,14 +66,14 @@ instance MGraph U where
 
     delEdges es (MLGraph g) = unsafePrimToPrim $ do
         eids <- forM es $ \(fr, to) -> igraphGetEid g fr to False True
-        withEdgesList eids (igraphDeleteEdges g)
+        withEdgeIdsList eids (igraphDeleteEdges g)
 
 instance MGraph D where
     new n = unsafePrimToPrim $ igraphInit >>= igraphNew n True >>= return . MLGraph
 
     delEdges es (MLGraph g) = unsafePrimToPrim $ do
         eids <- forM es $ \(fr, to) -> igraphGetEid g fr to True True
-        withEdgesList eids (igraphDeleteEdges g)
+        withEdgeIdsList eids (igraphDeleteEdges g)
 
 -- | Set node attribute.
 setNodeAttr :: (PrimMonad m, Serialize v)
