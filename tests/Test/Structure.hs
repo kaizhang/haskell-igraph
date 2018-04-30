@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 module Test.Structure
     ( tests
     ) where
@@ -27,7 +28,7 @@ subGraphs = testGroup "generate induced subgraphs"
             , ["a","c"], [("a","c"), ("c","a")] )
     test (ori,ns,expect) = sort expect @=? sort result
       where
-        gr = fromLabeledEdges $ zip ori $ repeat () :: LGraph D String ()
+        gr = fromLabeledEdges $ zip ori $ repeat () :: Graph 'D String ()
         ns' = map (head . getNodes gr) ns
         gr' = inducedSubgraph gr ns'
         result = map (nodeLab gr' *** nodeLab gr') $ edges gr'

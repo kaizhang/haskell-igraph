@@ -61,7 +61,7 @@ defaultLGL = LGL
   where
     area x = fromIntegral $ x^2
 
-getLayout :: Graph d => LGraph d v e -> LayoutMethod -> IO [(Double, Double)]
+getLayout :: Graph d v e -> LayoutMethod -> IO [(Double, Double)]
 getLayout gr method = case method of
     KamadaKawai seed niter sigma initemp coolexp kkconst -> case seed of
         Nothing -> allocaMatrix $ \mat -> do

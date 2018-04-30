@@ -65,6 +65,7 @@ library
     , hashable
     , hxt
     , split
+    , singletons
 
   extra-libraries:     igraph
   hs-source-dirs:      src

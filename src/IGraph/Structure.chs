@@ -15,6 +15,7 @@ import qualified Data.HashMap.Strict       as M
 import           Data.Serialize            (Serialize, decode)
 import           System.IO.Unsafe          (unsafePerformIO)
 import Data.Maybe
+import Data.Singletons (SingI)
 
 import Foreign
 import Foreign.C.Types
@@ -26,14 +27,14 @@ import           IGraph.Mutable
 
 #include "igraph/igraph.h"
 
-inducedSubgraph :: (Hashable v, Eq v, Serialize v) => LGraph d v e -> [Int] -> LGraph d v e
+inducedSubgraph :: (Hashable v, Eq v, Serialize v) => Graph d v e -> [Int] -> Graph d v e
 inducedSubgraph gr nds = unsafePerformIO $ withVerticesList nds $ \vs ->
     igraphInducedSubgraph (_graph gr) vs IgraphSubgraphCreateFromScratch >>=
-        unsafeFreeze . MLGraph
+        unsafeFreeze . MGraph
 
 -- | Closeness centrality
 closeness :: [Int]  -- ^ vertices
-          -> LGraph d v e
+          -> Graph d v e
           -> Maybe [Double]  -- ^ optional edge weights
           -> Neimode
           -> Bool   -- ^ whether to normalize
@@ -45,7 +46,7 @@ closeness nds gr ws mode normal = unsafePerformIO $ allocaVector $ \result ->
 
 -- | Betweenness centrality
 betweenness :: [Int]
-            -> LGraph d v e
+            -> Graph d v e
             -> Maybe [Double]
             -> [Double]
 betweenness nds gr ws = unsafePerformIO $ allocaVector $ \result ->
@@ -54,7 +55,7 @@ betweenness nds gr ws = unsafePerformIO $ allocaVector $ \result ->
         toList result
 
 -- | Eigenvector centrality
-eigenvectorCentrality :: LGraph d v e
+eigenvectorCentrality :: Graph d v e
                       -> Maybe [Double]
                       -> [Double]
 eigenvectorCentrality gr ws = unsafePerformIO $ allocaArpackOpt $ \arparck ->
@@ -63,8 +64,8 @@ eigenvectorCentrality gr ws = unsafePerformIO $ allocaArpackOpt $ \arparck ->
         toList result
 
 -- | Google's PageRank
-pagerank :: Graph d
-         => LGraph d v e
+pagerank :: SingI d
+         => Graph d v e
          -> Maybe [Double]  -- ^ edge weights
          -> Double  -- ^ damping factor, usually around 0.85
          -> [Double]
@@ -81,8 +82,8 @@ pagerank gr ws d
     m = nEdges gr
 
 -- | Personalized PageRank.
-personalizedPagerank :: Graph d
-                     => LGraph d v e
+personalizedPagerank :: SingI d
+                     => Graph d v e
                      -> [Double]   -- ^ reset probability
                      -> Maybe [Double]
                      -> Double

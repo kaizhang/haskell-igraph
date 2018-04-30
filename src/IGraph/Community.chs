@@ -1,5 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DataKinds #-}
 module IGraph.Community
     ( modularity
     , findCommunity
@@ -25,8 +26,7 @@ import IGraph.Internal.C2HS
 
 #include "haskell_igraph.h"
 
-modularity :: Graph d
-           => LGraph d v e
+modularity :: Graph d v e
            -> [[Int]]   -- ^ Communities.
            -> Maybe [Double] -- ^ Weights
            -> Double
@@ -70,7 +70,7 @@ defaultSpinglass = Spinglass
     , _coolFact = 0.99
     , _gamma = 1.0 }
 
-findCommunity :: LGraph U v e
+findCommunity :: Graph 'U v e
               -> Maybe [Double]   -- ^ node weights
               -> CommunityMethod  -- ^ Community finding algorithms
               -> [[Int]]

@@ -1,4 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module IGraph.Generators
     ( full
     , ErdosRenyiModel(..)
@@ -10,6 +12,7 @@ module IGraph.Generators
 import           Control.Monad                  (when)
 import           Data.Hashable                  (Hashable)
 import           Data.Serialize                 (Serialize)
+import Data.Singletons (SingI, Sing, sing, fromSing)
 import System.IO.Unsafe (unsafePerformIO)
 
 import qualified Foreign.Ptr as C2HSImp
@@ -23,14 +26,17 @@ import           IGraph.Mutable
 
 #include "haskell_igraph.h"
 
-full :: Graph d
+full :: forall d. SingI d
      => Int   -- ^ The number of vertices in the graph.
      -> Bool  -- ^ Whether to include self-edges (loops)
-     -> d     -- ^ U or D
-     -> LGraph d () ()
-full n hasLoop d = unsafePerformIO $ do
-    gr <- igraphFull n (isD d) hasLoop
-    unsafeFreeze $ MLGraph gr
+     -> Graph d () ()
+full n hasLoop = unsafePerformIO $ do
+    gr <- igraphFull n directed hasLoop
+    unsafeFreeze $ MGraph gr
+  where
+    directed = case fromSing (sing :: Sing d) of
+        D -> True
+        U -> False
 {#fun igraph_full as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , `Int', `Bool', `Bool'
@@ -39,18 +45,21 @@ full n hasLoop d = unsafePerformIO $ do
 data ErdosRenyiModel = GNP Int Double
                      | GNM Int Int
 
-erdosRenyiGame :: Graph d
+erdosRenyiGame :: forall d. SingI d
                => ErdosRenyiModel
-               -> d     -- ^ directed
                -> Bool  -- ^ self-loop
-               -> IO (LGraph d () ())
-erdosRenyiGame (GNP n p) d self = do
-    gp <- igraphInit >> igraphErdosRenyiGame IgraphErdosRenyiGnp n p (isD d) self
-    unsafeFreeze $ MLGraph gp
-erdosRenyiGame (GNM n m) d self = do
-    gp <- igraphInit >> igraphErdosRenyiGame IgraphErdosRenyiGnm n
-        (fromIntegral m) (isD d) self
-    unsafeFreeze $ MLGraph gp
+               -> IO (Graph d () ())
+erdosRenyiGame model self = do
+    igraphInit
+    gr <- case model of
+        GNP n p -> igraphErdosRenyiGame IgraphErdosRenyiGnp n p directed self
+        GNM n m -> igraphErdosRenyiGame IgraphErdosRenyiGnm n (fromIntegral m)
+            directed self
+    unsafeFreeze $ MGraph gr
+  where
+    directed = case fromSing (sing :: Sing d) of
+        D -> True
+        U -> False
 {#fun igraph_erdos_renyi_game as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , `ErdosRenyi', `Int', `Double', `Bool', `Bool'
@@ -59,24 +68,24 @@ erdosRenyiGame (GNM n m) d self = do
 -- | Generates a random graph with a given degree sequence.
 degreeSequenceGame :: [Int]   -- ^ Out degree
                    -> [Int]   -- ^ In degree
-                   -> IO (LGraph D () ())
+                   -> IO (Graph 'D () ())
 degreeSequenceGame out_deg in_deg = withList out_deg $ \out_deg' ->
     withList in_deg $ \in_deg' -> do
         gp <- igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
-        unsafeFreeze $ MLGraph gp
+        unsafeFreeze $ MGraph gp
 {#fun igraph_degree_sequence_game as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , castPtr `Ptr Vector', castPtr `Ptr Vector', `Degseq'
     } -> `CInt' void- #}
 
 -- | Randomly rewires a graph while preserving the degree distribution.
-rewire :: (Graph d, Hashable v, Serialize v, Eq v, Serialize e)
+rewire :: (Hashable v, Serialize v, Eq v, Serialize e)
        => Int    -- ^ Number of rewiring trials to perform.
-       -> LGraph d v e
-       -> IO (LGraph d v e)
+       -> Graph d v e
+       -> IO (Graph d v e)
 rewire n gr = do
-    (MLGraph gptr) <- thaw gr
+    (MGraph gptr) <- thaw gr
     err <- igraphRewire gptr n IgraphRewiringSimple
     when (err /= 0) $ error "failed to rewire graph!"
-    unsafeFreeze $ MLGraph gptr
+    unsafeFreeze $ MGraph gptr
 {#fun igraph_rewire as ^ { `IGraph', `Int', `Rewiring' } -> `Int' #}

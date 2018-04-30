@@ -1,4 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE DataKinds #-}
 module IGraph.Motif
     ( triad
     , triadCensus
@@ -32,7 +33,7 @@ import IGraph
 -- 120C: A->B->C, A<->C.
 -- 210: A->B<->C, A<->C.
 -- 300: A<->B<->C, A<->C, the complete graph.
-triad :: [LGraph D () ()]
+triad :: [Graph 'D () ()]
 triad = map make edgeList
   where
     edgeList =
@@ -53,10 +54,10 @@ triad = map make edgeList
          , [(0,1), (1,2), (2,1), (0,2), (2,0)]
          , [(0,1), (1,0), (1,2), (2,1), (0,2), (2,0)]
          ]
-    make :: [(Int, Int)] -> LGraph D () ()
+    make :: [(Int, Int)] -> Graph 'D () ()
     make xs = mkGraph (replicate 3 ()) $ zip xs $ repeat ()
 
-triadCensus :: (Hashable v, Eq v, Read v) => LGraph d v e -> [Int]
+triadCensus :: (Hashable v, Eq v, Read v) => Graph d v e -> [Int]
 triadCensus gr = unsafePerformIO $ allocaVector $ \result -> do
     igraphTriadCensus (_graph gr) result
     map truncate <$> toList result

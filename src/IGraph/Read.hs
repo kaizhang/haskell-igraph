@@ -4,20 +4,21 @@ module IGraph.Read
     , readAdjMatrixWeighted
     ) where
 
-import qualified Data.ByteString.Char8 as B
-import Data.ByteString.Lex.Fractional (readSigned, readExponential)
-import Data.Maybe (fromJust)
+import qualified Data.ByteString.Char8          as B
+import           Data.ByteString.Lex.Fractional (readExponential, readSigned)
+import           Data.Maybe                     (fromJust)
+import           Data.Singletons                (SingI)
 
-import IGraph
+import           IGraph
 
 readDouble :: B.ByteString -> Double
 readDouble = fst . fromJust . readSigned readExponential
 {-# INLINE readDouble #-}
 
-readAdjMatrix :: Graph d => FilePath -> IO (LGraph d B.ByteString ())
+readAdjMatrix :: SingI d => FilePath -> IO (Graph d B.ByteString ())
 readAdjMatrix = fmap fromAdjMatrix . B.readFile
 
-fromAdjMatrix :: Graph d => B.ByteString -> LGraph d B.ByteString ()
+fromAdjMatrix :: SingI d => B.ByteString -> Graph d B.ByteString ()
 fromAdjMatrix bs =
     let (header:xs) = B.lines bs
         mat = map (map readDouble . B.words) xs
@@ -31,7 +32,7 @@ fromAdjMatrix bs =
     f ((i,j),v) = i < j && v /= 0
 {-# INLINE fromAdjMatrix #-}
 
-readAdjMatrixWeighted :: Graph d => FilePath -> IO (LGraph d B.ByteString Double)
+readAdjMatrixWeighted :: SingI d => FilePath -> IO (Graph d B.ByteString Double)
 readAdjMatrixWeighted fl = do
     c <- B.readFile fl
     let (header:xs) = B.lines c

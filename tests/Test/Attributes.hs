@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 module Test.Attributes
     ( tests
     ) where
@@ -31,14 +32,14 @@ tests = testGroup "Attribute tests"
 nodeLabelTest :: TestTree
 nodeLabelTest = testCase "node label test" $ do
     let ns = sort $ map show [38..7000]
-        gr = mkGraph ns [] :: LGraph D String ()
+        gr = mkGraph ns [] :: Graph 'D String ()
     assertBool "" $ sort (map (nodeLab gr) $ nodes gr) == ns
 
 labelTest :: TestTree
 labelTest = testCase "edge label test" $ do
     dat <- randEdges 1000 10000
     let es = sort $ zipWith (\a b -> (a,b)) dat $ map show [1..]
-        gr = fromLabeledEdges es :: LGraph D Int String
+        gr = fromLabeledEdges es :: Graph 'D Int String
         es' = sort $ map (\(a,b) -> ((nodeLab gr a, nodeLab gr b), edgeLab gr (a,b))) $ edges gr
     assertBool "" $ es == es'
 
@@ -48,8 +49,8 @@ serializeTest = testCase "serialize test" $ do
     let es = map ( \(a, b) -> (
             ( defaultNodeAttributes{_nodeZindex=a}
             , defaultNodeAttributes{_nodeZindex=b}), defaultEdgeAttributes) ) dat
-        gr = fromLabeledEdges es :: LGraph D NodeAttr EdgeAttr
-        gr' :: LGraph D NodeAttr EdgeAttr
+        gr = fromLabeledEdges es :: Graph 'D NodeAttr EdgeAttr
+        gr' :: Graph 'D NodeAttr EdgeAttr
         gr' = case decode $ encode gr of
             Left msg -> error msg
             Right r  -> r

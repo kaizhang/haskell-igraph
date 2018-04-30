@@ -9,12 +9,13 @@ module IGraph.Exporter.GEXF
     , writeGEXF
     ) where
 
-import           Data.Colour               (AlphaColour, alphaChannel, black,
-                                            opaque, over)
-import           Data.Colour.SRGB          (channelBlue, channelGreen,
-                                            channelRed, toSRGB24)
+import           Data.Colour       (AlphaColour, alphaChannel, black, opaque,
+                                    over)
+import           Data.Colour.SRGB  (channelBlue, channelGreen, channelRed,
+                                    toSRGB24)
 import           Data.Hashable
 import           Data.Serialize
+import           Data.Singletons   (SingI)
 import           GHC.Generics
 import           IGraph
 import           Text.XML.HXT.Core
@@ -71,7 +72,7 @@ defaultEdgeAttributes = EdgeAttr
     , _edgeZindex = 2
     }
 
-genXMLTree :: (ArrowXml a, Graph d) => LGraph d NodeAttr EdgeAttr -> a XmlTree XmlTree
+genXMLTree :: (SingI d, ArrowXml a) => Graph d NodeAttr EdgeAttr -> a XmlTree XmlTree
 genXMLTree gr = root [] [gexf]
   where
     gexf = mkelem "gexf" [ attr "version" $ txt "1.2"
@@ -124,7 +125,7 @@ genXMLTree gr = root [] [gexf]
         a = show $ alphaChannel $ _edgeColour at
 {-# INLINE genXMLTree #-}
 
-writeGEXF :: Graph d => FilePath -> LGraph d NodeAttr EdgeAttr -> IO ()
+writeGEXF :: SingI d => FilePath -> Graph d NodeAttr EdgeAttr -> IO ()
 writeGEXF fl gr = runX (genXMLTree gr >>> writeDocument config fl) >> return ()
   where
     config = [withIndent yes]

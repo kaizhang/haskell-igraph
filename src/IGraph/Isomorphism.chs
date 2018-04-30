@@ -1,4 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module IGraph.Isomorphism
     ( getSubisomorphisms
     , isomorphic
@@ -8,6 +9,7 @@ module IGraph.Isomorphism
     ) where
 
 import           System.IO.Unsafe               (unsafePerformIO)
+import Data.Singletons (SingI, Sing, sing, fromSing)
 
 import Foreign
 import Foreign.C.Types
@@ -19,9 +21,8 @@ import           IGraph.Mutable
 
 #include "haskell_igraph.h"
 
-getSubisomorphisms :: Graph d
-                   => LGraph d v1 e1  -- ^ graph to be searched in
-                   -> LGraph d v2 e2   -- ^ smaller graph
+getSubisomorphisms :: Graph d v1 e1  -- ^ graph to be searched in
+                   -> Graph d v2 e2   -- ^ smaller graph
                    -> [[Int]]
 getSubisomorphisms g1 g2 = unsafePerformIO $ allocaVectorPtr $ \vpptr -> do
     igraphGetSubisomorphismsVf2 gptr1 gptr2 nullPtr nullPtr nullPtr nullPtr vpptr
@@ -45,9 +46,8 @@ getSubisomorphisms g1 g2 = unsafePerformIO $ allocaVectorPtr $ \vpptr -> do
     } -> `CInt' void- #}
 
 -- | Determine whether two graphs are isomorphic.
-isomorphic :: Graph d
-           => LGraph d v1 e1
-           -> LGraph d v2 e2
+isomorphic :: Graph d v1 e1
+           -> Graph d v2 e2
            -> Bool
 isomorphic g1 g2 = unsafePerformIO $ alloca $ \ptr -> do
     _ <- igraphIsomorphic (_graph g1) (_graph g2) ptr
@@ -57,27 +57,32 @@ isomorphic g1 g2 = unsafePerformIO $ alloca $ \ptr -> do
 
 -- | Creates a graph from the given isomorphism class.
 -- This function is implemented only for graphs with three or four vertices.
-isoclassCreate :: Graph d
+isoclassCreate :: forall d. SingI d
                => Int   -- ^ The number of vertices to add to the graph.
                -> Int   -- ^ The isomorphism class
-               -> d
-               -> LGraph d () ()
-isoclassCreate size idx d = unsafePerformIO $ do
-    gp <- igraphInit >> igraphIsoclassCreate size idx (isD d)
-    unsafeFreeze $ MLGraph gp
+               -> Graph d () ()
+isoclassCreate size idx = unsafePerformIO $ do
+    gp <- igraphInit >> igraphIsoclassCreate size idx directed
+    unsafeFreeze $ MGraph gp
+  where
+    directed = case fromSing (sing :: Sing d) of
+        D -> True
+        U -> False
 {#fun igraph_isoclass_create as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , `Int', `Int', `Bool'
     } -> `CInt' void- #}
 
-isoclass3 :: Graph d => d -> [LGraph d () ()]
-isoclass3 d = map (flip (isoclassCreate 3) d) n
+isoclass3 :: forall d. SingI d => [Graph d () ()]
+isoclass3 = map (isoclassCreate 3) (if directed then [0..15] else [0..3])
   where
-    n | isD d = [0..15]
-      | otherwise = [0..3]
+    directed = case fromSing (sing :: Sing d) of
+        D -> True
+        U -> False
 
-isoclass4 :: Graph d => d -> [LGraph d () ()]
-isoclass4 d = map (flip (isoclassCreate 4) d) n
+isoclass4 :: forall d. SingI d => [Graph d () ()]
+isoclass4 = map (isoclassCreate 4) (if directed then [0..217] else [0..10])
   where
-    n | isD d = [0..217]
-      | otherwise = [0..10]
+    directed = case fromSing (sing :: Sing d) of
+        D -> True
+        U -> False
