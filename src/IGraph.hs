@@ -42,7 +42,7 @@ module IGraph
 
 import           Conduit
 import           Control.Arrow             ((&&&))
-import           Control.Monad             (forM, forM_, liftM, replicateM)
+import           Control.Monad             (forM, forM_, liftM, replicateM, when)
 import           Control.Monad.Primitive
 import           Control.Monad.ST          (runST)
 import           Data.Conduit.Cereal
@@ -71,6 +71,7 @@ data Graph (d :: EdgeType) v e = Graph
 instance (SingI d, Serialize v, Serialize e, Hashable v, Eq v)
     => Serialize (Graph d v e) where
         put gr = do
+            put $ fromSing (sing :: Sing d)
             put $ nNodes gr
             go (nodeLab gr) (nNodes gr) 0
             put $ nEdges gr
@@ -79,6 +80,9 @@ instance (SingI d, Serialize v, Serialize e, Hashable v, Eq v)
             go f n i | i >= n = return ()
                      | otherwise = put (f i) >> go f n (i+1)
         get = do
+            directed <- get
+            when (fromSing (sing :: Sing d) /= directed) $
+                error "Incorrect graph type"
             nn <- get
             nds <- replicateM nn get
             ne <- get

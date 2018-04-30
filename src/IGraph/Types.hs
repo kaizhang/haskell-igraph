@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds              #-}
+{-# LANGUAGE DeriveGeneric          #-}
 {-# LANGUAGE EmptyCase              #-}
 {-# LANGUAGE FlexibleContexts       #-}
 {-# LANGUAGE FlexibleInstances      #-}
@@ -15,14 +16,18 @@
 
 module IGraph.Types where
 
+import           Data.Serialize          (Serialize)
 import           Data.Singletons.Prelude
 import           Data.Singletons.TH
+import           GHC.Generics            (Generic)
 
 $(singletons [d|
     data EdgeType = D
                   | U
-        deriving (Show, Read, Eq)
+        deriving (Show, Read, Eq, Generic)
     |])
+
+instance Serialize EdgeType
 
 type Node = Int
 type LNode a = (Node, a)
