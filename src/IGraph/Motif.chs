@@ -9,7 +9,6 @@ import Data.Hashable (Hashable)
 import System.IO.Unsafe (unsafePerformIO)
 
 import Foreign
-import qualified Foreign.Ptr as C2HSImp
 
 import IGraph
 {#import IGraph.Internal #}

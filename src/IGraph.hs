@@ -189,18 +189,20 @@ fromLabeledEdges es = mkGraph labels es'
     labelToId = M.fromList $ zip labels [0..]
 
 -- | Create a graph from a stream of labeled edges.
-fromLabeledEdges' :: (SingI d, Hashable v, Serialize v, Eq v, Serialize e)
+fromLabeledEdges' :: (MonadUnliftIO m, SingI d, Hashable v, Serialize v, Eq v, Serialize e)
                   => a    -- ^ Input, usually a file
-                  -> (a -> ConduitT () ((v, v), e) IO ())  -- ^ deserialize the input into a stream of edges
-                  -> IO (Graph d v e)
+                  -> (a -> ConduitT () ((v, v), e) m ())  -- ^ deserialize the input into a stream of edges
+                  -> m (Graph d v e)
 fromLabeledEdges' input mkConduit = do
     (labelToId, _, ne) <- runConduit $ mkConduit input .|
         foldlC f (M.empty, 0::Int, 0::Int)
-    allocaVectorN (2*ne) $ \evec -> allocaBSVectorN ne $ \bsvec -> do
-        let getId x = M.lookupDefault undefined x labelToId
-        runConduit $ mkConduit input .|
-            mapC (\((v1, v2), e) -> ((getId v1, getId v2), e)) .|
-            deserializeGraph (fst $ unzip $ sortBy (comparing snd) $ M.toList labelToId) evec bsvec
+    let action evec bsvec = do
+            let getId x = M.lookupDefault undefined x labelToId
+            runConduit $ mkConduit input .|
+                mapC (\((v1, v2), e) -> ((getId v1, getId v2), e)) .|
+                deserializeGraph (fst $ unzip $ sortBy (comparing snd) $ M.toList labelToId) evec bsvec
+    withRunInIO $ \runInIO -> allocaVectorN (2*ne) $ \evec ->
+        allocaBSVectorN ne $ \bsvec -> (runInIO $ action evec bsvec)
   where
     f (vs, nn, ne) ((v1, v2), _) =
         let (vs', nn') = add v1 $ add v2 (vs, nn)
@@ -210,11 +212,11 @@ fromLabeledEdges' input mkConduit = do
             then (m, i)
             else (M.insert v i m, i + 1)
 
-deserializeGraph :: (SingI d, Hashable v, Serialize v, Eq v, Serialize e)
+deserializeGraph :: (MonadIO m, SingI d, Hashable v, Serialize v, Eq v, Serialize e)
                  => [v]
                  -> Ptr Vector  -- ^ a vector that is sufficient to hold all edges
                  -> Ptr BSVector
-                 -> ConduitT (LEdge e) o IO (Graph d v e)
+                 -> ConduitT (LEdge e) o m (Graph d v e)
 deserializeGraph nds evec bsvec = do
     let f i ((fr, to), attr) = liftIO $ do
             igraphVectorSet evec (i*2) $ fromIntegral fr
@@ -222,8 +224,8 @@ deserializeGraph nds evec bsvec = do
             bsvectorSet bsvec i $ encode attr
             return $ i + 1
     _ <- foldMC f 0
-    gr@(MGraph g) <- new 0
     liftIO $ do
+        gr@(MGraph g) <- new 0
         addLNodes nds gr
         withBSAttr edgeAttr bsvec $ \ptr ->
             withPtrs [ptr] (igraphAddEdges g evec . castPtr)
