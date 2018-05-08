@@ -14,7 +14,7 @@ import           Test.Utils
 import Conduit
 
 import           IGraph
-import           IGraph.Mutable
+import qualified IGraph.Mutable as GM
 import           IGraph.Structure
 
 tests :: TestTree
@@ -60,5 +60,5 @@ graphEdit = testGroup "Graph editing"
     simple = mkGraph (replicate 3 ()) $ zip [(0,1),(1,2),(2,0)] $ repeat () :: Graph 'U () ()
     simple' = runST $ do
         g <- thaw simple
-        delEdges [(0,1),(0,2)] g
+        GM.delEdges [(0,1),(0,2)] g
         freeze g

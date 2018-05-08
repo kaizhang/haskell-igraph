@@ -21,13 +21,16 @@ import Foreign
 import Foreign.C.Types
 
 import           IGraph
-import           IGraph.Mutable
+import           IGraph.Mutable (MGraph(..))
 {#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
 
 #include "igraph/igraph.h"
 
-inducedSubgraph :: (Hashable v, Eq v, Serialize v) => Graph d v e -> [Int] -> Graph d v e
+inducedSubgraph :: (Hashable v, Eq v, Serialize v)
+                => Graph d v e
+                -> [Int]
+                -> Graph d v e
 inducedSubgraph gr nds = unsafePerformIO $ withVerticesList nds $ \vs ->
     igraphInducedSubgraph (_graph gr) vs IgraphSubgraphCreateFromScratch >>=
         unsafeFreeze . MGraph

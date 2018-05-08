@@ -97,14 +97,12 @@ module IGraph.Internal
     , withAttr
     , withBSAttr
     , igraphHaskellAttributeHasAttr
-    , igraphHaskellAttributeGANSet
-    , igraphHaskellAttributeGAN
     , igraphHaskellAttributeVAS
-    , igraphHaskellAttributeEAN
     , igraphHaskellAttributeEAS
-    , igraphHaskellAttributeEASSetv
     , igraphHaskellAttributeVASSet
+    , igraphHaskellAttributeVASSetv
     , igraphHaskellAttributeEASSet
+    , igraphHaskellAttributeEASSetv
 
       -- * Igraph arpack options type
     , ArpackOpt
@@ -620,31 +618,58 @@ withBSAttr name bsvec fun = withCString name $ \name' ->
         {#set igraph_attribute_record_t.value #} attr y
 {-# INLINE withBSAttr #-}
 
+-- | Checks whether a (graph, vertex or edge) attribute exists
 {#fun igraph_haskell_attribute_has_attr as ^
-    { `IGraph', `AttributeElemtype', `String' } -> `Bool' #}
+    { `IGraph'
+    , `AttributeElemtype' -- ^ The type of the attribute
+    , `String' -- ^ The name of the attribute
+    } -> `Bool' #}
 
-{#fun igraph_haskell_attribute_GAN_set as ^
-    { `IGraph', `String', `Double' } -> `Int' #}
-
-{#fun igraph_haskell_attribute_GAN as ^
-    { `IGraph', `String' } -> `Double' #}
-
+-- | Query a string vertex attribute
 {#fun igraph_haskell_attribute_VAS as ^
-    { `IGraph', `String', `Int' } -> `Ptr BSLen' castPtr #}
+    { `IGraph'
+    , `String'    -- ^ The name of the attribute
+    , `Int'       -- ^ The id of the queried vertex
+    } -> `Ptr BSLen' castPtr #}
 
-{#fun igraph_haskell_attribute_EAN as ^
-    { `IGraph', `String', `Int' } -> `Double' #}
+-- | Query a string edge attribute.
 {#fun igraph_haskell_attribute_EAS as ^
-    { `IGraph', `String', `Int' } -> `Ptr BSLen' castPtr #}
-
-{#fun igraph_haskell_attribute_EAS_setv as ^
-    { `IGraph', `String', castPtr `Ptr BSVector' } -> `Int' #}
+    { `IGraph'
+    , `String'  -- ^ The name of the attribute
+    , `Int'     -- ^ The id of the queried edge
+    } -> `Ptr BSLen' castPtr #}
 
 {#fun igraph_haskell_attribute_VAS_set as ^
-    { `IGraph', `String', `Int', castPtr `Ptr BSLen' } -> `Int' #}
+    { `IGraph'
+    , `String'
+    , `Int'
+    , castPtr `Ptr BSLen'
+    } -> `CInt' void-#}
 
+{#fun igraph_haskell_attribute_VAS_setv as ^
+    { `IGraph'
+    , `String'   -- ^ Name of the attribute
+    , castPtr `Ptr BSVector'   -- ^ String vector, the new attribute values.
+                               -- The length of this vector must match the
+                               -- number of vertices.
+    } -> `CInt' void-#}
+
+-- | Set a string edge attribute.
 {#fun igraph_haskell_attribute_EAS_set as ^
-    { `IGraph', `String', `Int', castPtr `Ptr BSLen' } -> `Int' #}
+    { `IGraph'
+    , `String'  -- ^ The name of the attribute
+    , `Int'     -- ^ The id of the queried vertex
+    , castPtr `Ptr BSLen'   -- ^ The (new) value of the attribute.
+    } -> `CInt' void-#}
+
+-- | Set a string edge attribute for all edges.
+{#fun igraph_haskell_attribute_EAS_setv as ^
+    { `IGraph'
+    , `String'   -- ^ Name of the attribute
+    , castPtr `Ptr BSVector'   -- ^ String vector, the new attribute values.
+                               -- The length of this vector must match the
+                               -- number of edges.
+    } -> `CInt' void-#}
 
 
 --------------------------------------------------------------------------------

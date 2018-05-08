@@ -59,7 +59,8 @@ import           System.IO.Unsafe          (unsafePerformIO)
 
 import           IGraph.Internal
 import           IGraph.Internal.Constants
-import           IGraph.Mutable
+import           IGraph.Mutable (MGraph(..))
+import qualified IGraph.Mutable as GM
 import           IGraph.Types
 
 -- | Graph with labeled nodes and edges.
@@ -89,6 +90,7 @@ instance (SingI d, Serialize v, Serialize e, Hashable v, Eq v)
             es <- replicateM ne get
             return $ mkGraph nds es
 
+-- | Is the graph directed or not.
 isDirected :: forall d v e. SingI d => Graph d v e -> Bool
 isDirected _ = case fromSing (sing :: Sing d) of
     D -> True
@@ -165,7 +167,7 @@ getEdgeLabByEid (Graph g _) i = unsafePerformIO $
 -- | Create a empty graph.
 empty :: (SingI d, Hashable v, Serialize v, Eq v, Serialize e)
       => Graph d v e
-empty = runST $ new 0 >>= unsafeFreeze
+empty = runST $ GM.new 0 >>= unsafeFreeze
 
 -- | Create a graph.
 mkGraph :: (SingI d, Hashable v, Serialize v, Eq v, Serialize e)
@@ -173,9 +175,9 @@ mkGraph :: (SingI d, Hashable v, Serialize v, Eq v, Serialize e)
         -> [LEdge e]  -- ^ Labeled edges.
         -> Graph d v e
 mkGraph vattr es = runST $ do
-    g <- new 0
-    addLNodes vattr g
-    addLEdges es g
+    g <- GM.new 0
+    GM.addLNodes vattr g
+    GM.addLEdges es g
     unsafeFreeze g
 
 -- | Create a graph from labeled edges.
@@ -225,8 +227,8 @@ deserializeGraph nds evec bsvec = do
             return $ i + 1
     _ <- foldMC f 0
     liftIO $ do
-        gr@(MGraph g) <- new 0
-        addLNodes nds gr
+        gr@(MGraph g) <- GM.new 0
+        GM.addLNodes nds gr
         withBSAttr edgeAttr bsvec $ \ptr ->
             withPtrs [ptr] (igraphAddEdges g evec . castPtr)
         unsafeFreeze gr
@@ -280,7 +282,7 @@ nmap :: (Serialize v1, Serialize v2, Hashable v2, Eq v2)
 nmap f gr = runST $ do
     (MGraph gptr) <- thaw gr
     let gr' = MGraph gptr
-    forM_ (nodes gr) $ \x -> setNodeAttr x (f (x, nodeLab gr x)) gr'
+    forM_ (nodes gr) $ \x -> GM.setNodeAttr x (f (x, nodeLab gr x)) gr'
     unsafeFreeze gr'
 
 -- | Apply a function to change edges' labels.
@@ -291,7 +293,7 @@ emap f gr = runST $ do
     let gr' = MGraph gptr
     forM_ [0 .. nEdges gr - 1] $ \i -> do
         let lab = f (getEdgeByEid gr i, getEdgeLabByEid gr i)
-        setEdgeAttr i lab gr'
+        GM.setEdgeAttr i lab gr'
     unsafeFreeze gr'
 
 -- | Keep nodes that satisfy the constraint.
@@ -300,7 +302,7 @@ nfilter :: (Hashable v, Eq v, Serialize v)
 nfilter f gr = runST $ do
     let deleted = fst $ unzip $ filter (not . f) $ labNodes gr
     gr' <- thaw gr
-    delNodes deleted gr'
+    GM.delNodes deleted gr'
     unsafeFreeze gr'
 
 -- | Keep edges that satisfy the constraint.
@@ -309,5 +311,5 @@ efilter :: (SingI d, Hashable v, Eq v, Serialize v, Serialize e)
 efilter f gr = runST $ do
     let deleted = fst $ unzip $ filter (not . f) $ labEdges gr
     gr' <- thaw gr
-    delEdges deleted gr'
+    GM.delEdges deleted gr'
     unsafeFreeze gr'

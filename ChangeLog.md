@@ -1,6 +1,12 @@
 Revision history for haskell-igraph
 ===================================
 
+v0.6.0 --
+-------------------
+
+* Breaking change: Drop `Graph` type class. Change `LGraph` and `MLGraph` to
+`Graph` and `MGraph`. The new `Graph` and `MGraph` types are now dependently typed.
+
 v0.5.0 -- 2018-04-25
 -------------------
 

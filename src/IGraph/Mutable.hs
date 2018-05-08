@@ -5,6 +5,8 @@
 module IGraph.Mutable
     ( MGraph(..)
     , new
+    , nNodes
+    , nEdges
     , addNodes
     , addLNodes
     , delNodes
@@ -13,9 +15,10 @@ module IGraph.Mutable
     , delEdges
     , setEdgeAttr
     , setNodeAttr
+    , initializeNullAttribute
     )where
 
-import           Control.Monad                  (forM, when)
+import           Control.Monad                  (forM)
 import           Control.Monad.Primitive
 import           Data.Serialize                 (Serialize, encode)
 import           Data.Singletons.Prelude        (Sing, SingI, fromSing, sing)
@@ -36,6 +39,16 @@ new n = unsafePrimToPrim $ igraphInit >>= igraphNew n directed >>= return . MGra
     directed = case fromSing (sing :: Sing d) of
         D -> True
         U -> False
+
+-- | Return the number of nodes in a graph.
+nNodes :: PrimMonad m => MGraph (PrimState m) d v e -> m Int
+nNodes (MGraph gr) = unsafePrimToPrim $ igraphVcount gr
+{-# INLINE nNodes #-}
+
+-- | Return the number of edges in a graph.
+nEdges :: PrimMonad m => MGraph (PrimState m) d v e -> m Int
+nEdges (MGraph gr) = unsafePrimToPrim $ igraphEcount gr
+{-# INLINE nEdges #-}
 
 -- | Add nodes to the graph.
 addNodes :: PrimMonad m
@@ -92,9 +105,7 @@ setNodeAttr :: (PrimMonad m, Serialize v)
             -> MGraph (PrimState m) d v e
             -> m ()
 setNodeAttr nodeId x (MGraph gr) = unsafePrimToPrim $
-    withByteString (encode x) $ \bs -> do
-        err <- igraphHaskellAttributeVASSet gr vertexAttr nodeId bs
-        when (err /= 0) $ error "Fail to set node attribute!"
+    withByteString (encode x) $ igraphHaskellAttributeVASSet gr vertexAttr nodeId
 
 -- | Set edge attribute.
 setEdgeAttr :: (PrimMonad m, Serialize e)
@@ -103,6 +114,16 @@ setEdgeAttr :: (PrimMonad m, Serialize e)
             -> MGraph (PrimState m) d v e
             -> m ()
 setEdgeAttr edgeId x (MGraph gr) = unsafePrimToPrim $
-    withByteString (encode x) $ \bs -> do
-        err <- igraphHaskellAttributeEASSet gr edgeAttr edgeId bs
-        when (err /= 0) $ error "Fail to set edge attribute!"
+    withByteString (encode x) $ igraphHaskellAttributeEASSet gr edgeAttr edgeId
+
+initializeNullAttribute :: PrimMonad m
+                        => MGraph (PrimState m) d () ()
+                        -> m ()
+initializeNullAttribute gr@(MGraph g) = do
+    nn <- nNodes gr
+    unsafePrimToPrim $ withByteStrings (map encode $ replicate nn ()) $
+        igraphHaskellAttributeVASSetv g vertexAttr
+    ne <- nEdges gr
+    unsafePrimToPrim $ withByteStrings (map encode $ replicate ne ()) $
+        igraphHaskellAttributeEASSetv g edgeAttr
+{-# INLINE initializeNullAttribute #-}

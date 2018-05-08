@@ -9,7 +9,7 @@ module IGraph.Generators
     , rewire
     ) where
 
-import           Control.Monad                  (when)
+import           Control.Monad                  (when, forM_)
 import           Data.Hashable                  (Hashable)
 import           Data.Serialize                 (Serialize)
 import Data.Singletons (SingI, Sing, sing, fromSing)
@@ -19,7 +19,8 @@ import qualified Foreign.Ptr as C2HSImp
 import Foreign
 
 import           IGraph
-import           IGraph.Mutable
+import           IGraph.Mutable (MGraph(..))
+import qualified IGraph.Mutable as M
 {#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
 {# import IGraph.Internal.Initialization #}
@@ -31,8 +32,9 @@ full :: forall d. SingI d
      -> Bool  -- ^ Whether to include self-edges (loops)
      -> Graph d () ()
 full n hasLoop = unsafePerformIO $ do
-    gr <- igraphFull n directed hasLoop
-    unsafeFreeze $ MGraph gr
+    gr <- MGraph <$> igraphFull n directed hasLoop
+    M.initializeNullAttribute gr
+    unsafeFreeze gr
   where
     directed = case fromSing (sing :: Sing d) of
         D -> True
@@ -51,11 +53,12 @@ erdosRenyiGame :: forall d. SingI d
                -> IO (Graph d () ())
 erdosRenyiGame model self = do
     igraphInit
-    gr <- case model of
+    gr <- fmap MGraph $ case model of
         GNP n p -> igraphErdosRenyiGame IgraphErdosRenyiGnp n p directed self
         GNM n m -> igraphErdosRenyiGame IgraphErdosRenyiGnm n (fromIntegral m)
             directed self
-    unsafeFreeze $ MGraph gr
+    M.initializeNullAttribute gr
+    unsafeFreeze gr
   where
     directed = case fromSing (sing :: Sing d) of
         D -> True
@@ -71,8 +74,9 @@ degreeSequenceGame :: [Int]   -- ^ Out degree
                    -> IO (Graph 'D () ())
 degreeSequenceGame out_deg in_deg = withList out_deg $ \out_deg' ->
     withList in_deg $ \in_deg' -> do
-        gp <- igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
-        unsafeFreeze $ MGraph gp
+        gr <- MGraph <$> igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
+        M.initializeNullAttribute gr
+        unsafeFreeze gr
 {#fun igraph_degree_sequence_game as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , castPtr `Ptr Vector', castPtr `Ptr Vector', `Degseq'
@@ -85,7 +89,6 @@ rewire :: (Hashable v, Serialize v, Eq v, Serialize e)
        -> IO (Graph d v e)
 rewire n gr = do
     (MGraph gptr) <- thaw gr
-    err <- igraphRewire gptr n IgraphRewiringSimple
-    when (err /= 0) $ error "failed to rewire graph!"
+    igraphRewire gptr n IgraphRewiringSimple
     unsafeFreeze $ MGraph gptr
-{#fun igraph_rewire as ^ { `IGraph', `Int', `Rewiring' } -> `Int' #}
+{#fun igraph_rewire as ^ { `IGraph', `Int', `Rewiring' } -> `CInt' void-#}
