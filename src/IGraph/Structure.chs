@@ -5,7 +5,6 @@ module IGraph.Structure
     , betweenness
     , eigenvectorCentrality
     , pagerank
-    , personalizedPagerank
     ) where
 
 import           Control.Monad
@@ -34,6 +33,12 @@ inducedSubgraph :: (Hashable v, Eq v, Serialize v)
 inducedSubgraph gr nds = unsafePerformIO $ withVerticesList nds $ \vs ->
     igraphInducedSubgraph (_graph gr) vs IgraphSubgraphCreateFromScratch >>=
         unsafeFreeze . MGraph
+{#fun igraph_induced_subgraph as ^
+    { `IGraph'
+    , allocaIGraph- `IGraph' addIGraphFinalizer*
+    , castPtr %`Ptr VertexSelector'
+    , `SubgraphImplementation'
+    } -> `CInt' void- #}
 
 -- | Closeness centrality
 closeness :: [Int]  -- ^ vertices
@@ -46,6 +51,14 @@ closeness nds gr ws mode normal = unsafePerformIO $ allocaVector $ \result ->
     withVerticesList nds $ \vs -> withListMaybe ws $ \ws' -> do
         igraphCloseness (_graph gr) result vs mode ws' normal
         toList result
+{#fun igraph_closeness as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr %`Ptr VertexSelector'
+    , `Neimode'
+    , castPtr `Ptr Vector'
+    , `Bool' } -> `CInt' void- #}
+
 
 -- | Betweenness centrality
 betweenness :: [Int]
@@ -56,6 +69,13 @@ betweenness nds gr ws = unsafePerformIO $ allocaVector $ \result ->
     withVerticesList nds $ \vs -> withListMaybe ws $ \ws' -> do
         igraphBetweenness (_graph gr) result vs True ws' False
         toList result
+{#fun igraph_betweenness as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr %`Ptr VertexSelector'
+    , `Bool'
+    , castPtr `Ptr Vector'
+    , `Bool' } -> `CInt' void- #}
 
 -- | Eigenvector centrality
 eigenvectorCentrality :: Graph d v e
@@ -65,68 +85,6 @@ eigenvectorCentrality gr ws = unsafePerformIO $ allocaArpackOpt $ \arparck ->
     allocaVector $ \result -> withListMaybe ws $ \ws' -> do
         igraphEigenvectorCentrality (_graph gr) result nullPtr True True ws' arparck
         toList result
-
--- | Google's PageRank
-pagerank :: SingI d
-         => Graph d v e
-         -> Maybe [Double]  -- ^ edge weights
-         -> Double  -- ^ damping factor, usually around 0.85
-         -> [Double]
-pagerank gr ws d
-    | n == 0 = []
-    | isJust ws && length (fromJust ws) /= m = error "incorrect length of edge weight vector"
-    | otherwise = unsafePerformIO $ alloca $ \p -> allocaVector $ \result ->
-        withVerticesAll $ \vs -> withListMaybe ws $ \ws' -> do
-            igraphPagerank (_graph gr) IgraphPagerankAlgoPrpack result p vs
-                (isDirected gr) d ws' nullPtr
-            toList result
-  where
-    n = nNodes gr
-    m = nEdges gr
-
--- | Personalized PageRank.
-personalizedPagerank :: SingI d
-                     => Graph d v e
-                     -> [Double]   -- ^ reset probability
-                     -> Maybe [Double]
-                     -> Double
-                     -> [Double]
-personalizedPagerank gr reset ws d
-    | n == 0 = []
-    | length reset /= n = error "incorrect length of reset vector"
-    | isJust ws && length (fromJust ws) /= m = error "incorrect length of edge weight vector"
-    | otherwise = unsafePerformIO $ alloca $ \p -> allocaVector $ \result ->
-        withList reset $ \reset' -> withVerticesAll $ \vs -> withListMaybe ws $ \ws' -> do
-            igraphPersonalizedPagerank (_graph gr) IgraphPagerankAlgoPrpack result p vs
-                (isDirected gr) d reset' ws' nullPtr
-            toList result
-  where
-    n = nNodes gr
-    m = nEdges gr
-
-{#fun igraph_induced_subgraph as ^
-    { `IGraph'
-    , allocaIGraph- `IGraph' addIGraphFinalizer*
-    , castPtr %`Ptr VertexSelector'
-    , `SubgraphImplementation'
-    } -> `CInt' void- #}
-
-{#fun igraph_closeness as ^
-    { `IGraph'
-    , castPtr `Ptr Vector'
-    , castPtr %`Ptr VertexSelector'
-    , `Neimode'
-    , castPtr `Ptr Vector'
-    , `Bool' } -> `CInt' void- #}
-
-{#fun igraph_betweenness as ^
-    { `IGraph'
-    , castPtr `Ptr Vector'
-    , castPtr %`Ptr VertexSelector'
-    , `Bool'
-    , castPtr `Ptr Vector'
-    , `Bool' } -> `CInt' void- #}
-
 {#fun igraph_eigenvector_centrality as ^
     { `IGraph'
     , castPtr `Ptr Vector'
@@ -135,6 +93,30 @@ personalizedPagerank gr reset ws d
     , `Bool'
     , castPtr `Ptr Vector'
     , castPtr `Ptr ArpackOpt' } -> `CInt' void- #}
+
+-- | Google's PageRank algorithm, with option to
+pagerank :: SingI d
+         => Graph d v e
+         -> Maybe [Double]  -- ^ Node weights or reset probability. If provided,
+                            -- the personalized PageRank will be used
+         -> Maybe [Double]  -- ^ Edge weights
+         -> Double  -- ^ damping factor, usually around 0.85
+         -> [Double]
+pagerank gr reset ws d
+    | n == 0 = []
+    | isJust ws && length (fromJust ws) /= m = error "incorrect length of edge weight vector"
+    | otherwise = unsafePerformIO $ alloca $ \p -> allocaVector $ \result ->
+        withVerticesAll $ \vs -> withListMaybe ws $ \ws' -> do
+            case reset of
+                Nothing -> igraphPagerank (_graph gr) IgraphPagerankAlgoPrpack
+                    result p vs (isDirected gr) d ws' nullPtr
+                Just reset' -> withList reset' $ \reset'' -> igraphPersonalizedPagerank
+                    (_graph gr) IgraphPagerankAlgoPrpack result p vs
+                    (isDirected gr) d reset'' ws' nullPtr
+            toList result
+  where
+    n = nNodes gr
+    m = nEdges gr
 
 {#fun igraph_pagerank as ^
     { `IGraph'

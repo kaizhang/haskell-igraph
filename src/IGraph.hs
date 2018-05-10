@@ -45,7 +45,6 @@ import           Control.Arrow             ((&&&))
 import           Control.Monad             (forM, forM_, liftM, replicateM, when)
 import           Control.Monad.Primitive
 import           Control.Monad.ST          (runST)
-import           Data.Conduit.Cereal
 import           Data.Either               (fromRight)
 import           Data.Hashable             (Hashable)
 import qualified Data.HashMap.Strict       as M

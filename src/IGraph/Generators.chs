@@ -3,6 +3,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module IGraph.Generators
     ( full
+    , star
     , ErdosRenyiModel(..)
     , erdosRenyiGame
     , degreeSequenceGame
@@ -42,6 +43,20 @@ full n hasLoop = unsafePerformIO $ do
 {#fun igraph_full as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , `Int', `Bool', `Bool'
+    } -> `CInt' void- #}
+
+-- | Return the Star graph. The center node is always associated with id 0.
+star :: Int    -- ^ The number of nodes
+     -> Graph 'U () ()
+star n = unsafePerformIO $ do
+    gr <- MGraph <$> igraphStar n IgraphStarUndirected 0
+    M.initializeNullAttribute gr
+    unsafeFreeze gr
+{# fun igraph_star as ^
+    { allocaIGraph- `IGraph' addIGraphFinalizer*
+    , `Int'
+    , `StarMode'
+    , `Int'
     } -> `CInt' void- #}
 
 data ErdosRenyiModel = GNP Int Double

@@ -55,6 +55,7 @@ module IGraph.Internal
     , allocaIGraph
     , addIGraphFinalizer
     , igraphNew
+    , igraphCreate
 
       -- * Selector and iterator for edge and vertex
       -- ** Igraph vertex selector
@@ -368,6 +369,18 @@ addIGraphFinalizer ptr = do
 {#fun igraph_copy as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , `IGraph'
+    } -> `CInt' void- #}
+
+{#fun igraph_create as ^
+    { allocaIGraph- `IGraph' addIGraphFinalizer*
+    , castPtr `Ptr Vector'  -- ^ The edges to add, the first two elements are
+                            -- the first edge, etc.
+    , `Int'    -- ^ The number of vertices in the graph, if smaller or equal to
+               -- the highest vertex id in the edges vector it will be
+               -- increased automatically. So it is safe to give 0 here.
+    , `Bool'   -- ^ Whether to create a directed graph or not. If yes,
+               -- then the first edge points from the first vertex id in edges
+               -- to the second, etc.
     } -> `CInt' void- #}
 
 -- | Create a igraph object and attach a finalizer

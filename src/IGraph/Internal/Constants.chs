@@ -30,5 +30,8 @@ module IGraph.Internal.Constants where
 {#enum igraph_rewiring_t as Rewiring {underscoreToCase}
     deriving (Show, Read, Eq) #}
 
+{#enum igraph_star_mode_t as StarMode {underscoreToCase}
+    deriving (Show, Read, Eq) #}
+
 {#enum igraph_degseq_t as Degseq {underscoreToCase}
     deriving (Show, Read, Eq) #}
