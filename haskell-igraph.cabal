@@ -58,7 +58,6 @@ library
     , colour
     , conduit >= 1.3.0
     , data-ordlist
-    , data-default-class
     , primitive
     , unordered-containers
     , hashable

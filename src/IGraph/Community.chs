@@ -9,7 +9,6 @@ module IGraph.Community
     , defaultSpinglass
     ) where
 
-import           Data.Default.Class
 import           Data.Function             (on)
 import           Data.List (sortBy, groupBy)
 import Data.List.Ordered (nubSortBy)

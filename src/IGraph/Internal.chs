@@ -361,6 +361,9 @@ addIGraphFinalizer ptr = do
     return $ IGraph vec
 {-# INLINE addIGraphFinalizer #-}
 
+-- | Create a igraph object and attach a finalizer
+igraphNew :: Int -> Bool -> HasInit -> IO IGraph
+igraphNew n directed _ = igraphNew' n directed
 {#fun igraph_empty as igraphNew'
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , `Int', `Bool'
@@ -383,9 +386,15 @@ addIGraphFinalizer ptr = do
                -- to the second, etc.
     } -> `CInt' void- #}
 
--- | Create a igraph object and attach a finalizer
-igraphNew :: Int -> Bool -> HasInit -> IO IGraph
-igraphNew n directed _ = igraphNew' n directed
+{#fun igraph_to_directed as ^
+    { `IGraph'   -- ^ The graph object to convert.
+    , `ToDirected'   -- ^ Specifies the details of how exactly the conversion is
+                     -- done. Possible values: IGRAPH_TO_DIRECTED_ARBITRARY:
+                     -- the number of edges in the graph stays the same,
+                     -- an arbitrarily directed edge is created for each
+                     -- undirected edge; IGRAPH_TO_DIRECTED_MUTUAL: two directed
+                     -- edges are created for each undirected edge, one in each direction.
+    } -> `CInt' void- #}
 
 
 --------------------------------------------------------------------------------

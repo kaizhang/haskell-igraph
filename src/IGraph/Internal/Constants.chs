@@ -9,6 +9,9 @@ module IGraph.Internal.Constants where
 {#enum igraph_edgeorder_type_t as EdgeOrderType {underscoreToCase}
     deriving (Show, Eq) #}
 
+{#enum igraph_to_directed_t as ToDirected {underscoreToCase}
+    deriving (Eq) #}
+
 {#enum igraph_spincomm_update_t as SpincommUpdate {underscoreToCase}
     deriving (Show, Eq) #}
 
