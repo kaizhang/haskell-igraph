@@ -1,7 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module IGraph.Generators
+module IGraph.Algorithms.Generators
     ( full
     , star
     , ErdosRenyiModel(..)

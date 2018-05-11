@@ -1,5 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-module IGraph.Clique
+module IGraph.Algorithms.Clique
     ( cliques
     , largestCliques
     , maximalCliques

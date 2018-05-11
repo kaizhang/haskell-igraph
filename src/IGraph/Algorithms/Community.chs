@@ -1,7 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DataKinds #-}
-module IGraph.Community
+module IGraph.Algorithms.Community
     ( modularity
     , findCommunity
     , CommunityMethod(..)

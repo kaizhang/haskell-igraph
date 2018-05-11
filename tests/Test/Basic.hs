@@ -3,19 +3,17 @@ module Test.Basic
     ( tests
     ) where
 
+import           Conduit
 import           Control.Monad.ST
 import           Data.List
 import           Data.List.Ordered (nubSort)
-import           Data.Maybe
 import           System.IO.Unsafe
 import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Test.Utils
-import Conduit
 
 import           IGraph
-import qualified IGraph.Mutable as GM
-import           IGraph.Structure
+import qualified IGraph.Mutable    as GM
 
 tests :: TestTree
 tests = testGroup "Basic tests"

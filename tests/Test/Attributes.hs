@@ -3,14 +3,8 @@ module Test.Attributes
     ( tests
     ) where
 
-import           Conduit
-import           Control.Monad
-import           Control.Monad.ST
 import           Data.List
-import           Data.List.Ordered         (nubSort)
-import           Data.Maybe
 import           Data.Serialize
-import           Foreign
 import           System.IO.Unsafe
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -20,7 +14,6 @@ import           IGraph
 import           IGraph.Exporter.GEXF
 import           IGraph.Internal
 import           IGraph.Mutable
-import           IGraph.Structure
 
 tests :: TestTree
 tests = testGroup "Attribute tests"

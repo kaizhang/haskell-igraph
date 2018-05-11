@@ -1,6 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE DataKinds #-}
-module IGraph.Motif
+module IGraph.Algorithms.Motif
     ( triad
     , triadCensus
     ) where

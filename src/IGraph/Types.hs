@@ -24,7 +24,7 @@ import           GHC.Generics            (Generic)
 $(singletons [d|
     data EdgeType = D
                   | U
-        deriving (Show, Read, Eq, Generic)
+        deriving (Eq, Generic)
     |])
 
 instance Serialize EdgeType

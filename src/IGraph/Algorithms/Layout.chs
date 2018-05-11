@@ -1,5 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-module IGraph.Layout
+module IGraph.Algorithms.Layout
     ( getLayout
     , LayoutMethod(..)
     , defaultKamadaKawai

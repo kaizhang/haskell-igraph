@@ -6,6 +6,10 @@
 module IGraph
     ( Graph(..)
     , EdgeType(..)
+    , Node
+    , LNode
+    , Edge
+    , LEdge
     , isDirected
     , nNodes
     , nodeLab
@@ -115,7 +119,7 @@ nEdges :: Graph d v e -> Int
 nEdges = unsafePerformIO . igraphEcount . _graph
 {-# INLINE nEdges #-}
 
-    -- | Return all edges.
+-- | Return all edges.
 edges :: Graph d v e -> [Edge]
 edges gr = map (getEdgeByEid gr) [0 .. nEdges gr - 1]
 {-# INLINE edges #-}

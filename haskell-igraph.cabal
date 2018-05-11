@@ -1,5 +1,5 @@
 name:                haskell-igraph
-version:             0.6.0
+version:             0.7.0-dev
 synopsis:            Haskell interface of the igraph library.
 description:         igraph<"http://igraph.org/c/"> is a library for creating
                      and manipulating large graphs. This package provides the Haskell
@@ -29,17 +29,18 @@ library
     IGraph.Internal.Constants
     IGraph.Internal
     IGraph
-    IGraph.Types
     IGraph.Mutable
-    IGraph.Clique
-    IGraph.Structure
-    IGraph.Isomorphism
-    IGraph.Community
+    IGraph.Types
     IGraph.Read
-    IGraph.Motif
-    IGraph.Layout
-    IGraph.Generators
     IGraph.Exporter.GEXF
+    IGraph.Algorithms
+    IGraph.Algorithms.Structure
+    IGraph.Algorithms.Community
+    IGraph.Algorithms.Clique
+    IGraph.Algorithms.Layout
+    IGraph.Algorithms.Motif
+    IGraph.Algorithms.Generators
+    IGraph.Algorithms.Isomorphism
 
   other-modules:
     IGraph.Internal.C2HS
@@ -79,14 +80,12 @@ library
 test-suite tests
   type: exitcode-stdio-1.0
   hs-source-dirs: tests
+  ghc-options:         -Wall
   main-is: test.hs
   other-modules:
     Test.Basic
     Test.Attributes
-    Test.Structure
-    Test.Isomorphism
-    Test.Motif
-    Test.Clique
+    Test.Algorithms
     Test.Utils
 
   default-language:    Haskell2010

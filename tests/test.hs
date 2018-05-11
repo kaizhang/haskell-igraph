@@ -1,17 +1,11 @@
-import qualified Test.Attributes  as Attributes
-import qualified Test.Basic       as Basic
-import qualified Test.Clique      as Clique
-import qualified Test.Isomorphism as Isomorphism
-import qualified Test.Motif       as Motif
-import qualified Test.Structure   as Structure
+import qualified Test.Algorithms as Algorithms
+import qualified Test.Attributes as Attributes
+import qualified Test.Basic      as Basic
 import           Test.Tasty
 
 main :: IO ()
 main = defaultMain $ testGroup "Haskell-igraph Tests"
     [ Basic.tests
-    , Structure.tests
-    , Motif.tests
-    , Isomorphism.tests
+    , Algorithms.tests
     , Attributes.tests
-    , Clique.tests
     ]

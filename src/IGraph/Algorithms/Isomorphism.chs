@@ -1,6 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module IGraph.Isomorphism
+module IGraph.Algorithms.Isomorphism
     ( getSubisomorphisms
     , isomorphic
     , isoclassCreate

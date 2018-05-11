@@ -1,6 +1,8 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-module IGraph.Structure
-    ( inducedSubgraph
+module IGraph.Algorithms.Structure
+    ( -- * Shortest Path Related Functions
+      getShortestPath
+    , inducedSubgraph
     , closeness
     , betweenness
     , eigenvectorCentrality
@@ -24,7 +26,34 @@ import           IGraph.Mutable (MGraph(..))
 {#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
 
-#include "igraph/igraph.h"
+#include "haskell_igraph.h"
+
+{#fun igraph_shortest_paths as ^
+    { `IGraph'
+    , castPtr `Ptr Matrix'
+    , castPtr %`Ptr VertexSelector'
+    , castPtr %`Ptr VertexSelector'
+    , `Neimode'
+    } -> `CInt' void- #}
+
+-- Calculates and returns a single unweighted shortest path from a given vertex
+-- to another one. If there are more than one shortest paths between the two
+-- vertices, then an arbitrary one is returned.
+getShortestPath :: Graph d v e
+                -> Node     -- ^ The id of the source vertex.
+                -> Node     -- ^ The id of the target vertex.
+                -> [Node]
+getShortestPath gr s t = unsafePerformIO $ allocaVector $ \path -> do
+    igraphGetShortestPath (_graph gr) path nullPtr s t IgraphOut
+    map truncate <$> toList path
+{#fun igraph_get_shortest_path as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr Vector'
+    , `Int'
+    , `Int'
+    , `Neimode'
+    } -> `CInt' void- #}
 
 inducedSubgraph :: (Hashable v, Eq v, Serialize v)
                 => Graph d v e

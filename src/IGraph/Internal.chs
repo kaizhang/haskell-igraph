@@ -172,7 +172,7 @@ toList vec = do
     n <- igraphVectorSize vec
     allocaArray n $ \ptr -> do
         igraphVectorCopyTo vec ptr
-        liftM (map realToFrac) $ peekArray n ptr
+        map realToFrac <$> peekArray n ptr
 {-# INLINE toList #-}
 
 {#fun igraph_vector_copy_to as ^ { castPtr `Ptr Vector', id `Ptr CDouble' } -> `()' #}
