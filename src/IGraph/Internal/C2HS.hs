@@ -4,7 +4,7 @@ module IGraph.Internal.C2HS (
   cIntConv, cFloatConv, cToBool, cFromBool, cToEnum, cFromEnum,
 
   -- * Composite marshalling functions
-  peekIntConv, peekFloatConv,
+  peekIntConv, peekFloatConv, peekBool
 
 ) where
 
@@ -64,10 +64,14 @@ cFromEnum  = cIntConv . fromEnum
 
 -- | Marshalling of numerals
 --
-{-# INLINE peekIntConv #-}
 peekIntConv :: (Storable a, Integral a, Integral b) => Ptr a -> IO b
 peekIntConv = liftM cIntConv . peek
+{-# INLINE peekIntConv #-}
 
-{-# INLINE peekFloatConv #-}
+peekBool :: (Storable a, Eq a, Num a)  => Ptr a -> IO Bool
+peekBool = liftM cToBool . peek
+{-# INLINE peekBool #-}
+
 peekFloatConv :: (Storable a, RealFloat a, RealFloat b) => Ptr a -> IO b
 peekFloatConv = liftM cFloatConv . peek
+{-# INLINE peekFloatConv #-}

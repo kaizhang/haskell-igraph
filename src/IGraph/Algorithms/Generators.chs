@@ -33,6 +33,7 @@ full :: forall d. SingI d
      -> Bool  -- ^ Whether to include self-edges (loops)
      -> Graph d () ()
 full n hasLoop = unsafePerformIO $ do
+    igraphInit
     gr <- MGraph <$> igraphFull n directed hasLoop
     M.initializeNullAttribute gr
     unsafeFreeze gr
@@ -49,6 +50,7 @@ full n hasLoop = unsafePerformIO $ do
 star :: Int    -- ^ The number of nodes
      -> Graph 'U () ()
 star n = unsafePerformIO $ do
+    igraphInit
     gr <- MGraph <$> igraphStar n IgraphStarUndirected 0
     M.initializeNullAttribute gr
     unsafeFreeze gr
@@ -87,11 +89,13 @@ erdosRenyiGame model self = do
 degreeSequenceGame :: [Int]   -- ^ Out degree
                    -> [Int]   -- ^ In degree
                    -> IO (Graph 'D () ())
-degreeSequenceGame out_deg in_deg = withList out_deg $ \out_deg' ->
-    withList in_deg $ \in_deg' -> do
-        gr <- MGraph <$> igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
-        M.initializeNullAttribute gr
-        unsafeFreeze gr
+degreeSequenceGame out_deg in_deg = do
+    igraphInit
+    withList out_deg $ \out_deg' ->
+        withList in_deg $ \in_deg' -> do
+            gr <- MGraph <$> igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
+            M.initializeNullAttribute gr
+            unsafeFreeze gr
 {#fun igraph_degree_sequence_game as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , castPtr `Ptr Vector', castPtr `Ptr Vector', `Degseq'

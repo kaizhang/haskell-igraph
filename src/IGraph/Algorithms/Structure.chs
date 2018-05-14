@@ -14,6 +14,7 @@ import           Data.Either               (fromRight)
 import           Data.Hashable             (Hashable)
 import qualified Data.HashMap.Strict       as M
 import           Data.Serialize            (Serialize, decode)
+import Data.List (foldl')
 import           System.IO.Unsafe          (unsafePerformIO)
 import Data.Maybe
 import Data.Singletons (SingI)
@@ -134,6 +135,9 @@ pagerank :: SingI d
 pagerank gr reset ws d
     | n == 0 = []
     | isJust ws && length (fromJust ws) /= m = error "incorrect length of edge weight vector"
+    | isJust reset && length (fromJust reset) /= n = error
+        "incorrect length of node weight vector"
+    | fmap (foldl' (+) 0) reset == Just 0 = error "sum of node weight vector must be non-zero"
     | otherwise = unsafePerformIO $ alloca $ \p -> allocaVector $ \result ->
         withVerticesAll $ \vs -> withListMaybe ws $ \ws' -> do
             case reset of

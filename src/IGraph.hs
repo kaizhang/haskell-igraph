@@ -42,6 +42,10 @@ module IGraph
 
     , nfilter
     , efilter
+
+    -- * Non-simple graphs: multiple and loop edges
+    , isSimple
+    , hasMultiple
     ) where
 
 import           Conduit
@@ -316,3 +320,16 @@ efilter f gr = runST $ do
     gr' <- thaw gr
     GM.delEdges deleted gr'
     unsafeFreeze gr'
+
+-- | Decides whether the input graph is a simple graph. A graph is a simple
+-- graph if it does not contain loop edges and multiple edges.
+isSimple :: Graph d v e -> Bool
+isSimple = unsafePerformIO . igraphIsSimple . _graph
+{-# INLINE isSimple #-}
+
+-- | Check whether the graph has at least one multiple edge. An edge is a
+-- multiple edge if there is another edge with the same head and tail vertices
+-- in the graph.
+hasMultiple :: Graph d v e -> Bool
+hasMultiple = unsafePerformIO . igraphHasMultiple . _graph
+{-# INLINE hasMultiple #-}

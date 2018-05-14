@@ -56,6 +56,8 @@ module IGraph.Internal
     , addIGraphFinalizer
     , igraphNew
     , igraphCreate
+    , igraphIsSimple
+    , igraphHasMultiple
 
       -- * Selector and iterator for edge and vertex
       -- ** Igraph vertex selector
@@ -384,6 +386,17 @@ igraphNew n directed _ = igraphNew' n directed
     , `Bool'   -- ^ Whether to create a directed graph or not. If yes,
                -- then the first edge points from the first vertex id in edges
                -- to the second, etc.
+    } -> `CInt' void- #}
+
+-- | A graph is a simple graph if it does not contain loop edges and multiple edges.
+{#fun igraph_is_simple as ^
+    { `IGraph'
+    , alloca- `Bool' peekBool*
+    } -> `CInt' void- #}
+
+{#fun igraph_has_multiple as ^
+    { `IGraph'
+    , alloca- `Bool' peekBool*
     } -> `CInt' void- #}
 
 {#fun igraph_to_directed as ^
