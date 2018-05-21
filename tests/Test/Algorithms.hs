@@ -20,6 +20,7 @@ tests = testGroup "Algorithms"
     , motifTest
     , cliqueTest
     , subGraphs
+    , decomposeTest
     , pagerankTest
     ]
 
@@ -65,6 +66,25 @@ subGraphs = testGroup "generate induced subgraphs"
         ns' = map (head . getNodes gr) ns
         gr' = inducedSubgraph gr ns'
         result = map (nodeLab gr' *** nodeLab gr') $ edges gr'
+
+decomposeTest :: TestTree
+decomposeTest = testGroup "Decompose"
+    [ testCase "ring" $ edges (head $ decompose $ ring 10) @?=
+        [(0,1), (1,2), (2,3), (3,4), (4,5), (5,6), (6,7), (7,8), (8,9), (0,9)]
+    , testCase "1 component" $ do
+        gr <- erdosRenyiGame (GNP 100 (40/100)) False :: IO (Graph 'U () ())
+        1 @?= length (decompose gr)
+    , testCase "toy example" $ map (sort . edges) (decompose gr) @?=
+        [ [(0,1), (0,2), (1,2)]
+        , [(0,1), (1,2), (2,3)]
+        , []
+        , [(0,1), (1,2)] ]
+    ]
+  where
+    es = [ (0,1), (1,2), (2,0)
+		 , (3,4), (4,5), (5,6)
+		 , (8,9), (9,10) ]
+    gr = mkGraph (replicate 11 ()) $ zip es $ repeat () :: Graph 'U () ()
 
 pagerankTest :: TestTree
 pagerankTest = testGroup "PageRank"

@@ -22,6 +22,9 @@ module IGraph.Internal
     , allocaVectorPtrN
     , withPtrs
     , toLists
+    , igraphVectorPtrSize
+    , igraphVectorPtrE
+    , igraphVectorPtrSet
 
       -- ** Customized bytestring for storing attributes
     , BSLen

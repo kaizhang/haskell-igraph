@@ -3,6 +3,7 @@ module IGraph.Algorithms.Structure
     ( -- * Shortest Path Related Functions
       getShortestPath
     , inducedSubgraph
+    , decompose
     , closeness
     , betweenness
     , eigenvectorCentrality
@@ -68,6 +69,25 @@ inducedSubgraph gr nds = unsafePerformIO $ withVerticesList nds $ \vs ->
     , allocaIGraph- `IGraph' addIGraphFinalizer*
     , castPtr %`Ptr VertexSelector'
     , `SubgraphImplementation'
+    } -> `CInt' void- #}
+
+
+-- | Decompose a graph into connected components.
+decompose :: (Hashable v, Eq v, Serialize v)
+          => Graph d v e -> [Graph d v e]
+decompose gr = unsafePerformIO $ allocaVectorPtr $ \ptr -> do
+    igraphDecompose (_graph gr) ptr IgraphWeak (-1) 1
+    n <- igraphVectorPtrSize ptr
+    forM [0..n-1] $ \i -> do
+        p <- igraphVectorPtrE ptr i
+        addIGraphFinalizer (castPtr p) >>= unsafeFreeze . MGraph
+{-# INLINE decompose #-}
+{#fun igraph_decompose as ^
+    { `IGraph'
+    , castPtr `Ptr VectorPtr'
+    , `Connectedness'
+    , `Int'
+    , `Int'
     } -> `CInt' void- #}
 
 -- | Closeness centrality

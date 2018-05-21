@@ -24,6 +24,9 @@ module IGraph.Internal.Constants where
 {#enum igraph_subgraph_implementation_t as SubgraphImplementation {underscoreToCase}
     deriving (Show, Read, Eq) #}
 
+{#enum igraph_connectedness_t as Connectedness {underscoreToCase}
+    deriving (Eq) #}
+
 {#enum igraph_pagerank_algo_t as PagerankAlgo {underscoreToCase}
     deriving (Show, Read, Eq) #}
 

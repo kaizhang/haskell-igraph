@@ -4,6 +4,7 @@
 module IGraph.Algorithms.Generators
     ( full
     , star
+    , ring
     , ErdosRenyiModel(..)
     , erdosRenyiGame
     , degreeSequenceGame
@@ -54,11 +55,26 @@ star n = unsafePerformIO $ do
     gr <- MGraph <$> igraphStar n IgraphStarUndirected 0
     M.initializeNullAttribute gr
     unsafeFreeze gr
-{# fun igraph_star as ^
+{#fun igraph_star as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , `Int'
     , `StarMode'
     , `Int'
+    } -> `CInt' void- #}
+
+-- | Creates a ring graph, a one dimensional lattice.
+ring :: Int -> Graph 'U () ()
+ring n = unsafePerformIO $ do
+    igraphInit
+    gr <- MGraph <$> igraphRing n False False True
+    M.initializeNullAttribute gr
+    unsafeFreeze gr
+{#fun igraph_ring as ^
+    { allocaIGraph- `IGraph' addIGraphFinalizer*
+    , `Int'
+    , `Bool'
+    , `Bool'
+    , `Bool'
     } -> `CInt' void- #}
 
 data ErdosRenyiModel = GNP Int Double
