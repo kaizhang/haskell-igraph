@@ -40,12 +40,12 @@ serializeTest :: TestTree
 serializeTest = testCase "serialize test" $ do
     dat <- randEdges 1000 10000
     let es = map ( \(a, b) -> (
-            ( defaultNodeAttributes{_nodeZindex=a}
-            , defaultNodeAttributes{_nodeZindex=b}), defaultEdgeAttributes) ) dat
+            ( defaultNodeAttributes{_nodeLabel= show a}
+            , defaultNodeAttributes{_nodeLabel= show b}), defaultEdgeAttributes) ) dat
         gr = fromLabeledEdges es :: Graph 'D NodeAttr EdgeAttr
         gr' :: Graph 'D NodeAttr EdgeAttr
         gr' = case decode $ encode gr of
             Left msg -> error msg
             Right r  -> r
         es' = map (\(a,b) -> ((nodeLab gr' a, nodeLab gr' b), edgeLab gr' (a,b))) $ edges gr'
-    assertBool "" $ sort (map show es) == sort (map show es')
+    sort (map show es) @=? sort (map show es')

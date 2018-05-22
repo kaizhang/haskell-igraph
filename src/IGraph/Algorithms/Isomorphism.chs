@@ -63,7 +63,7 @@ isoclassCreate :: forall d. SingI d
                -> Graph d () ()
 isoclassCreate size idx = unsafePerformIO $ do
     gp <- igraphInit >> igraphIsoclassCreate size idx directed
-    unsafeFreeze $ MGraph gp
+    return $ Graph gp $ mkLabelToId gp
   where
     directed = case fromSing (sing :: Sing d) of
         D -> True

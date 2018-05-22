@@ -8,18 +8,20 @@ module IGraph.Mutable
     , nNodes
     , nEdges
     , addNodes
-    , addLNodes
     , delNodes
     , addEdges
-    , addLEdges
     , delEdges
     , setEdgeAttr
     , setNodeAttr
-    , initializeNullAttribute
     )where
 
 import           Control.Monad                  (forM)
 import           Control.Monad.Primitive
+import           Data.Either                    (fromRight)
+import Data.Serialize (decode)
+import qualified Data.Map.Strict            as M
+import           Data.List                      (foldl', delete)
+import           Data.Primitive.MutVar
 import           Data.Serialize                 (Serialize, encode)
 import           Data.Singletons.Prelude        (Sing, SingI, fromSing, sing)
 import           Foreign                        hiding (new)
@@ -29,83 +31,102 @@ import           IGraph.Internal.Initialization
 import           IGraph.Types
 
 -- | Mutable labeled graph.
-newtype MGraph m (d :: EdgeType) v e = MGraph IGraph
+data MGraph m (d :: EdgeType) v e = MGraph
+    { _mgraph       :: IGraph
+    , _mlabelToNode :: MutVar m (M.Map v [Node])
+    }
 
 -- | Create a new graph.
-new :: forall m d v e. (SingI d, PrimMonad m)
-    => Int -> m (MGraph (PrimState m) d v e)
-new n = unsafePrimToPrim $ igraphInit >>= igraphNew n directed >>= return . MGraph
+new :: forall m d v e. (SingI d, Ord v, Serialize v, PrimMonad m)
+    => [v] -> m (MGraph (PrimState m) d v e)
+new nds = do
+    gr <- unsafePrimToPrim $ do
+        gr <- igraphInit >>= igraphNew n directed
+        withAttr vertexAttr nds $ \attr ->
+            withPtrs [attr] (igraphAddVertices gr n . castPtr)
+        return gr
+    m <- newMutVar $ M.fromListWith (++) $ zip nds $ map return [0 .. n - 1]
+    return $ MGraph gr m
   where
+    n = length nds
     directed = case fromSing (sing :: Sing d) of
         D -> True
         U -> False
 
 -- | Return the number of nodes in a graph.
 nNodes :: PrimMonad m => MGraph (PrimState m) d v e -> m Int
-nNodes (MGraph gr) = unsafePrimToPrim $ igraphVcount gr
+nNodes gr = unsafePrimToPrim $ igraphVcount $ _mgraph gr
 {-# INLINE nNodes #-}
 
 -- | Return the number of edges in a graph.
 nEdges :: PrimMonad m => MGraph (PrimState m) d v e -> m Int
-nEdges (MGraph gr) = unsafePrimToPrim $ igraphEcount gr
+nEdges gr = unsafePrimToPrim $ igraphEcount $ _mgraph gr
 {-# INLINE nEdges #-}
 
--- | Add nodes to the graph.
-addNodes :: PrimMonad m
-         => Int  -- ^ The number of new nodes.
-         -> MGraph(PrimState m) d v e -> m ()
-addNodes n (MGraph g) = unsafePrimToPrim $ igraphAddVertices g n nullPtr
-
 -- | Add nodes with labels to the graph.
-addLNodes :: (Serialize v, PrimMonad m)
-          => [v]  -- ^ vertices' labels
-          -> MGraph (PrimState m) d v e -> m ()
-addLNodes labels (MGraph g) = unsafePrimToPrim $
-    withAttr vertexAttr labels $ \attr ->
-        withPtrs [attr] (igraphAddVertices g n . castPtr)
+addNodes :: (Ord v, Serialize v, PrimMonad m)
+         => [v]  -- ^ vertices' labels
+         -> MGraph (PrimState m) d v e -> m ()
+addNodes labels gr = do
+    m <- nNodes gr
+    unsafePrimToPrim $ withAttr vertexAttr labels $ \attr ->
+        withPtrs [attr] (igraphAddVertices (_mgraph gr) n . castPtr)
+    modifyMutVar' (_mlabelToNode gr) $ \x ->
+        foldl' (\acc (k,v) -> M.insertWith (++) k v acc) x $
+            zip labels $ map return [m .. m + n - 1]
   where
     n = length labels
+{-# INLINE addNodes #-}
+
+-- | Return the label of given node.
+nodeLab :: (PrimMonad m, Serialize v) => MGraph (PrimState m) d v e -> Node -> m v
+nodeLab gr i = unsafePrimToPrim $
+    igraphHaskellAttributeVAS (_mgraph gr) vertexAttr i >>= toByteString >>=
+        return . fromRight (error "decode failed") . decode
+{-# INLINE nodeLab #-}
 
 -- | Delete nodes from the graph.
-delNodes :: PrimMonad m => [Int] -> MGraph (PrimState m) d v e -> m ()
-delNodes ns (MGraph g) = unsafePrimToPrim $ withVerticesList ns $ \vs ->
-    igraphDeleteVertices g vs
-
--- | Add edges to the graph.
-addEdges :: PrimMonad m => [(Int, Int)] -> MGraph (PrimState m) d v e -> m ()
-addEdges es (MGraph g) = unsafePrimToPrim $ withList xs $ \vec ->
-    igraphAddEdges g vec nullPtr
-  where
-    xs = concatMap ( \(a,b) -> [a, b] ) es
+delNodes :: (PrimMonad m, Ord v, Serialize v)
+         => [Node] -> MGraph (PrimState m) d v e -> m ()
+delNodes ns gr = do
+    unsafePrimToPrim $ withVerticesList ns $ igraphDeleteVertices (_mgraph gr)
+    writeMutVar (_mlabelToNode gr) $ mkLabelToId $ _mgraph gr
+{-# INLINE delNodes #-}
 
 -- | Add edges with labels to the graph.
-addLEdges :: (PrimMonad m, Serialize e)
-          => [LEdge e] -> MGraph (PrimState m) d v e -> m ()
-addLEdges es (MGraph g) = unsafePrimToPrim $
+-- If you also want to add new vertices, call addNodes first.
+addEdges :: (PrimMonad m, Serialize e)
+         => [LEdge e] -> MGraph (PrimState m) d v e -> m ()
+addEdges es gr = unsafePrimToPrim $
     withAttr edgeAttr vs $ \attr -> withList (concat xs) $ \vec ->
-        withPtrs [attr] (igraphAddEdges g vec . castPtr)
+        withPtrs [attr] (igraphAddEdges (_mgraph gr) vec . castPtr)
   where
     (xs, vs) = unzip $ map ( \((a,b),v) -> ([a, b], v) ) es
+{-# INLINE addEdges #-}
 
 -- | Delete edges from the graph.
 delEdges :: forall m d v e. (SingI d, PrimMonad m)
-         => [(Int, Int)] -> MGraph (PrimState m) d v e -> m ()
-delEdges es (MGraph g) = unsafePrimToPrim $ do
-    eids <- forM es $ \(fr, to) -> igraphGetEid g fr to directed True
-    withEdgeIdsList eids (igraphDeleteEdges g)
+         => [Edge] -> MGraph (PrimState m) d v e -> m ()
+delEdges es gr = unsafePrimToPrim $ do
+    eids <- forM es $ \(fr, to) -> igraphGetEid (_mgraph gr) fr to directed True
+    withEdgeIdsList eids (igraphDeleteEdges (_mgraph gr))
   where
     directed = case fromSing (sing :: Sing d) of
         D -> True
         U -> False
 
 -- | Set node attribute.
-setNodeAttr :: (PrimMonad m, Serialize v)
+setNodeAttr :: (PrimMonad m, Serialize v, Ord v)
             => Int   -- ^ Node id
             -> v
             -> MGraph (PrimState m) d v e
             -> m ()
-setNodeAttr nodeId x (MGraph gr) = unsafePrimToPrim $
-    withByteString (encode x) $ igraphHaskellAttributeVASSet gr vertexAttr nodeId
+setNodeAttr nodeId x gr = do
+    x' <- nodeLab gr nodeId
+    unsafePrimToPrim $ withByteString (encode x) $
+        igraphHaskellAttributeVASSet (_mgraph gr) vertexAttr nodeId
+    modifyMutVar' (_mlabelToNode gr) $
+        M.insertWith (++) x [nodeId] . M.adjust (delete nodeId) x'
 
 -- | Set edge attribute.
 setEdgeAttr :: (PrimMonad m, Serialize e)
@@ -113,17 +134,5 @@ setEdgeAttr :: (PrimMonad m, Serialize e)
             -> e
             -> MGraph (PrimState m) d v e
             -> m ()
-setEdgeAttr edgeId x (MGraph gr) = unsafePrimToPrim $
-    withByteString (encode x) $ igraphHaskellAttributeEASSet gr edgeAttr edgeId
-
-initializeNullAttribute :: PrimMonad m
-                        => MGraph (PrimState m) d () ()
-                        -> m ()
-initializeNullAttribute gr@(MGraph g) = do
-    nn <- nNodes gr
-    unsafePrimToPrim $ withByteStrings (map encode $ replicate nn ()) $
-        igraphHaskellAttributeVASSetv g vertexAttr
-    ne <- nEdges gr
-    unsafePrimToPrim $ withByteStrings (map encode $ replicate ne ()) $
-        igraphHaskellAttributeEASSetv g edgeAttr
-{-# INLINE initializeNullAttribute #-}
+setEdgeAttr edgeId x gr = unsafePrimToPrim $
+    withByteString (encode x) $ igraphHaskellAttributeEASSet (_mgraph gr) edgeAttr edgeId

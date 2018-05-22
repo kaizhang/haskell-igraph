@@ -57,6 +57,8 @@ module IGraph.Internal
     , withIGraph
     , allocaIGraph
     , addIGraphFinalizer
+    , mkLabelToId
+    , initializeNullAttribute
     , igraphNew
     , igraphCreate
     , igraphIsSimple
@@ -120,8 +122,12 @@ import qualified Data.ByteString.Char8 as B
 import Data.ByteString (packCStringLen)
 import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import Data.List (transpose)
+import qualified Data.Map.Strict as M
+import           System.IO.Unsafe          (unsafePerformIO)
+import Data.Either (fromRight)
 import Data.List.Split (chunksOf)
-import Data.Serialize (Serialize, encode)
+import Data.Serialize (Serialize, decode, encode)
+import           Control.Monad.Primitive
 import Control.Exception (bracket_)
 import Conduit (ConduitT, yield, liftIO)
 
@@ -132,6 +138,7 @@ import IGraph.Internal.C2HS
 
 {#import IGraph.Internal.Initialization #}
 {#import IGraph.Internal.Constants #}
+import IGraph.Types
 
 #include "haskell_attributes.h"
 #include "haskell_igraph.h"
@@ -359,6 +366,27 @@ toColumnLists mptr = do
 allocaIGraph :: (Ptr IGraph -> IO a) -> IO a
 allocaIGraph f = mallocBytes {# sizeof igraph_t #} >>= f
 {-# INLINE allocaIGraph #-}
+
+mkLabelToId :: (Ord v, Serialize v) => IGraph -> M.Map v [Int]
+mkLabelToId gr = unsafePerformIO $ do
+    n <- igraphVcount gr
+    fmap (M.fromListWith (++)) $ forM [0..n-1] $ \i -> do
+        l <- igraphHaskellAttributeVAS gr vertexAttr i >>= toByteString >>=
+            return . fromRight (error "decode failed") . decode
+        return (l, [i])
+{-# INLINE mkLabelToId #-}
+
+initializeNullAttribute :: PrimMonad m
+                        => IGraph
+                        -> m ()
+initializeNullAttribute gr = unsafePrimToPrim $ do
+    nn <- igraphVcount gr
+    unsafePrimToPrim $ withByteStrings (map encode $ replicate nn ()) $
+        igraphHaskellAttributeVASSetv gr vertexAttr
+    ne <- igraphEcount gr
+    unsafePrimToPrim $ withByteStrings (map encode $ replicate ne ()) $
+        igraphHaskellAttributeEASSetv gr edgeAttr
+{-# INLINE initializeNullAttribute #-}
 
 addIGraphFinalizer :: Ptr IGraph -> IO IGraph
 addIGraphFinalizer ptr = do

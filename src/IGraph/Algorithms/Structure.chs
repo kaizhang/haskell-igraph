@@ -12,8 +12,7 @@ module IGraph.Algorithms.Structure
 
 import           Control.Monad
 import           Data.Either               (fromRight)
-import           Data.Hashable             (Hashable)
-import qualified Data.HashMap.Strict       as M
+import qualified Data.Map.Strict       as M
 import           Data.Serialize            (Serialize, decode)
 import Data.List (foldl')
 import           System.IO.Unsafe          (unsafePerformIO)
@@ -57,13 +56,13 @@ getShortestPath gr s t = unsafePerformIO $ allocaVector $ \path -> do
     , `Neimode'
     } -> `CInt' void- #}
 
-inducedSubgraph :: (Hashable v, Eq v, Serialize v)
+inducedSubgraph :: (Ord v, Serialize v)
                 => Graph d v e
                 -> [Int]
                 -> Graph d v e
 inducedSubgraph gr nds = unsafePerformIO $ withVerticesList nds $ \vs ->
     igraphInducedSubgraph (_graph gr) vs IgraphSubgraphCreateFromScratch >>=
-        unsafeFreeze . MGraph
+        (\g -> return $ Graph g $ mkLabelToId g)
 {#fun igraph_induced_subgraph as ^
     { `IGraph'
     , allocaIGraph- `IGraph' addIGraphFinalizer*
@@ -73,14 +72,14 @@ inducedSubgraph gr nds = unsafePerformIO $ withVerticesList nds $ \vs ->
 
 
 -- | Decompose a graph into connected components.
-decompose :: (Hashable v, Eq v, Serialize v)
+decompose :: (Ord v, Serialize v)
           => Graph d v e -> [Graph d v e]
 decompose gr = unsafePerformIO $ allocaVectorPtr $ \ptr -> do
     igraphDecompose (_graph gr) ptr IgraphWeak (-1) 1
     n <- igraphVectorPtrSize ptr
     forM [0..n-1] $ \i -> do
         p <- igraphVectorPtrE ptr i
-        addIGraphFinalizer (castPtr p) >>= unsafeFreeze . MGraph
+        addIGraphFinalizer (castPtr p) >>= (\g -> return $ Graph g $ mkLabelToId g)
 {-# INLINE decompose #-}
 {#fun igraph_decompose as ^
     { `IGraph'

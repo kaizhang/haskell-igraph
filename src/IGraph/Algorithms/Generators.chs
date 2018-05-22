@@ -12,17 +12,17 @@ module IGraph.Algorithms.Generators
     ) where
 
 import           Control.Monad                  (when, forM_)
-import           Data.Hashable                  (Hashable)
 import           Data.Serialize                 (Serialize)
 import Data.Singletons (SingI, Sing, sing, fromSing)
 import System.IO.Unsafe (unsafePerformIO)
+import qualified Data.Map.Strict as M
 
 import qualified Foreign.Ptr as C2HSImp
 import Foreign
 
 import           IGraph
 import           IGraph.Mutable (MGraph(..))
-import qualified IGraph.Mutable as M
+import qualified IGraph.Mutable as GM
 {#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
 {# import IGraph.Internal.Initialization #}
@@ -35,9 +35,9 @@ full :: forall d. SingI d
      -> Graph d () ()
 full n hasLoop = unsafePerformIO $ do
     igraphInit
-    gr <- MGraph <$> igraphFull n directed hasLoop
-    M.initializeNullAttribute gr
-    unsafeFreeze gr
+    gr <- igraphFull n directed hasLoop
+    initializeNullAttribute gr
+    return $ Graph gr M.empty
   where
     directed = case fromSing (sing :: Sing d) of
         D -> True
@@ -52,9 +52,9 @@ star :: Int    -- ^ The number of nodes
      -> Graph 'U () ()
 star n = unsafePerformIO $ do
     igraphInit
-    gr <- MGraph <$> igraphStar n IgraphStarUndirected 0
-    M.initializeNullAttribute gr
-    unsafeFreeze gr
+    gr <- igraphStar n IgraphStarUndirected 0
+    initializeNullAttribute gr
+    return $ Graph gr M.empty
 {#fun igraph_star as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , `Int'
@@ -66,9 +66,9 @@ star n = unsafePerformIO $ do
 ring :: Int -> Graph 'U () ()
 ring n = unsafePerformIO $ do
     igraphInit
-    gr <- MGraph <$> igraphRing n False False True
-    M.initializeNullAttribute gr
-    unsafeFreeze gr
+    gr <- igraphRing n False False True
+    initializeNullAttribute gr
+    return $ Graph gr M.empty
 {#fun igraph_ring as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , `Int'
@@ -86,12 +86,12 @@ erdosRenyiGame :: forall d. SingI d
                -> IO (Graph d () ())
 erdosRenyiGame model self = do
     igraphInit
-    gr <- fmap MGraph $ case model of
+    gr <- case model of
         GNP n p -> igraphErdosRenyiGame IgraphErdosRenyiGnp n p directed self
         GNM n m -> igraphErdosRenyiGame IgraphErdosRenyiGnm n (fromIntegral m)
             directed self
-    M.initializeNullAttribute gr
-    unsafeFreeze gr
+    initializeNullAttribute gr
+    return $ Graph gr M.empty
   where
     directed = case fromSing (sing :: Sing d) of
         D -> True
@@ -109,21 +109,21 @@ degreeSequenceGame out_deg in_deg = do
     igraphInit
     withList out_deg $ \out_deg' ->
         withList in_deg $ \in_deg' -> do
-            gr <- MGraph <$> igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
-            M.initializeNullAttribute gr
-            unsafeFreeze gr
+            gr <- igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple
+            initializeNullAttribute gr
+            return $ Graph gr M.empty
 {#fun igraph_degree_sequence_game as ^
     { allocaIGraph- `IGraph' addIGraphFinalizer*
     , castPtr `Ptr Vector', castPtr `Ptr Vector', `Degseq'
     } -> `CInt' void- #}
 
 -- | Randomly rewires a graph while preserving the degree distribution.
-rewire :: (Hashable v, Serialize v, Eq v, Serialize e)
+rewire :: (Serialize v, Ord v, Serialize e)
        => Int    -- ^ Number of rewiring trials to perform.
        -> Graph d v e
        -> IO (Graph d v e)
 rewire n gr = do
-    (MGraph gptr) <- thaw gr
-    igraphRewire gptr n IgraphRewiringSimple
-    unsafeFreeze $ MGraph gptr
+    gr' <- thaw gr
+    igraphRewire (_mgraph gr') n IgraphRewiringSimple
+    unsafeFreeze gr'
 {#fun igraph_rewire as ^ { `IGraph', `Int', `Rewiring' } -> `CInt' void-#}

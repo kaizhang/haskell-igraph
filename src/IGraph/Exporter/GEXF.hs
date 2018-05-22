@@ -13,8 +13,8 @@ import           Data.Colour       (AlphaColour, alphaChannel, black, opaque,
                                     over)
 import           Data.Colour.SRGB  (channelBlue, channelGreen, channelRed,
                                     toSRGB24)
-import           Data.Hashable
 import           Data.Serialize
+import Data.Function (on)
 import           Data.Singletons   (SingI)
 import           GHC.Generics
 import           IGraph
@@ -35,10 +35,9 @@ data NodeAttr = NodeAttr
     , _nodeZindex :: Int
     } deriving (Show, Read, Eq, Generic)
 
+instance Ord NodeAttr where
+    compare = compare `on` _nodeLabel
 instance Serialize NodeAttr
-
-instance Hashable NodeAttr where
-    hashWithSalt salt at = hashWithSalt salt $ _nodeLabel at
 
 defaultNodeAttributes :: NodeAttr
 defaultNodeAttributes = NodeAttr
@@ -58,10 +57,9 @@ data EdgeAttr = EdgeAttr
     , _edgeZindex      :: Int
     } deriving (Show, Read, Eq, Generic)
 
+instance Ord EdgeAttr where
+    compare = compare `on` _edgeLabel
 instance Serialize EdgeAttr
-
-instance Hashable EdgeAttr where
-    hashWithSalt salt at = hashWithSalt salt $ _edgeLabel at
 
 defaultEdgeAttributes :: EdgeAttr
 defaultEdgeAttributes = EdgeAttr

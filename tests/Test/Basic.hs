@@ -53,10 +53,19 @@ graphCreationLabeled = testGroup "Graph creation -- with labels"
 
 graphEdit :: TestTree
 graphEdit = testGroup "Graph editing"
-    [ testCase "" $ [(1,2)] @=? (sort $ edges simple') ]
+    [ testCase "case 1" $ [((1,2), 'b')] @=? sort (getEdges simple')
+    , testCase "case 2" $ [((0,2), 'c')] @=? sort (getEdges $ delNodes [1] simple)
+    , testCase "case 3" $ 2 @=?
+        (let gr = delNodes [1] simple in nodeLab gr $ head $ getNodes gr 2)
+    , testCase "case 4" $ 4 @=?
+        (let gr = addNodes [3,4,5] simple in nodeLab gr $ head $ getNodes gr 4)
+    ]
   where
-    simple = mkGraph (replicate 3 ()) $ zip [(0,1),(1,2),(2,0)] $ repeat () :: Graph 'U () ()
+    simple = mkGraph [0,1,2] $
+        [ ((0,1), 'a'), ((1,2), 'b'), ((0,2), 'c') ] :: Graph 'U Int Char
     simple' = runST $ do
         g <- thaw simple
         GM.delEdges [(0,1),(0,2)] g
         freeze g
+    getEdges gr = map
+        (\(a,b) -> ((nodeLab gr a, nodeLab gr b), edgeLab gr (a,b))) $ edges gr

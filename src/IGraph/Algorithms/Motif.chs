@@ -5,7 +5,6 @@ module IGraph.Algorithms.Motif
     , triadCensus
     ) where
 
-import Data.Hashable (Hashable)
 import System.IO.Unsafe (unsafePerformIO)
 
 import Foreign
@@ -56,7 +55,7 @@ triad = map make edgeList
     make :: [(Int, Int)] -> Graph 'D () ()
     make xs = mkGraph (replicate 3 ()) $ zip xs $ repeat ()
 
-triadCensus :: (Hashable v, Eq v, Read v) => Graph d v e -> [Int]
+triadCensus :: (Ord v, Read v) => Graph d v e -> [Int]
 triadCensus gr = unsafePerformIO $ allocaVector $ \result -> do
     igraphTriadCensus (_graph gr) result
     map truncate <$> toList result
