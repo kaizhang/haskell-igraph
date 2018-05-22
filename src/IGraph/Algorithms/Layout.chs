@@ -9,7 +9,6 @@ module IGraph.Algorithms.Layout
 import           Data.Maybe             (isJust)
 import           Foreign                (nullPtr)
 
-import qualified Foreign.Ptr as C2HSImp
 import Foreign
 
 import           IGraph

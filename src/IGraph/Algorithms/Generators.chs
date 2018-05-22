@@ -11,7 +11,6 @@ module IGraph.Algorithms.Generators
     , rewire
     ) where
 
-import           Control.Monad                  (when, forM_)
 import           Data.Serialize                 (Serialize)
 import Data.Singletons (SingI, Sing, sing, fromSing)
 import System.IO.Unsafe (unsafePerformIO)
@@ -22,7 +21,6 @@ import Foreign
 
 import           IGraph
 import           IGraph.Mutable (MGraph(..))
-import qualified IGraph.Mutable as GM
 {#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
 {# import IGraph.Internal.Initialization #}

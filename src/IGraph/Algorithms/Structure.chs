@@ -11,9 +11,7 @@ module IGraph.Algorithms.Structure
     ) where
 
 import           Control.Monad
-import           Data.Either               (fromRight)
-import qualified Data.Map.Strict       as M
-import           Data.Serialize            (Serialize, decode)
+import           Data.Serialize            (Serialize)
 import Data.List (foldl')
 import           System.IO.Unsafe          (unsafePerformIO)
 import Data.Maybe
@@ -23,7 +21,6 @@ import Foreign
 import Foreign.C.Types
 
 import           IGraph
-import           IGraph.Mutable (MGraph(..))
 {#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
 

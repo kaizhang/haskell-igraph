@@ -16,7 +16,6 @@ import Foreign.C.Types
 
 import           IGraph
 import           IGraph.Internal.Initialization (igraphInit)
-import           IGraph.Mutable
 {#import IGraph.Internal #}
 
 #include "haskell_igraph.h"
