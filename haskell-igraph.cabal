@@ -1,5 +1,5 @@
 name:                haskell-igraph
-version:             0.7.0-dev
+version:             0.7.0
 synopsis:            Haskell interface of the igraph library.
 description:         igraph<"http://igraph.org/c/"> is a library for creating
                      and manipulating large graphs. This package provides the Haskell
@@ -40,6 +40,7 @@ library
     IGraph.Algorithms.Motif
     IGraph.Algorithms.Generators
     IGraph.Algorithms.Isomorphism
+    IGraph.Algorithms.Centrality
 
   other-modules:
     IGraph.Internal.C2HS

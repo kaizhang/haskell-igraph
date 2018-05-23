@@ -136,3 +136,12 @@ setEdgeAttr :: (PrimMonad m, Serialize e)
             -> m ()
 setEdgeAttr edgeId x gr = unsafePrimToPrim $
     withByteString (encode x) $ igraphHaskellAttributeEASSet (_mgraph gr) edgeAttr edgeId
+
+{-
+-- | Removes loop and/or multiple edges from the graph.
+simplify :: Bool   -- ^ If true, multiple edges will be removed.
+         -> Bool   -- ^ If true, loops (self edges) will be removed.
+         ->
+         -> Graph d v e -> Graph d v e
+simplify delMul delLoop fun gr = do
+-}

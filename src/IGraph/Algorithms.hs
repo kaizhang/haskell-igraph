@@ -6,6 +6,7 @@ module IGraph.Algorithms
     , module IGraph.Algorithms.Motif
     , module IGraph.Algorithms.Generators
     , module IGraph.Algorithms.Isomorphism
+    , module IGraph.Algorithms.Centrality
     ) where
 
 import IGraph.Algorithms.Structure
@@ -15,3 +16,4 @@ import IGraph.Algorithms.Layout
 import IGraph.Algorithms.Motif
 import IGraph.Algorithms.Generators
 import IGraph.Algorithms.Isomorphism
+import IGraph.Algorithms.Centrality
