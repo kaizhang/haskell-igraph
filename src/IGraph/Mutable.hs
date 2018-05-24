@@ -141,7 +141,7 @@ setEdgeAttr edgeId x gr = unsafePrimToPrim $
 -- | Removes loop and/or multiple edges from the graph.
 simplify :: Bool   -- ^ If true, multiple edges will be removed.
          -> Bool   -- ^ If true, loops (self edges) will be removed.
-         ->
+         -> ([e] -> e)   -- ^ Edge c
          -> Graph d v e -> Graph d v e
 simplify delMul delLoop fun gr = do
 -}

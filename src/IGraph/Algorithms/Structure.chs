@@ -1,4 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE DataKinds #-}
 module IGraph.Algorithms.Structure
     ( -- * Shortest Path Related Functions
       getShortestPath
@@ -75,7 +76,8 @@ isConnected gr = igraphIsConnected (_graph gr) IgraphWeak
 
 isStronglyConnected :: Graph 'D v e -> Bool
 isStronglyConnected gr = igraphIsConnected (_graph gr) IgraphStrong
-{#fun igraph_is_connected as ^
+
+{#fun pure igraph_is_connected as ^
     { `IGraph'
     , alloca- `Bool' peekBool*
     , `Connectedness'

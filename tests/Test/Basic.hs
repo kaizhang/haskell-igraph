@@ -20,6 +20,7 @@ tests = testGroup "Basic tests"
     [ graphCreation
     , graphCreationLabeled
     , graphEdit
+    , nonSimpleGraphTest
     ]
 
 graphCreation :: TestTree
@@ -69,3 +70,15 @@ graphEdit = testGroup "Graph editing"
         freeze g
     getEdges gr = map
         (\(a,b) -> ((nodeLab gr a, nodeLab gr b), edgeLab gr (a,b))) $ edges gr
+
+nonSimpleGraphTest :: TestTree
+nonSimpleGraphTest = testGroup "loops, multiple edges"
+    [ testCase "case 1" $ es @=? labEdges gr
+    ]
+  where
+    es = [ ((0,1), 'a')
+         , ((1,2), 'b')
+         , ((1,2), 'c')
+         , ((0,2), 'd') ]
+    gr :: Graph 'U Int Char
+    gr = mkGraph [0,1,2] es

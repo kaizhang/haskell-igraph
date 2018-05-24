@@ -1,8 +1,8 @@
 Revision history for haskell-igraph
 ===================================
 
-v0.7.0 --
------------
+v0.7.0 -- 2018-05-23
+--------------------
 
 * Add more functions and tests.
 * Internal interface redesign.
