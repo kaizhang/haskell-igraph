@@ -2,7 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 module IGraph.Algorithms.Structure
     ( -- * Shortest Path Related Functions
-      getShortestPath
+      shortestPath
     , inducedSubgraph
     , isConnected
     , isStronglyConnected
@@ -40,12 +40,18 @@ import IGraph.Internal.C2HS
 -- Calculates and returns a single unweighted shortest path from a given vertex
 -- to another one. If there are more than one shortest paths between the two
 -- vertices, then an arbitrary one is returned.
-getShortestPath :: Graph d v e
-                -> Node     -- ^ The id of the source vertex.
-                -> Node     -- ^ The id of the target vertex.
-                -> [Node]
-getShortestPath gr s t = unsafePerformIO $ allocaVector $ \path -> do
-    igraphGetShortestPath (_graph gr) path nullPtr s t IgraphOut
+shortestPath :: Serialize e
+             => Graph d v e
+             -> Node     -- ^ The id of the source vertex.
+             -> Node     -- ^ The id of the target vertex.
+             -> Maybe (e -> Double)  -- ^ A function to retrieve edge weights. If provied,
+                                     -- the Dijkstra's algorithm will be used.
+             -> [Node]
+shortestPath gr s t getEdgeW = unsafePerformIO $ allocaVector $ \path -> do
+    case getEdgeW of
+        Nothing -> igraphGetShortestPath (_graph gr) path nullPtr s t IgraphOut
+        Just f -> withList (map (f . snd) $ labEdges gr) $ \ws ->
+            igraphGetShortestPathDijkstra (_graph gr) path nullPtr s t ws IgraphOut
     map truncate <$> toList path
 {#fun igraph_get_shortest_path as ^
     { `IGraph'
@@ -53,6 +59,15 @@ getShortestPath gr s t = unsafePerformIO $ allocaVector $ \path -> do
     , castPtr `Ptr Vector'
     , `Int'
     , `Int'
+    , `Neimode'
+    } -> `CInt' void- #}
+{#fun igraph_get_shortest_path_dijkstra as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr Vector'
+    , `Int'
+    , `Int'
+    , castPtr `Ptr Vector'
     , `Neimode'
     } -> `CInt' void- #}
 
