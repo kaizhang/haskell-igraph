@@ -93,4 +93,4 @@ pagerankTest = testGroup "PageRank"
     gr = star 11
     ranks = [0.47,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05]
     ranks' = map ((/100) . fromIntegral . round. (*100)) $
-        pagerank gr Nothing Nothing 0.85
+        pagerank gr 0.85 Nothing Nothing
