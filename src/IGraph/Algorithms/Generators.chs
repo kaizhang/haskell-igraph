@@ -8,6 +8,7 @@ module IGraph.Algorithms.Generators
     , ErdosRenyiModel(..)
     , erdosRenyiGame
     , degreeSequenceGame
+    , rewireEdges
     , rewire
     ) where
 
@@ -15,6 +16,7 @@ import           Data.Serialize                 (Serialize)
 import Data.Singletons (SingI, Sing, sing, fromSing)
 import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.Map.Strict as M
+import Control.Monad.Primitive (RealWorld)
 
 import qualified Foreign.Ptr as C2HSImp
 import Foreign
@@ -75,8 +77,11 @@ ring n = unsafePerformIO $ do
     , `Bool'
     } -> `CInt' void- #}
 
-data ErdosRenyiModel = GNP Int Double
-                     | GNM Int Int
+data ErdosRenyiModel = GNP Int Double  -- ^ G(n,p) graph, every possible edge is
+                                       -- included in the graph with probability p.
+                     | GNM Int Int   -- ^ G(n,m) graph, m edges are selected
+                                     -- uniformly randomly in a graph with n
+                                     -- vertices.
 
 erdosRenyiGame :: forall d. SingI d
                => ErdosRenyiModel
@@ -115,6 +120,22 @@ degreeSequenceGame out_deg in_deg = do
     , castPtr `Ptr Vector', castPtr `Ptr Vector', `Degseq'
     } -> `CInt' void- #}
 
+
+-- | Rewire the edges of a graph with constant probability.
+rewireEdges :: MGraph RealWorld d v e
+            -> Double   -- ^ The rewiring probability a constant between zero and
+                        -- one (inclusive).
+            -> Bool     -- ^ whether loop edges are allowed in the new graph, or not.
+            -> Bool     -- ^ whether multiple edges are allowed in the new graph.
+            -> IO ()
+rewireEdges gr p loop multi = igraphRewireEdges (_mgraph gr) p loop multi
+{#fun igraph_rewire_edges as ^ 
+    { `IGraph'
+    , `Double'
+    , `Bool'
+    , `Bool'
+    } -> `CInt' void- #}
+
 -- | Randomly rewires a graph while preserving the degree distribution.
 rewire :: (Serialize v, Ord v, Serialize e)
        => Int    -- ^ Number of rewiring trials to perform.
@@ -125,3 +146,4 @@ rewire n gr = do
     igraphRewire (_mgraph gr') n IgraphRewiringSimple
     unsafeFreeze gr'
 {#fun igraph_rewire as ^ { `IGraph', `Int', `Rewiring' } -> `CInt' void-#}
+
