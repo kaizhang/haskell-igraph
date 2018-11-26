@@ -7,4 +7,5 @@ packages:
 
 extra-deps: []
 
-resolver: nightly-2018-04-19
+resolver: nightly-2018-11-24
+#resolver: lts-12.14
