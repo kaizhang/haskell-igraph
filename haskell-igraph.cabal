@@ -30,6 +30,7 @@ library
     IGraph.Internal
     IGraph
     IGraph.Mutable
+    IGraph.Random
     IGraph.Types
     IGraph.Exporter.GEXF
     IGraph.Algorithms

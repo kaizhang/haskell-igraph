@@ -13,7 +13,9 @@ import           Test.Tasty.HUnit
 import           Test.Utils
 
 import           IGraph
+import           IGraph.Random
 import qualified IGraph.Mutable    as GM
+import IGraph.Algorithms.Generators
 
 tests :: TestTree
 tests = testGroup "Basic tests"
@@ -21,6 +23,7 @@ tests = testGroup "Basic tests"
     , graphCreationLabeled
     , graphEdit
     , nonSimpleGraphTest
+    , randomGeneratorTest
     ]
 
 graphCreation :: TestTree
@@ -82,3 +85,14 @@ nonSimpleGraphTest = testGroup "loops, multiple edges"
          , ((0,2), 'd') ]
     gr :: Graph 'U Int Char
     gr = mkGraph [0,1,2] es
+
+randomGeneratorTest :: TestTree
+randomGeneratorTest = testGroup "random generator"
+    [ t1 ]
+  where
+    t1 = testCase "random graph" $ do
+        gr1 <- sort . edges <$> genGr 1244
+        gr2 <- sort . edges <$> genGr 1244
+        gr1 @=? gr2
+    genGr :: Int -> IO (Graph 'D () ())
+    genGr seed = withSeed seed $ erdosRenyiGame (GNP 1000 0.5) False

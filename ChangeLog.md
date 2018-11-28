@@ -1,7 +1,13 @@
 Revision history for haskell-igraph
 ===================================
 
-v0.7.1 -- 2018-XX-XX
+v0.7.2 -- XXXX-XX-XX
+--------------------
+
+* Add random number generator.
+
+v0.7.1 -- 2018-11-26
+--------------------
 
 * Add a few more functions.
 

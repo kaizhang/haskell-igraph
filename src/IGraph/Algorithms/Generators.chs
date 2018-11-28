@@ -22,6 +22,7 @@ import qualified Foreign.Ptr as C2HSImp
 import Foreign
 
 import           IGraph
+import           IGraph.Random (Gen)
 import           IGraph.Mutable (MGraph(..))
 {#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
@@ -86,8 +87,9 @@ data ErdosRenyiModel = GNP Int Double  -- ^ G(n,p) graph, every possible edge is
 erdosRenyiGame :: forall d. SingI d
                => ErdosRenyiModel
                -> Bool  -- ^ self-loop
+               -> Gen
                -> IO (Graph d () ())
-erdosRenyiGame model self = do
+erdosRenyiGame model self _ = do
     igraphInit
     gr <- case model of
         GNP n p -> igraphErdosRenyiGame IgraphErdosRenyiGnp n p directed self
@@ -107,8 +109,9 @@ erdosRenyiGame model self = do
 -- | Generates a random graph with a given degree sequence.
 degreeSequenceGame :: [Int]   -- ^ Out degree
                    -> [Int]   -- ^ In degree
+                   -> Gen
                    -> IO (Graph 'D () ())
-degreeSequenceGame out_deg in_deg = do
+degreeSequenceGame out_deg in_deg _ = do
     igraphInit
     withList out_deg $ \out_deg' ->
         withList in_deg $ \in_deg' -> do
@@ -127,8 +130,9 @@ rewireEdges :: MGraph RealWorld d v e
                         -- one (inclusive).
             -> Bool     -- ^ whether loop edges are allowed in the new graph, or not.
             -> Bool     -- ^ whether multiple edges are allowed in the new graph.
+            -> Gen
             -> IO ()
-rewireEdges gr p loop multi = igraphRewireEdges (_mgraph gr) p loop multi
+rewireEdges gr p loop multi _ = igraphRewireEdges (_mgraph gr) p loop multi
 {#fun igraph_rewire_edges as ^ 
     { `IGraph'
     , `Double'
@@ -140,8 +144,9 @@ rewireEdges gr p loop multi = igraphRewireEdges (_mgraph gr) p loop multi
 rewire :: (Serialize v, Ord v, Serialize e)
        => Int    -- ^ Number of rewiring trials to perform.
        -> Graph d v e
+       -> Gen
        -> IO (Graph d v e)
-rewire n gr = do
+rewire n gr _ = do
     gr' <- thaw gr
     igraphRewire (_mgraph gr') n IgraphRewiringSimple
     unsafeFreeze gr'

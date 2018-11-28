@@ -115,6 +115,12 @@ module IGraph.Internal
       -- * Igraph arpack options type
     , ArpackOpt
     , allocaArpackOpt
+
+      -- * Random numbers
+    , RNG
+    , igraphRngSetDefault
+    , allocaRng
+    , igraphRngSeed
     ) where
 
 import Control.Monad
@@ -749,3 +755,33 @@ allocaArpackOpt fun = allocaBytes {# sizeof igraph_arpack_options_t #} $ \opt ->
     igraphArpackOptionsInit opt >> fun opt
 {-# INLINE allocaArpackOpt #-}
 {#fun igraph_arpack_options_init as ^ { castPtr `Ptr ArpackOpt' } -> `CInt' void- #}
+
+
+--------------------------------------------------------------------------------
+-- Random numbers
+--------------------------------------------------------------------------------
+
+data RNG
+
+-- | Set the default igraph random number generator.
+{#fun igraph_rng_set_default as ^ { castPtr `Ptr RNG' } -> `()' #}
+
+-- | Allocate and initialize a RNG.
+allocaRng :: (Ptr RNG -> IO a) -> IO a
+allocaRng fun = allocaBytes {# sizeof igraph_rng_t #} $ \rng ->
+    bracket_ (igraphRngInit_ rng) (igraphRngDestroy rng) (fun rng)
+{-# INLINE allocaRng #-}
+
+{#fun igraph_rng_init_ as igraphRngInit_
+    { castPtr `Ptr RNG' } -> `CInt' void- #}
+{#fun igraph_rng_destroy as ^ { castPtr `Ptr RNG' } -> `()' #}
+
+-- | Set the seed of a random number generator
+{#fun igraph_rng_seed as ^
+    { castPtr `Ptr RNG', `Int' } -> `CInt' void- #}
+
+#c
+int igraph_rng_init_(igraph_rng_t *rng) {
+    return(igraph_rng_init(rng, &igraph_rngtype_mt19937));
+}
+#endc
