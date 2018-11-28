@@ -88,11 +88,15 @@ nonSimpleGraphTest = testGroup "loops, multiple edges"
 
 randomGeneratorTest :: TestTree
 randomGeneratorTest = testGroup "random generator"
-    [ t1 ]
+    [t1 , t2]
   where
     t1 = testCase "random graph" $ do
         gr1 <- sort . edges <$> genGr 1244
         gr2 <- sort . edges <$> genGr 1244
         gr1 @=? gr2
+    t2 = testCase "random graph" $ do
+        gr1 <- sort . edges <$> genGr 145
+        gr2 <- sort . edges <$> genGr 24
+        assertBool "" $ gr1 /= gr2
     genGr :: Int -> IO (Graph 'D () ())
-    genGr seed = withSeed seed $ erdosRenyiGame (GNP 1000 0.5) False
+    genGr seed = withSeed seed $ erdosRenyiGame (GNP 500 0.5) False

@@ -73,7 +73,7 @@ decomposeTest = testGroup "Decompose"
     [ testCase "ring" $ edges (head $ decompose $ ring 10) @?=
         [(0,1), (1,2), (2,3), (3,4), (4,5), (5,6), (6,7), (7,8), (8,9), (0,9)]
     , testCase "1 component" $ do
-        gr <- (withSystemRandom $ erdosRenyiGame (GNP 100 (40/100)) False) :: IO (Graph 'U () ())
+        gr <- (withSeed 1244 $ erdosRenyiGame (GNP 100 (40/100)) False) :: IO (Graph 'U () ())
         1 @?= length (decompose gr)
     , testCase "toy example" $ map (sort . edges) (decompose gr) @?=
         [ [(0,1), (0,2), (1,2)]
