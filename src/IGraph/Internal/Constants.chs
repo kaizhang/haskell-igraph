@@ -1,7 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 module IGraph.Internal.Constants where
 
-#include "igraph/igraph.h"
+#include "haskell_igraph.h"
 
 {#enum igraph_neimode_t as Neimode {underscoreToCase}
     deriving (Show, Eq) #}

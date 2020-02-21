@@ -132,7 +132,6 @@ import Data.List (transpose)
 import qualified Data.Map.Strict as M
 import           System.IO.Unsafe          (unsafePerformIO)
 import Data.Either (fromRight)
-import Data.List.Split (chunksOf)
 import Data.Serialize (Serialize, decode, encode)
 import           Control.Monad.Primitive
 import Control.Exception (bracket_)
@@ -348,6 +347,9 @@ toColumnLists mptr = do
         igraphMatrixCopyTo mptr ptr
         peekArray (r*c) ptr
     return $ chunksOf r $ map realToFrac xs
+  where
+    chunksOf _ [] = []
+    chunksOf i ls = take i ls : chunksOf i (drop i ls)
 
 {#fun igraph_matrix_null as ^ { castPtr `Ptr Matrix' } -> `()' #}
 

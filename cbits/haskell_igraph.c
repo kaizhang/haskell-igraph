@@ -1,4 +1,3 @@
-#include <igraph/igraph.h>
 #include "haskell_attributes.h"
 
 const igraph_attribute_table_t igraph_haskell_attribute_table={

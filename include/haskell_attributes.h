@@ -1,7 +1,7 @@
 #ifndef HASKELL_IGRAPH_ATTRIBUTE
 #define HASKELL_IGRAPH_ATTRIBUTE
 
-#include "igraph/igraph.h"
+#include "igraph.h"
 #include "bytestring.h"
 
 #include <string.h>

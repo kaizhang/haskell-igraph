@@ -1,7 +1,7 @@
 cabal-version:       2.2
 name:                haskell-igraph
-version:             0.8.0.0
-synopsis:            Bindings to the igraph C library.
+version:             0.8.0
+synopsis:            Bindings to the igraph C library (v0.8.0).
 description:         igraph<"http://igraph.org/c/"> is a library for creating
                      and manipulating large graphs. This package provides the Haskell
                      interface of igraph.
@@ -28,10 +28,6 @@ extra-source-files:
   README.md
   ChangeLog.md
 
-Flag graphics
-  Description: Enable graphics output
-  Default:     False
-
 library
   exposed-modules:
     IGraph.Internal.Initialization
@@ -45,7 +41,7 @@ library
     IGraph.Algorithms.Structure
     IGraph.Algorithms.Community
     IGraph.Algorithms.Clique
-    IGraph.Algorithms.Layout
+    --IGraph.Algorithms.Layout
     IGraph.Algorithms.Motif
     IGraph.Algorithms.Generators
     IGraph.Algorithms.Isomorphism
@@ -62,7 +58,6 @@ library
     , containers
     , data-ordlist
     , primitive
-    , split
     , singletons
 
   extra-libraries:     stdc++

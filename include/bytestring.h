@@ -1,7 +1,7 @@
 #ifndef HASKELL_IGRAPH_BYTESTRING
 #define HASKELL_IGRAPH_BYTESTRING
 
-#include <igraph/igraph.h>
+#include "igraph.h"
 
 typedef struct bytestring_t {
   unsigned long int len;

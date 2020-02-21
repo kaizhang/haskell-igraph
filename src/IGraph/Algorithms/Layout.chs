@@ -14,7 +14,7 @@ import Foreign
 import           IGraph
 {#import IGraph.Internal #}
 
-#include "igraph/igraph.h"
+#include "haskell_igraph.h"
 
 data LayoutMethod =
     KamadaKawai { kk_seed      :: !(Maybe [(Double, Double)])

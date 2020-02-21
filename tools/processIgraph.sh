@@ -19,7 +19,6 @@ cat <<EOT > include/config.h
 #undef HAVE_ISFINITE
 
 /* libraries */
-#define HAVE_GMP 1
 #define HAVE_MEMORY_H 1
 #define HAVE_STDINT_H 1
 #define HAVE_STRINGS_H 1
@@ -95,3 +94,4 @@ ls -d1 $2/src/*.cc
 #define HAVE_TIMES_H 1
 #define HAVE_TIME_H 1
 #define HAVE_UNISTD_H 1
+#define HAVE_GMP 1
