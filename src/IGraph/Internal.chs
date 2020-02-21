@@ -118,6 +118,7 @@ module IGraph.Internal
 
       -- * Random numbers
     , RNG
+    , igraphRngDefault
     , igraphRngSetDefault
     , allocaRng
     , igraphRngSeed
@@ -762,6 +763,9 @@ allocaArpackOpt fun = allocaBytes {# sizeof igraph_arpack_options_t #} $ \opt ->
 --------------------------------------------------------------------------------
 
 data RNG
+
+-- | Query the default random number generator.
+{#fun igraph_rng_default as ^ {} -> `Ptr RNG' castPtr #}
 
 -- | Set the default igraph random number generator.
 {#fun igraph_rng_set_default as ^ { castPtr `Ptr RNG' } -> `()' #}

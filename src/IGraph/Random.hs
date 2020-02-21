@@ -15,8 +15,8 @@ withSystemRandom fun = fun Gen
 -}
 
 withSeed :: Int -> (Gen -> IO a) -> IO a
-withSeed seed fun = allocaRng $ \rng -> do
-    igraphRngSetDefault rng
+withSeed seed fun = do
+    rng <- igraphRngDefault
     igraphRngSeed rng seed
     fun Gen
 {-# INLINE withSeed #-}

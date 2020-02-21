@@ -1,8 +1,10 @@
 Revision history for haskell-igraph
 ===================================
 
-v0.7.2 -- XXXX-XX-XX
+v0.8.0 -- XXXX-XX-XX
 --------------------
+
+* Ship igraph C sources v0.8.0
 
 * Add random number generator.
 

@@ -88,7 +88,7 @@ nonSimpleGraphTest = testGroup "loops, multiple edges"
 
 randomGeneratorTest :: TestTree
 randomGeneratorTest = testGroup "random generator"
-    [t1 , t2]
+    [t1, t2]
   where
     t1 = testCase "random graph" $ do
         gr1 <- sort . edges <$> genGr 1244

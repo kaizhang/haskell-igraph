@@ -11,7 +11,6 @@ import           Test.Tasty.HUnit
 import           Test.Utils
 
 import           IGraph
-import           IGraph.Exporter.GEXF
 import           IGraph.Internal
 import           IGraph.Mutable
 
@@ -19,7 +18,6 @@ tests :: TestTree
 tests = testGroup "Attribute tests"
     [ nodeLabelTest
     , labelTest
-    , serializeTest
     ]
 
 nodeLabelTest :: TestTree
@@ -36,6 +34,7 @@ labelTest = testCase "edge label test" $ do
         es' = sort $ map (\(a,b) -> ((nodeLab gr a, nodeLab gr b), edgeLab gr (a,b))) $ edges gr
     assertBool "" $ es == es'
 
+{-
 serializeTest :: TestTree
 serializeTest = testCase "serialize test" $ do
     dat <- randEdges 1000 10000
@@ -49,3 +48,4 @@ serializeTest = testCase "serialize test" $ do
             Right r  -> r
         es' = map (\(a,b) -> ((nodeLab gr' a, nodeLab gr' b), edgeLab gr' (a,b))) $ edges gr'
     sort (map show es) @=? sort (map show es')
+    -}

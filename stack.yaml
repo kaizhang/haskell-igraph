@@ -5,7 +5,4 @@ flags:
 packages:
     - '.'
 
-extra-deps: []
-
-#resolver: nightly-2018-11-24
-resolver: lts-12.14
+resolver: lts-15.0
