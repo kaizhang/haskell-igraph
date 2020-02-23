@@ -1,7 +1,12 @@
 Revision history for haskell-igraph
 ===================================
 
-v0.8.0 -- XXXX-XX-XX
+v0.8.1 -- 2020-02-XX
+--------------------
+
+Add more functions
+
+v0.8.0 -- 2020-02-22
 --------------------
 
 * Ship igraph C sources v0.8.0

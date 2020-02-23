@@ -29,14 +29,6 @@ import IGraph.Internal.C2HS
 
 #include "haskell_igraph.h"
 
-{#fun igraph_shortest_paths as ^
-    { `IGraph'
-    , castPtr `Ptr Matrix'
-    , castPtr %`Ptr VertexSelector'
-    , castPtr %`Ptr VertexSelector'
-    , `Neimode'
-    } -> `CInt' void- #}
-
 -- Calculates and returns a single unweighted shortest path from a given vertex
 -- to another one. If there are more than one shortest paths between the two
 -- vertices, then an arbitrary one is returned.
@@ -53,6 +45,7 @@ shortestPath gr s t getEdgeW = unsafePerformIO $ allocaVector $ \path -> do
         Just f -> withList (map (f . snd) $ labEdges gr) $ \ws ->
             igraphGetShortestPathDijkstra (_graph gr) path nullPtr s t ws IgraphOut
     map truncate <$> toList path
+{-# INLINE shortestPath #-}
 {#fun igraph_get_shortest_path as ^
     { `IGraph'
     , castPtr `Ptr Vector'
@@ -71,13 +64,16 @@ shortestPath gr s t getEdgeW = unsafePerformIO $ allocaVector $ \path -> do
     , `Neimode'
     } -> `CInt' void- #}
 
+-- | Creates a subgraph induced by the specified vertices. This function collects
+-- the specified vertices and all edges between them to a new graph.
 inducedSubgraph :: (Ord v, Serialize v)
                 => Graph d v e
-                -> [Int]
+                -> [Node]
                 -> Graph d v e
 inducedSubgraph gr nds = unsafePerformIO $ withVerticesList nds $ \vs ->
     igraphInducedSubgraph (_graph gr) vs IgraphSubgraphCreateFromScratch >>=
         (\g -> return $ Graph g $ mkLabelToId g)
+{-# INLINE inducedSubgraph #-}
 {#fun igraph_induced_subgraph as ^
     { `IGraph'
     , allocaIGraph- `IGraph' addIGraphFinalizer*
@@ -88,10 +84,11 @@ inducedSubgraph gr nds = unsafePerformIO $ withVerticesList nds $ \vs ->
 -- | Decides whether the graph is weakly connected.
 isConnected :: Graph d v e -> Bool
 isConnected gr = igraphIsConnected (_graph gr) IgraphWeak
+{-# INLINE isConnected #-}
 
 isStronglyConnected :: Graph 'D v e -> Bool
 isStronglyConnected gr = igraphIsConnected (_graph gr) IgraphStrong
-
+{-# INLINE isStronglyConnected #-}
 {#fun pure igraph_is_connected as ^
     { `IGraph'
     , alloca- `Bool' peekBool*
@@ -124,11 +121,14 @@ isDag = igraphIsDag . _graph
     { `IGraph'
     , alloca- `Bool' peekBool*
     } -> `CInt' void- #}
+{-# INLINE isDag #-}
 
--- | Calculate a possible topological sorting of the graph.
+-- | Calculate a possible topological sorting of the graph. Raise error if the
+-- graph is not acyclic.
 topSort :: Graph d v e -> [Node]
 topSort gr | isDag gr = topSortUnsafe gr
            | otherwise = error "the graph is not acyclic"
+{-# INLINE topSort #-}
 
 -- | Calculate a possible topological sorting of the graph. If the graph is not
 -- acyclic (it has at least one cycle), a partial topological sort is returned.
@@ -138,6 +138,7 @@ topSortUnsafe gr = unsafePerformIO $ allocaVectorN n $ \res -> do
     map truncate <$> toList res
   where
     n = nNodes gr
+{-# INLINE topSortUnsafe #-}
 {#fun igraph_topological_sorting as ^
     { `IGraph'
     , castPtr `Ptr Vector'

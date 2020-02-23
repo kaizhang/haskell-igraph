@@ -2,11 +2,12 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DataKinds #-}
 module IGraph.Algorithms.Community
-    ( modularity
-    , findCommunity
+    ( findCommunity
     , CommunityMethod(..)
-    , defaultLeadingEigenvector
-    , defaultSpinglass
+    , leadingEigenvector
+    , spinglass
+    , leiden
+    , modularity
     ) where
 
 import           Data.Function             (on)
@@ -14,37 +15,53 @@ import           Data.List (sortBy, groupBy)
 import Data.List.Ordered (nubSortBy)
 import           Data.Ord (comparing)
 import           System.IO.Unsafe          (unsafePerformIO)
+import           Data.Serialize            (Serialize)
 
 import           Foreign
 import           Foreign.C.Types
 
 import           IGraph
+import           IGraph.Random
 import IGraph.Internal.C2HS
 {#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
 
 #include "haskell_igraph.h"
 
-modularity :: Graph d v e
-           -> [[Int]]   -- ^ Communities.
-           -> Maybe [Double] -- ^ Weights
-           -> Double
-modularity gr clusters ws
-    | length nds /= length (concat clusters) = error "Duplicated nodes"
-    | nds /= nodes gr = error "Some nodes were not given community assignments"
-    | otherwise = unsafePerformIO $ withList membership $ \membership' ->
-        withListMaybe ws (igraphModularity (_graph gr) membership')
+-- | Detecting community structure.
+findCommunity :: (Serialize v, Serialize e)
+              => Graph 'U v e
+              -> Maybe (v -> Double)  -- ^ Function to assign node weights
+              -> Maybe (e -> Double)  -- ^ Function to assign edge weights
+              -> CommunityMethod  -- ^ Community finding algorithms
+              -> Gen
+              -> [[Int]]
+findCommunity gr getNodeW getEdgeW method _ = unsafePerformIO $ allocaVector $ \result ->
+    withListMaybe ew $ \ew' -> do
+        case method of
+            LeadingEigenvector n -> allocaArpackOpt $ \arpack ->
+                igraphCommunityLeadingEigenvector (_graph gr) ew' nullPtr result
+                                                  n arpack nullPtr False
+                                                  nullPtr nullPtr nullPtr
+                                                  nullFunPtr nullPtr
+            Spinglass{..} -> igraphCommunitySpinglass (_graph gr) ew' nullPtr nullPtr result
+                                     nullPtr _nSpins False _startTemp
+                                     _stopTemp _coolFact
+                                     IgraphSpincommUpdateConfig _gamma
+                                     IgraphSpincommImpOrig 1.0
+            Leiden{..} -> do
+                _ <- withListMaybe nw $ \nw' -> igraphCommunityLeiden
+                    (_graph gr) ew' nw' _resolution _beta False result nullPtr
+                return ()
+        fmap ( map (fst . unzip) . groupBy ((==) `on` snd)
+              . sortBy (comparing snd) . zip [0..] ) $ toList result
   where
-    (membership, nds) = unzip $ nubSortBy (comparing snd) $ concat $
-        zipWith f [0 :: Int ..] clusters
-      where
-        f i xs = zip (repeat i) xs
-{#fun igraph_modularity as ^
-    { `IGraph'
-    , castPtr `Ptr Vector'
-	, alloca- `Double' peekFloatConv*
-	, castPtr `Ptr Vector'
-    } -> `CInt' void- #}
+    ew = case getEdgeW of
+        Nothing -> Nothing
+        Just f -> Just $ map (f . snd) $ labEdges gr
+    nw = case getNodeW of
+        Nothing -> Nothing
+        Just f -> Just $ map (f . snd) $ labNodes gr
 
 data CommunityMethod =
       LeadingEigenvector
@@ -57,38 +74,29 @@ data CommunityMethod =
         , _coolFact  :: Double  -- ^ the cooling factor for the simulated annealing
         , _gamma     :: Double  -- ^ the gamma parameter of the algorithm.
         }
+    | Leiden
+        { _resolution :: Double
+        , _beta :: Double
+        }
 
-defaultLeadingEigenvector :: CommunityMethod
-defaultLeadingEigenvector = LeadingEigenvector 10000
+-- | Default parameters for the leading eigenvector algorithm.
+leadingEigenvector :: CommunityMethod
+leadingEigenvector = LeadingEigenvector 10000
 
-defaultSpinglass :: CommunityMethod
-defaultSpinglass = Spinglass
+-- | Default parameters for the spin-glass algorithm.
+spinglass :: CommunityMethod
+spinglass = Spinglass
     { _nSpins = 25
     , _startTemp = 1.0
     , _stopTemp = 0.01
     , _coolFact = 0.99
     , _gamma = 1.0 }
 
-findCommunity :: Graph 'U v e
-              -> Maybe [Double]   -- ^ node weights
-              -> CommunityMethod  -- ^ Community finding algorithms
-              -> [[Int]]
-findCommunity gr ws method = unsafePerformIO $ allocaVector $ \result ->
-    withListMaybe ws $ \ws' -> do
-        case method of
-            LeadingEigenvector n -> allocaArpackOpt $ \arpack ->
-                igraphCommunityLeadingEigenvector (_graph gr) ws' nullPtr result
-                                                  n arpack nullPtr False
-                                                  nullPtr nullPtr nullPtr
-                                                  nullFunPtr nullPtr
-            Spinglass{..} -> igraphCommunitySpinglass (_graph gr) ws' nullPtr nullPtr result
-                                     nullPtr _nSpins False _startTemp
-                                     _stopTemp _coolFact
-                                     IgraphSpincommUpdateConfig _gamma
-                                     IgraphSpincommImpOrig 1.0
-
-        fmap ( map (fst . unzip) . groupBy ((==) `on` snd)
-              . sortBy (comparing snd) . zip [0..] ) $ toList result
+-- | Default parameters for the leiden algorithm.
+leiden :: CommunityMethod
+leiden = Leiden
+    { _resolution = 1
+    , _beta = 0 }
 
 {#fun igraph_community_spinglass as ^
     { `IGraph'
@@ -124,6 +132,18 @@ findCommunity gr ws method = unsafePerformIO $ allocaVector $ \result ->
     , id `Ptr ()'
     } -> `CInt' void- #}
 
+{#fun igraph_community_leiden as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr Vector'
+    , `Double'
+    , `Double'
+    , `Bool'
+    , castPtr `Ptr Vector'
+    , alloca- `Int' peekIntConv*
+    , id `Ptr CDouble'
+    } -> `CInt' void- #}
+
 type T = FunPtr ( Ptr ()
                 -> CLong
                 -> CDouble
@@ -132,3 +152,30 @@ type T = FunPtr ( Ptr ()
                 -> Ptr ()
                 -> Ptr ()
                 -> IO CInt)
+
+-- | Calculate the modularity of a graph with respect to some vertex types.
+modularity :: Serialize e
+           => Graph d v e
+           -> Maybe (e -> Double)  -- ^ Function to assign edge weights
+           -> [[Int]]   -- ^ Communities.
+           -> Double
+modularity gr getEdgeW clusters
+    | length nds /= length (concat clusters) = error "Duplicated nodes"
+    | nds /= nodes gr = error "Some nodes were not given community assignments"
+    | otherwise = unsafePerformIO $ withList membership $ \membership' ->
+        withListMaybe ws (igraphModularity (_graph gr) membership')
+  where
+    (membership, nds) = unzip $ nubSortBy (comparing snd) $ concat $
+        zipWith f [0 :: Int ..] clusters
+      where
+        f i xs = zip (repeat i) xs
+    ws = case getEdgeW of
+        Nothing -> Nothing
+        Just f -> Just $ map (f . snd) $ labEdges gr
+{#fun igraph_modularity as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+	, alloca- `Double' peekFloatConv*
+	, castPtr `Ptr Vector'
+    } -> `CInt' void- #}
+

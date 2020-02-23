@@ -87,10 +87,25 @@ decomposeTest = testGroup "Decompose"
 		 , (8,9), (9,10) ]
     gr = mkGraph (replicate 11 ()) $ zip es $ repeat () :: Graph 'U () ()
 
+{-
+communityTest :: TestTree
+communityTest = testGroup "Community"
+    [ consistency ]
+  where
+    consistency = testCase "Consistency" $ do
+        r1 <- withSeed 134 $ return . findCommunity zacharyKarate Nothing spinglass
+        r2 <- withSeed 14 $ return . findCommunity zacharyKarate Nothing spinglass 
+        r1 @=? r2
+        -}
+
 pagerankTest :: TestTree
 pagerankTest = testGroup "PageRank"
-    [ testCase "case 1" $ ranks @=? ranks' ]
+    [ consistency
+    , testCase "case 1" $ ranks @=? ranks' ]
   where
+    consistency = testCase "Consistency" $ 
+        pagerank gr 0.85 Nothing Nothing @=?
+        pagerank gr 0.85 Nothing Nothing
     gr = star 11
     ranks = [0.47,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05]
     ranks' = map ((/100) . fromIntegral . round. (*100)) $

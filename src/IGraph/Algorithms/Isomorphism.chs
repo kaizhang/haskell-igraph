@@ -1,8 +1,8 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module IGraph.Algorithms.Isomorphism
-    ( getSubisomorphisms
-    , isomorphic
+    ( isomorphic
+    , getSubisomorphisms
     , isoclassCreate
     , isoclass3
     , isoclass4
@@ -19,6 +19,17 @@ import           IGraph.Internal.Initialization (igraphInit)
 {#import IGraph.Internal #}
 
 #include "haskell_igraph.h"
+
+-- | Determine whether two graphs are isomorphic.
+isomorphic :: Graph d v1 e1
+           -> Graph d v2 e2
+           -> Bool
+isomorphic g1 g2 = unsafePerformIO $ alloca $ \ptr -> do
+    _ <- igraphIsomorphic (_graph g1) (_graph g2) ptr
+    x <- peek ptr
+    return (x /= 0)
+{-# INLINE isomorphic #-}
+{#fun igraph_isomorphic as ^ { `IGraph', `IGraph', id `Ptr CInt' } -> `CInt' void- #}
 
 getSubisomorphisms :: Graph d v1 e1  -- ^ graph to be searched in
                    -> Graph d v2 e2   -- ^ smaller graph
@@ -43,16 +54,6 @@ getSubisomorphisms g1 g2 = unsafePerformIO $ allocaVectorPtr $ \vpptr -> do
     , id `FunPtr (Ptr IGraph -> Ptr IGraph -> CInt -> CInt -> Ptr () -> IO CInt)'
     , id `Ptr ()'
     } -> `CInt' void- #}
-
--- | Determine whether two graphs are isomorphic.
-isomorphic :: Graph d v1 e1
-           -> Graph d v2 e2
-           -> Bool
-isomorphic g1 g2 = unsafePerformIO $ alloca $ \ptr -> do
-    _ <- igraphIsomorphic (_graph g1) (_graph g2) ptr
-    x <- peek ptr
-    return (x /= 0)
-{#fun igraph_isomorphic as ^ { `IGraph', `IGraph', id `Ptr CInt' } -> `CInt' void- #}
 
 -- | Creates a graph from the given isomorphism class.
 -- This function is implemented only for graphs with three or four vertices.
