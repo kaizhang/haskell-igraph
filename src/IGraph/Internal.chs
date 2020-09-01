@@ -8,6 +8,7 @@ module IGraph.Internal
     , withList
     , withListMaybe
     , toList
+    , toNodes
     , igraphVectorNull
     , igraphVectorFill
     , igraphVectorE
@@ -192,6 +193,10 @@ toList vec = do
         igraphVectorCopyTo vec ptr
         map realToFrac <$> peekArray n ptr
 {-# INLINE toList #-}
+
+toNodes :: Ptr Vector -> IO [Node]
+toNodes = fmap (map truncate) . toList
+{-# INLINE toNodes #-}
 
 {#fun igraph_vector_copy_to as ^ { castPtr `Ptr Vector', id `Ptr CDouble' } -> `()' #}
 

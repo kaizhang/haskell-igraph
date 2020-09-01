@@ -3,6 +3,7 @@
 module IGraph.Algorithms.Structure
     ( -- * Shortest Path Related Functions
       shortestPath
+    , diameter
     , inducedSubgraph
     , isConnected
     , isStronglyConnected
@@ -62,6 +63,29 @@ shortestPath gr s t getEdgeW = unsafePerformIO $ allocaVector $ \path -> do
     , `Int'
     , castPtr `Ptr Vector'
     , `Neimode'
+    } -> `CInt' void- #}
+
+-- | Calculates the diameter of a graph (longest geodesic).
+diameter :: Graph d v e
+         -> EdgeType -- ^ whether to consider directed paths
+         -> Bool     -- ^ if unconnected,
+                     -- return largest component diameter (True)
+                     -- or number of vertices (False)
+         -> (Int,[Node])
+diameter graph directed unconn = unsafePerformIO $
+  alloca $ \pres ->
+  allocaVector $ \path -> do
+    igraphDiameter (_graph graph) pres nullPtr nullPtr path directed unconn
+    liftM2 (,) (peekIntConv pres) (toNodes path)
+{-# INLINE igraphDiameter #-}
+{#fun igraph_diameter as ^
+    { `IGraph'
+    , castPtr `Ptr CInt'
+    , castPtr `Ptr CInt'
+    , castPtr `Ptr CInt'
+    , castPtr `Ptr Vector'
+    , dirToBool `EdgeType'
+    , `Bool'
     } -> `CInt' void- #}
 
 -- | Creates a subgraph induced by the specified vertices. This function collects
@@ -144,3 +168,8 @@ topSortUnsafe gr = unsafePerformIO $ allocaVectorN n $ \res -> do
     , castPtr `Ptr Vector'
     , `Neimode'
     } -> `CInt' void- #}
+
+-- Marshaller for those "treat edges as directed" booleans.
+dirToBool :: Num n => EdgeType -> n
+dirToBool D = cFromBool True
+dirToBool U = cFromBool False

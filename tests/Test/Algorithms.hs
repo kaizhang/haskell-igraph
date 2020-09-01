@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeApplications #-}
 module Test.Algorithms
     ( tests
     ) where
@@ -20,6 +21,7 @@ tests = testGroup "Algorithms"
     [ graphIsomorphism
     , motifTest
     , cliqueTest
+    , diameterTest
     , subGraphs
     , decomposeTest
     , pagerankTest
@@ -54,6 +56,13 @@ cliqueTest = testGroup "Clique"
     c3 = [ [0,3,4], [0,4,5], [1,2,3], [1,2,4], [1,2,5], [1,3,4], [1,4,5],
         [2,3,4], [2,4,5] ]
     c4 = [[1, 2, 3, 4], [1, 2, 4, 5]]
+
+diameterTest :: TestTree
+diameterTest = testGroup "Diameters"
+    [ testCase "clique" $ fst (diameter (full @'U 10 False) U True)  @?= 1
+    , testCase "star"   $ fst (diameter (star 10)          D False) @?= 2
+    , testCase "ring"   $ fst (diameter (ring 10)          U False) @?= 5
+    ]
 
 subGraphs :: TestTree
 subGraphs = testGroup "generate induced subgraphs"
