@@ -4,6 +4,8 @@ module IGraph.Algorithms.Centrality
     , betweenness
     , eigenvectorCentrality
     , pagerank
+    , hubScore
+    , authorityScore
     ) where
 
 import           Control.Monad
@@ -17,6 +19,7 @@ import Foreign
 import Foreign.C.Types
 
 import           IGraph
+import IGraph.Internal.C2HS
 {#import IGraph.Internal #}
 {#import IGraph.Internal.Constants #}
 
@@ -140,4 +143,44 @@ pagerank gr d getNodeW getEdgeW
     , castPtr `Ptr Vector'
     , castPtr `Ptr Vector'
     , id `Ptr ()'
+    } -> `CInt' void- #}
+
+-- | Kleinberg's hub scores.
+hubScore :: Graph d v e
+         -> Bool -- ^ scale result such that \(\left|max\ centrality\right|=1\)
+         -> ([Double],Double) -- ^ (eigenvector,eigenvalue)
+hubScore graph scale = unsafePerformIO $
+  allocaVector $ \vector ->
+  alloca $ \value ->
+  allocaArpackOpt $ \options -> do
+    igraphHubScore (_graph graph) vector value scale nullPtr options
+    liftM2 (,) (toList vector) (peekFloatConv value)
+{-# INLINE igraphHubScore #-}
+{#fun igraph_hub_score as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr CDouble'
+    , `Bool'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr ArpackOpt'
+    } -> `CInt' void- #}
+
+-- | Kleinberg's authority scores.
+authorityScore :: Graph d v e
+               -> Bool -- ^ scale result such that \(\left|max\ centrality\right|=1\)
+               -> ([Double],Double) -- ^ (eigenvector,eigenvalue)
+authorityScore graph scale = unsafePerformIO $
+  allocaVector $ \vector ->
+  alloca $ \value ->
+  allocaArpackOpt $ \options -> do
+    igraphAuthorityScore (_graph graph) vector value scale nullPtr options
+    liftM2 (,) (toList vector) (peekFloatConv value)
+{-# INLINE igraphAuthorityScore #-}
+{#fun igraph_authority_score as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr CDouble'
+    , `Bool'
+    , castPtr `Ptr Vector'
+    , castPtr `Ptr ArpackOpt'
     } -> `CInt' void- #}

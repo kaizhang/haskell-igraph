@@ -28,6 +28,7 @@ tests = testGroup "Algorithms"
     , subGraphs
     , decomposeTest
     , pagerankTest
+    , kleinbergTest
     ]
 
 graphIsomorphism :: TestTree
@@ -146,6 +147,14 @@ pagerankTest = testGroup "PageRank"
     ranks = [0.47,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05]
     ranks' = map ((/100) . fromIntegral . round. (*100)) $
         pagerank gr 0.85 Nothing Nothing
+
+kleinbergTest :: TestTree
+kleinbergTest = testGroup "Kleinberg"
+    [ testCase "Hub score" $
+        fst (hubScore (full @'U 16 False) True) @?= replicate 16 1
+    , testCase "Authority score" $
+        fst (authorityScore (ring 4) False) @?= replicate 4 0.5
+    ]
 
 -- approximate equality helper
 (@?~) :: (Ord n,Fractional n) => n -> n -> Assertion
