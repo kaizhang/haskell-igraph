@@ -18,6 +18,9 @@ module IGraph.Algorithms.Structure
     , isDag
     , topSort
     , topSortUnsafe
+      -- * Other Operations
+    , density
+    , reciprocity
       -- * Auxiliary types
     , Neimode(IgraphOut,IgraphIn,IgraphAll) -- not IgraphTotal
     ) where
@@ -247,6 +250,34 @@ topSortUnsafe gr = unsafePerformIO $ allocaVectorN n $ \res -> do
     , castPtr `Ptr Vector'
     , `Neimode'
     } -> `CInt' void- #}
+
+-- | Calculate the density of a graph.
+density :: Graph d v e
+        -> Bool -- ^ whether to include loops
+        -> Double -- ^ the ratio of edges to possible edges
+density gr loops = unsafePerformIO $ alloca $ \res -> do
+  igraphDensity (_graph gr) res loops
+  peek res
+{-# INLINE igraphDensity #-}
+{#fun igraph_density as ^
+    { `IGraph'
+    , castPtr `Ptr Double'
+    , `Bool'
+    } -> `CInt' void -#}
+
+-- | Calculates the reciprocity of a directed graph.
+reciprocity :: Graph d v e
+            -> Bool -- ^ whether to ignore loop edges
+            -> Double -- ^ the proportion of mutual connections
+reciprocity gr ignore_loops = unsafePerformIO $ alloca $ \res -> do
+  igraphReciprocity (_graph gr) res ignore_loops IgraphReciprocityDefault
+  peek res
+{#fun igraph_reciprocity as ^
+    { `IGraph'
+    , castPtr `Ptr Double'
+    , `Bool'
+    , `Reciprocity'
+    } -> `CInt' void -#}
 
 -- Marshaller for those "treat edges as directed" booleans.
 dirToBool :: Num n => EdgeType -> n

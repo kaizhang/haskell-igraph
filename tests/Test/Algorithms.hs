@@ -31,6 +31,8 @@ tests = testGroup "Algorithms"
     , bridgeTest
     , pagerankTest
     , kleinbergTest
+    , densityTest
+    , reciprocityTest
     ]
 
 graphIsomorphism :: TestTree
@@ -169,6 +171,19 @@ kleinbergTest = testGroup "Kleinberg"
     , testCase "Authority score" $
         fst (authorityScore (ring 4) False) @?= replicate 4 0.5
     ]
+
+densityTest :: TestTree
+densityTest = testGroup "Density"
+    [ testCase "clique" $ density (full @'U 16 False) False @?= 1
+    , testCase "ring" $ density (ring 9) False @?= 1/4
+    ]
+
+reciprocityTest :: TestTree
+reciprocityTest = testGroup "Reciprocity"
+    [ testCase "clique" $ reciprocity (full @'D 10 False) False @?= 1
+    , testCase "ring" $ reciprocity g False @?= 0
+    ]
+  where g = fromLabeledEdges @'D [(("a","b"),()),(("b","c"),()),(("c","a"),())]
 
 -- approximate equality helper
 (@?~) :: (Ord n,Fractional n) => n -> n -> Assertion
