@@ -21,8 +21,10 @@ tests = testGroup "Algorithms"
     [ graphIsomorphism
     , motifTest
     , cliqueTest
+    , averagePathTest
     , diameterTest
     , eccentricityTest
+    , radiusTest
     , subGraphs
     , decomposeTest
     , pagerankTest
@@ -58,6 +60,13 @@ cliqueTest = testGroup "Clique"
         [2,3,4], [2,4,5] ]
     c4 = [[1, 2, 3, 4], [1, 2, 4, 5]]
 
+averagePathTest :: TestTree
+averagePathTest = testGroup "Average path lengths"
+    [ testCase "clique" $ averagePathLength (full @'U 10 False) U True @?= 1
+    , testCase "star" $ averagePathLength (star 10) U True @?~ 1.8
+    , testCase "ring" $ averagePathLength (ring 11) U True @?= 3
+    ]
+
 diameterTest :: TestTree
 diameterTest = testGroup "Diameters"
     [ testCase "clique" $ fst (diameter (full @'U 10 False) U True)  @?= 1
@@ -73,6 +82,13 @@ eccentricityTest = testGroup "Eccentricity"
         eccentricity (star 10) IgraphAll [0..9] @?= (1 : replicate 9 2)
     , testCase "ring" $
         eccentricity (ring 10) IgraphAll [0..9] @?= replicate 10 5
+    ]
+
+radiusTest :: TestTree
+radiusTest = testGroup "Radius"
+    [ testCase "clique" $ radius (full @'U 10 False) IgraphAll @?= 1
+    , testCase "star" $ radius (star 10) IgraphAll @?= 1
+    , testCase "ring" $ radius (ring 10) IgraphAll @?= 5
     ]
 
 subGraphs :: TestTree
@@ -130,3 +146,7 @@ pagerankTest = testGroup "PageRank"
     ranks = [0.47,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05]
     ranks' = map ((/100) . fromIntegral . round. (*100)) $
         pagerank gr 0.85 Nothing Nothing
+
+-- approximate equality helper
+(@?~) :: (Ord n,Fractional n) => n -> n -> Assertion
+a @?~ b = assertBool "" $ abs (b-a) < 1/65536

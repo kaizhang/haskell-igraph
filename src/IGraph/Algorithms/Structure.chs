@@ -3,8 +3,10 @@
 module IGraph.Algorithms.Structure
     ( -- * Shortest Path Related Functions
       shortestPath
+    , averagePathLength
     , diameter
     , eccentricity
+    , radius
       -- * Graph Components
     , inducedSubgraph
     , isConnected
@@ -69,6 +71,23 @@ shortestPath gr s t getEdgeW = unsafePerformIO $ allocaVector $ \path -> do
     , `Neimode'
     } -> `CInt' void- #}
 
+-- | Calculates the average shortest path length between all vertex pairs.
+averagePathLength :: Graph d v e
+                  -> EdgeType -- ^ whether to consider directed paths
+                  -> Bool     -- ^ if unconnected,
+                              -- include only connected pairs (True)
+                              -- or return number if vertices (False)
+                  -> Double
+averagePathLength graph directed unconn =
+  cFloatConv $ igraphAveragePathLength (_graph graph) directed unconn
+{-# INLINE igraphAveragePathLength #-}
+{#fun pure igraph_average_path_length as ^
+    { `IGraph'
+    , alloca- `CDouble' peek*
+    , dirToBool `EdgeType'
+    , `Bool'
+    } -> `CInt' void- #}
+
 -- | Calculates the diameter of a graph (longest geodesic).
 diameter :: Graph d v e
          -> EdgeType -- ^ whether to consider directed paths
@@ -108,6 +127,19 @@ eccentricity graph mode vids = unsafePerformIO $
     { `IGraph'
     , castPtr `Ptr Vector'
     , castPtr %`Ptr VertexSelector'
+    , `Neimode'
+    } -> `CInt' void- #}
+
+-- | Radius of a graph.
+radius :: Graph d v e
+       -> Neimode -- ^ 'IgraphOut' to follow edges' direction,
+                  -- 'IgraphIn' to reverse it, 'IgraphAll' to ignore
+       -> Double
+radius graph mode = cFloatConv $ igraphRadius (_graph graph) mode
+{-# INLINE igraphRadius #-}
+{#fun pure igraph_radius as ^
+    { `IGraph'
+    , alloca- `CDouble' peek*
     , `Neimode'
     } -> `CInt' void- #}
 
