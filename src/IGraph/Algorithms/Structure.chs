@@ -4,6 +4,8 @@ module IGraph.Algorithms.Structure
     ( -- * Shortest Path Related Functions
       shortestPath
     , diameter
+    , eccentricity
+      -- * Graph Components
     , inducedSubgraph
     , isConnected
     , isStronglyConnected
@@ -11,6 +13,8 @@ module IGraph.Algorithms.Structure
     , isDag
     , topSort
     , topSortUnsafe
+      -- * Auxiliary types
+    , Neimode(IgraphOut,IgraphIn,IgraphAll) -- not IgraphTotal
     ) where
 
 import           Control.Monad
@@ -86,6 +90,25 @@ diameter graph directed unconn = unsafePerformIO $
     , castPtr `Ptr Vector'
     , dirToBool `EdgeType'
     , `Bool'
+    } -> `CInt' void- #}
+
+-- | Eccentricity of some vertices.
+eccentricity :: Graph d v e
+             -> Neimode -- ^ 'IgraphOut' to follow edges' direction,
+                        -- 'IgraphIn' to reverse it, 'IgraphAll' to ignore
+             -> [Node]  -- ^ vertices for which to calculate eccentricity
+             -> [Double]
+eccentricity graph mode vids = unsafePerformIO $
+  allocaVector $ \res ->
+  withVerticesList vids $ \vs -> do
+    igraphEccentricity (_graph graph) res vs mode
+    toList res
+{-# INLINE igraphEccentricity #-}
+{#fun igraph_eccentricity as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr %`Ptr VertexSelector'
+    , `Neimode'
     } -> `CInt' void- #}
 
 -- | Creates a subgraph induced by the specified vertices. This function collects

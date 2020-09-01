@@ -22,6 +22,7 @@ tests = testGroup "Algorithms"
     , motifTest
     , cliqueTest
     , diameterTest
+    , eccentricityTest
     , subGraphs
     , decomposeTest
     , pagerankTest
@@ -62,6 +63,16 @@ diameterTest = testGroup "Diameters"
     [ testCase "clique" $ fst (diameter (full @'U 10 False) U True)  @?= 1
     , testCase "star"   $ fst (diameter (star 10)          D False) @?= 2
     , testCase "ring"   $ fst (diameter (ring 10)          U False) @?= 5
+    ]
+
+eccentricityTest :: TestTree
+eccentricityTest = testGroup "Eccentricity"
+    [ testCase "clique" $
+        eccentricity (full @'U 10 False) IgraphAll [0..9] @?= replicate 10 1
+    , testCase "star" $
+        eccentricity (star 10) IgraphAll [0..9] @?= (1 : replicate 9 2)
+    , testCase "ring" $
+        eccentricity (ring 10) IgraphAll [0..9] @?= replicate 10 5
     ]
 
 subGraphs :: TestTree
