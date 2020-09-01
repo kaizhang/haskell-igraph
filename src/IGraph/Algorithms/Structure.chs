@@ -12,6 +12,9 @@ module IGraph.Algorithms.Structure
     , isConnected
     , isStronglyConnected
     , decompose
+    , articulationPoints
+    , bridges
+      -- * Topological Sorting, Directed Acyclic Graphs
     , isDag
     , topSort
     , topSortUnsafe
@@ -192,6 +195,27 @@ decompose gr = unsafePerformIO $ allocaVectorPtr $ \ptr -> do
     , `Int'
     } -> `CInt' void- #}
 
+-- | Find the articulation points in a graph.
+articulationPoints :: Graph d v e -> [Node]
+articulationPoints gr = unsafePerformIO $ allocaVector $ \res -> do
+  igraphArticulationPoints (_graph gr) res
+  toNodes res
+{-#INLINE igraphArticulationPoints #-}
+{#fun igraph_articulation_points as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    } -> `CInt' void- #}
+
+-- ^ Find all bridges in a graph.
+bridges :: Graph d v e -> [Edge]
+bridges gr = unsafePerformIO $ allocaVector $ \res -> do
+  igraphBridges (_graph gr) res
+  map (getEdgeByEid gr) <$> toNodes res
+{-# INLINE igraphBridges #-}
+{#fun igraph_bridges as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    } -> `CInt' void- #}
 
 -- | Checks whether a graph is a directed acyclic graph (DAG) or not.
 isDag :: Graph d v e -> Bool

@@ -27,6 +27,8 @@ tests = testGroup "Algorithms"
     , radiusTest
     , subGraphs
     , decomposeTest
+    , articulationTest
+    , bridgeTest
     , pagerankTest
     , kleinbergTest
     ]
@@ -123,6 +125,18 @@ decomposeTest = testGroup "Decompose"
 		 , (3,4), (4,5), (5,6)
 		 , (8,9), (9,10) ]
     gr = mkGraph (replicate 11 ()) $ zip es $ repeat () :: Graph 'U () ()
+
+articulationTest :: TestTree
+articulationTest = testCase "Articulation points" $
+  articulationPoints (star 3) @?= [0]
+
+bridgeTest :: TestTree
+bridgeTest = testCase "Bridges" $ edgeLab g <$> bridges g @?= ["bridge"]
+  where g = fromLabeledEdges @'U
+            [ (("a","b"),"ab") , (("b","c"),"bc") , (("c","a"),"ca")
+            , (("i","j"),"ij") , (("j","k"),"jk") , (("k","i"),"ki")
+            , (("a","i"),"bridge")
+            ]
 
 {-
 communityTest :: TestTree
