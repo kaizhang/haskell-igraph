@@ -1,0 +1,118 @@
+name: haskell-igraph
+version: "0.8.1"
+category: "Math"
+synopsis: "Bindings to the igraph C library (v0.8.0)."
+description: "igraph<\"http://igraph.org/c/\"> is a library for creating
+                and manipulating large graphs. This package provides the Haskell
+                interface of igraph."
+license: "MIT"
+author: "Kai Zhang"
+copyright: "(c) 2016-2021 Kai Zhang"
+maintainer: "kai@kzhang.org"
+
+ghc-options: -Wall
+
+extra-source-files:
+  - cbits/*.h
+
+  - igraph/include/*.h
+  - igraph/include/*.pmt
+  - igraph/include/f2c/*.h
+  - igraph/include/prpack/*.h
+  - igraph/include/cs/*.h
+  - igraph/include/cliquer/*.h
+  - igraph/include/bliss/*.hh
+  - igraph/include/plfit/*.h
+  - igraph/AUTHORS
+  - igraph/COPYING
+
+  - stack.yaml
+  - README.md
+  - ChangeLog.md
+
+library:
+  build-tools:
+    - c2hs:c2hs >=0.25.0
+  source-dirs:
+    - src
+  exposed-modules:
+    - IGraph.Internal.Initialization
+    - IGraph.Internal.Constants
+    - IGraph.Internal
+    - IGraph
+    - IGraph.Mutable
+    - IGraph.Random
+    - IGraph.Types
+    - IGraph.Algorithms
+    - IGraph.Algorithms.Structure
+    - IGraph.Algorithms.Community
+    - IGraph.Algorithms.Clique
+    - IGraph.Algorithms.Layout
+    - IGraph.Algorithms.Motif
+    - IGraph.Algorithms.Generators
+    - IGraph.Algorithms.Isomorphism
+    - IGraph.Algorithms.Centrality
+
+  other-modules: 
+    - IGraph.Internal.C2HS
+
+  dependencies:
+    - base >= 4.10 && < 5.0
+    - bytestring >= 0.9
+    - cereal
+    - conduit >= 1.3.0
+    - containers
+    - data-ordlist
+    - primitive
+    - singletons >= 2.7
+
+  include-dirs:
+    - cbits
+    - igraph/include
+    - igraph/include/f2c
+    - igraph/include/prpack
+    - igraph/include/cs
+    - igraph/include/cliquer
+    - igraph/include/bliss
+    - igraph/include/plfit
+
+  c-sources:
+    - cbits/*.c
+    - igraph/src/*.c
+
+  cxx-sources:
+    - igraph/src/*.cpp
+    - igraph/src/*.cc
+  cxx-options:
+    - -std=c++11
+    - -DPRPACK_IGRAPH_SUPPORT
+
+  extra-libraries: stdc++
+
+tests:
+  test:
+    main: "test.hs"
+    ghc-options: "-threaded"
+
+    source-dirs:
+      - tests
+
+    other-modules:
+      - Test.Basic
+      - Test.Attributes
+      - Test.Algorithms
+      - Test.Utils
+
+    dependencies:
+      - base
+      - haskell-igraph
+      - cereal
+      - conduit >= 1.3.0
+      - data-ordlist
+      - matrices
+      - tasty
+      - tasty-golden
+      - tasty-hunit
+      - random
+
+github: kaizhang/haskell-igraph
