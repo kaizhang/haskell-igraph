@@ -20,7 +20,7 @@ import IGraph.Internal.C2HS
 -- into three categories: mutual, there is an edge from a to b and also
 -- from b to a; asymmetric, there is an edge either from a to b or
 -- from b to a but not the other way; null, no edges between a and b.
-dyadCensus :: Graph D v e -> (Int, Int, Int)
+dyadCensus :: Graph 'D v e -> (Int, Int, Int)
 dyadCensus = unsafePerformIO . igraphDyadCensus . _graph
 {-# INLINE dyadCensus #-}
 
@@ -75,7 +75,7 @@ triad = map make edgeList
 
 -- | Calculating the triad census means classifying every triple of vertices
 -- in a directed graph. A triple can be in one of 16 states listed in `triad`.
-triadCensus :: (Ord v, Read v) => Graph D v e -> [Int]
+triadCensus :: (Ord v, Read v) => Graph 'D v e -> [Int]
 triadCensus gr = unsafePerformIO $ allocaVector $ \result -> do
     igraphTriadCensus (_graph gr) result
     map truncate <$> toList result

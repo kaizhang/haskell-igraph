@@ -12,7 +12,6 @@ import           Control.Monad
 import           Data.Serialize            (Serialize)
 import Data.List (foldl')
 import           System.IO.Unsafe          (unsafePerformIO)
-import Data.Maybe
 import Data.Singletons (SingI)
 
 import Foreign

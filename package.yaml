@@ -1,7 +1,7 @@
 name: haskell-igraph
-version: "0.8.1"
+version: "0.8.5"
 category: "Math"
-synopsis: "Bindings to the igraph C library (v0.8.0)."
+synopsis: "Bindings to the igraph C library (v0.8.5)."
 description: "igraph<\"http://igraph.org/c/\"> is a library for creating
                 and manipulating large graphs. This package provides the Haskell
                 interface of igraph."
@@ -9,8 +9,6 @@ license: "MIT"
 author: "Kai Zhang"
 copyright: "(c) 2016-2021 Kai Zhang"
 maintainer: "kai@kzhang.org"
-
-ghc-options: -Wall
 
 extra-source-files:
   - cbits/*.h
@@ -31,6 +29,8 @@ extra-source-files:
   - ChangeLog.md
 
 library:
+  ghc-options: -Wall -fno-warn-unused-matches 
+
   build-tools:
     - c2hs:c2hs >=0.25.0
   source-dirs:

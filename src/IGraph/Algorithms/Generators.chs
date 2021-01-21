@@ -36,7 +36,7 @@ full :: forall d. SingI d
      -> Bool  -- ^ Whether to include self-edges (loops)
      -> Graph d () ()
 full n hasLoop = unsafePerformIO $ do
-    igraphInit
+    _ <- igraphInit
     gr <- igraphFull n directed hasLoop
     initializeNullAttribute gr
     return $ Graph gr M.empty
@@ -53,7 +53,7 @@ full n hasLoop = unsafePerformIO $ do
 star :: Int    -- ^ The number of nodes
      -> Graph 'U () ()
 star n = unsafePerformIO $ do
-    igraphInit
+    _ <- igraphInit
     gr <- igraphStar n IgraphStarUndirected 0
     initializeNullAttribute gr
     return $ Graph gr M.empty
@@ -67,7 +67,7 @@ star n = unsafePerformIO $ do
 -- | Creates a ring graph, a one dimensional lattice.
 ring :: Int -> Graph 'U () ()
 ring n = unsafePerformIO $ do
-    igraphInit
+    _ <- igraphInit
     gr <- igraphRing n False False True
     initializeNullAttribute gr
     return $ Graph gr M.empty
@@ -105,7 +105,7 @@ erdosRenyiGame :: forall d. SingI d
                -> Gen
                -> IO (Graph d () ())
 erdosRenyiGame model self _ = do
-    igraphInit
+    _ <- igraphInit
     gr <- case model of
         GNP n p -> igraphErdosRenyiGame IgraphErdosRenyiGnp n p directed self
         GNM n m -> igraphErdosRenyiGame IgraphErdosRenyiGnm n (fromIntegral m)
@@ -127,7 +127,7 @@ degreeSequenceGame :: [Int]   -- ^ Out degree
                    -> Gen
                    -> IO (Graph 'D () ())
 degreeSequenceGame out_deg in_deg _ = do
-    igraphInit
+    _ <- igraphInit
     withList out_deg $ \out_deg' ->
         withList in_deg $ \in_deg' -> do
             gr <- igraphDegreeSequenceGame out_deg' in_deg' IgraphDegseqSimple

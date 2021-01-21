@@ -4,7 +4,7 @@ cabal-version: 2.2
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bbfdc1145a70f4898ed7f7665e2915d76dd2f96f0ad9b19469e32540dfae8334
+-- hash: eec35679c2bc2e9790d121f0e5e57bf25eb87dcf0776ae132bba4f4ff0d168b1
 
 name:           haskell-igraph
 version:        0.8.5
@@ -259,7 +259,7 @@ library
       IGraph.Internal.C2HS
   hs-source-dirs:
       src
-  ghc-options: -Wall
+  ghc-options: -Wall -fno-warn-unused-matches
   cxx-options: -std=c++11 -DPRPACK_IGRAPH_SUPPORT
   include-dirs:
       cbits
@@ -841,7 +841,7 @@ test-suite test
       Test.Utils
   hs-source-dirs:
       tests
-  ghc-options: -Wall -threaded
+  ghc-options: -threaded
   build-depends:
       base
     , cereal

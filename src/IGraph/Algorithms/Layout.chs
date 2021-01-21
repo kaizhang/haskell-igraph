@@ -9,10 +9,9 @@ module IGraph.Algorithms.Layout
 import           Data.Maybe             (isJust, fromMaybe)
 import           Foreign                (nullPtr)
 import           System.IO.Unsafe          (unsafePerformIO)
+import IGraph
 
 import Foreign
-
-import           IGraph
 import IGraph.Random
 {#import IGraph.Internal #}
 
@@ -86,7 +85,7 @@ lgl = LGL
     , lgl_cellsize = \x -> area x ** 0.25
     }
   where
-    area x = fromIntegral $ x^2
+    area x = fromIntegral $ x * x
 
 -- | Places the vertices uniform randomly on a plane.
 {#fun igraph_layout_random as ^
