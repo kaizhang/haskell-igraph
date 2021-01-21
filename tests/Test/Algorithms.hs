@@ -67,16 +67,16 @@ cliqueTest = testGroup "Clique"
 
 averagePathTest :: TestTree
 averagePathTest = testGroup "Average path lengths"
-    [ testCase "clique" $ averagePathLength (full @'U 10 False) U True @?= 1
-    , testCase "star" $ averagePathLength (star 10) U True @?~ 1.8
-    , testCase "ring" $ averagePathLength (ring 11) U True @?= 3
+    [ testCase "clique" $ averagePathLength (full @'U 10 False) True @?= 1
+    , testCase "star" $ averagePathLength (star 10) True @?~ 1.8
+    , testCase "ring" $ averagePathLength (ring 11) True @?= 3
     ]
 
 diameterTest :: TestTree
 diameterTest = testGroup "Diameters"
-    [ testCase "clique" $ fst (diameter (full @'U 10 False) U True)  @?= 1
-    , testCase "star"   $ fst (diameter (star 10)          D False) @?= 2
-    , testCase "ring"   $ fst (diameter (ring 10)          U False) @?= 5
+    [ testCase "clique" $ fst (diameter (full @'U 10 False) True)  @?= 1
+    , testCase "star"   $ fst (diameter (star 10)          False) @?= 2
+    , testCase "ring"   $ fst (diameter (ring 10)          False) @?= 5
     ]
 
 eccentricityTest :: TestTree

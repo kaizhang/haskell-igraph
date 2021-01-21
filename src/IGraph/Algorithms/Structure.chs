@@ -78,33 +78,33 @@ shortestPath gr s t getEdgeW = unsafePerformIO $ allocaVector $ \path -> do
     } -> `CInt' void- #}
 
 -- | Calculates the average shortest path length between all vertex pairs.
-averagePathLength :: Graph d v e
-                  -> EdgeType -- ^ whether to consider directed paths
+averagePathLength :: SingI d
+                  => Graph d v e
                   -> Bool     -- ^ if unconnected,
                               -- include only connected pairs (True)
                               -- or return number if vertices (False)
                   -> Double
-averagePathLength graph directed unconn =
-  cFloatConv $ igraphAveragePathLength (_graph graph) directed unconn
+averagePathLength graph unconn =
+  cFloatConv $ igraphAveragePathLength (_graph graph) (isDirected graph) unconn
 {-# INLINE igraphAveragePathLength #-}
 {#fun pure igraph_average_path_length as ^
     { `IGraph'
     , alloca- `CDouble' peek*
-    , dirToBool `EdgeType'
+    , `Bool'
     , `Bool'
     } -> `CInt' void- #}
 
 -- | Calculates the diameter of a graph (longest geodesic).
-diameter :: Graph d v e
-         -> EdgeType -- ^ whether to consider directed paths
+diameter :: SingI d
+         => Graph d v e
          -> Bool     -- ^ if unconnected,
                      -- return largest component diameter (True)
                      -- or number of vertices (False)
-         -> (Int,[Node])
-diameter graph directed unconn = unsafePerformIO $
+         -> (Int, [Node])
+diameter graph unconn = unsafePerformIO $
   alloca $ \pres ->
   allocaVector $ \path -> do
-    igraphDiameter (_graph graph) pres nullPtr nullPtr path directed unconn
+    igraphDiameter (_graph graph) pres nullPtr nullPtr path (isDirected graph) unconn
     liftM2 (,) (peekIntConv pres) (toNodes path)
 {-# INLINE igraphDiameter #-}
 {#fun igraph_diameter as ^
@@ -113,7 +113,7 @@ diameter graph directed unconn = unsafePerformIO $
     , castPtr `Ptr CInt'
     , castPtr `Ptr CInt'
     , castPtr `Ptr Vector'
-    , dirToBool `EdgeType'
+    , `Bool'
     , `Bool'
     } -> `CInt' void- #}
 
@@ -278,8 +278,3 @@ reciprocity gr ignore_loops = unsafePerformIO $ alloca $ \res -> do
     , `Bool'
     , `Reciprocity'
     } -> `CInt' void -#}
-
--- Marshaller for those "treat edges as directed" booleans.
-dirToBool :: Num n => EdgeType -> n
-dirToBool D = cFromBool True
-dirToBool U = cFromBool False
