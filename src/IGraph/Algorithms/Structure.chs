@@ -3,13 +3,26 @@
 module IGraph.Algorithms.Structure
     ( -- * Shortest Path Related Functions
       shortestPath
+    , averagePathLength
+    , diameter
+    , eccentricity
+    , radius
+      -- * Graph Components
     , inducedSubgraph
     , isConnected
     , isStronglyConnected
     , decompose
+    , articulationPoints
+    , bridges
+      -- * Topological Sorting, Directed Acyclic Graphs
     , isDag
     , topSort
     , topSortUnsafe
+      -- * Other Operations
+    , density
+    , reciprocity
+      -- * Auxiliary types
+    , Neimode(IgraphOut,IgraphIn,IgraphAll) -- not IgraphTotal
     ) where
 
 import           Control.Monad
@@ -64,6 +77,78 @@ shortestPath gr s t getEdgeW = unsafePerformIO $ allocaVector $ \path -> do
     , `Neimode'
     } -> `CInt' void- #}
 
+-- | Calculates the average shortest path length between all vertex pairs.
+averagePathLength :: Graph d v e
+                  -> EdgeType -- ^ whether to consider directed paths
+                  -> Bool     -- ^ if unconnected,
+                              -- include only connected pairs (True)
+                              -- or return number if vertices (False)
+                  -> Double
+averagePathLength graph directed unconn =
+  cFloatConv $ igraphAveragePathLength (_graph graph) directed unconn
+{-# INLINE igraphAveragePathLength #-}
+{#fun pure igraph_average_path_length as ^
+    { `IGraph'
+    , alloca- `CDouble' peek*
+    , dirToBool `EdgeType'
+    , `Bool'
+    } -> `CInt' void- #}
+
+-- | Calculates the diameter of a graph (longest geodesic).
+diameter :: Graph d v e
+         -> EdgeType -- ^ whether to consider directed paths
+         -> Bool     -- ^ if unconnected,
+                     -- return largest component diameter (True)
+                     -- or number of vertices (False)
+         -> (Int,[Node])
+diameter graph directed unconn = unsafePerformIO $
+  alloca $ \pres ->
+  allocaVector $ \path -> do
+    igraphDiameter (_graph graph) pres nullPtr nullPtr path directed unconn
+    liftM2 (,) (peekIntConv pres) (toNodes path)
+{-# INLINE igraphDiameter #-}
+{#fun igraph_diameter as ^
+    { `IGraph'
+    , castPtr `Ptr CInt'
+    , castPtr `Ptr CInt'
+    , castPtr `Ptr CInt'
+    , castPtr `Ptr Vector'
+    , dirToBool `EdgeType'
+    , `Bool'
+    } -> `CInt' void- #}
+
+-- | Eccentricity of some vertices.
+eccentricity :: Graph d v e
+             -> Neimode -- ^ 'IgraphOut' to follow edges' direction,
+                        -- 'IgraphIn' to reverse it, 'IgraphAll' to ignore
+             -> [Node]  -- ^ vertices for which to calculate eccentricity
+             -> [Double]
+eccentricity graph mode vids = unsafePerformIO $
+  allocaVector $ \res ->
+  withVerticesList vids $ \vs -> do
+    igraphEccentricity (_graph graph) res vs mode
+    toList res
+{-# INLINE igraphEccentricity #-}
+{#fun igraph_eccentricity as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    , castPtr %`Ptr VertexSelector'
+    , `Neimode'
+    } -> `CInt' void- #}
+
+-- | Radius of a graph.
+radius :: Graph d v e
+       -> Neimode -- ^ 'IgraphOut' to follow edges' direction,
+                  -- 'IgraphIn' to reverse it, 'IgraphAll' to ignore
+       -> Double
+radius graph mode = cFloatConv $ igraphRadius (_graph graph) mode
+{-# INLINE igraphRadius #-}
+{#fun pure igraph_radius as ^
+    { `IGraph'
+    , alloca- `CDouble' peek*
+    , `Neimode'
+    } -> `CInt' void- #}
+
 -- | Creates a subgraph induced by the specified vertices. This function collects
 -- the specified vertices and all edges between them to a new graph.
 inducedSubgraph :: (Ord v, Serialize v)
@@ -113,6 +198,27 @@ decompose gr = unsafePerformIO $ allocaVectorPtr $ \ptr -> do
     , `Int'
     } -> `CInt' void- #}
 
+-- | Find the articulation points in a graph.
+articulationPoints :: Graph d v e -> [Node]
+articulationPoints gr = unsafePerformIO $ allocaVector $ \res -> do
+  igraphArticulationPoints (_graph gr) res
+  toNodes res
+{-#INLINE igraphArticulationPoints #-}
+{#fun igraph_articulation_points as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    } -> `CInt' void- #}
+
+-- ^ Find all bridges in a graph.
+bridges :: Graph d v e -> [Edge]
+bridges gr = unsafePerformIO $ allocaVector $ \res -> do
+  igraphBridges (_graph gr) res
+  map (getEdgeByEid gr) <$> toNodes res
+{-# INLINE igraphBridges #-}
+{#fun igraph_bridges as ^
+    { `IGraph'
+    , castPtr `Ptr Vector'
+    } -> `CInt' void- #}
 
 -- | Checks whether a graph is a directed acyclic graph (DAG) or not.
 isDag :: Graph d v e -> Bool
@@ -144,3 +250,36 @@ topSortUnsafe gr = unsafePerformIO $ allocaVectorN n $ \res -> do
     , castPtr `Ptr Vector'
     , `Neimode'
     } -> `CInt' void- #}
+
+-- | Calculate the density of a graph.
+density :: Graph d v e
+        -> Bool -- ^ whether to include loops
+        -> Double -- ^ the ratio of edges to possible edges
+density gr loops = unsafePerformIO $ alloca $ \res -> do
+  igraphDensity (_graph gr) res loops
+  peek res
+{-# INLINE igraphDensity #-}
+{#fun igraph_density as ^
+    { `IGraph'
+    , castPtr `Ptr Double'
+    , `Bool'
+    } -> `CInt' void -#}
+
+-- | Calculates the reciprocity of a directed graph.
+reciprocity :: Graph d v e
+            -> Bool -- ^ whether to ignore loop edges
+            -> Double -- ^ the proportion of mutual connections
+reciprocity gr ignore_loops = unsafePerformIO $ alloca $ \res -> do
+  igraphReciprocity (_graph gr) res ignore_loops IgraphReciprocityDefault
+  peek res
+{#fun igraph_reciprocity as ^
+    { `IGraph'
+    , castPtr `Ptr Double'
+    , `Bool'
+    , `Reciprocity'
+    } -> `CInt' void -#}
+
+-- Marshaller for those "treat edges as directed" booleans.
+dirToBool :: Num n => EdgeType -> n
+dirToBool D = cFromBool True
+dirToBool U = cFromBool False

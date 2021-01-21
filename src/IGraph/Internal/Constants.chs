@@ -41,3 +41,6 @@ module IGraph.Internal.Constants where
 
 {#enum igraph_degseq_t as Degseq {underscoreToCase}
     deriving (Show, Read, Eq) #}
+
+{#enum igraph_reciprocity_t as Reciprocity {underscoreToCase}
+    deriving (Show, Read, Eq) #}

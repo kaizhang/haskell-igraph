@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeApplications #-}
 module Test.Algorithms
     ( tests
     ) where
@@ -20,9 +21,18 @@ tests = testGroup "Algorithms"
     [ graphIsomorphism
     , motifTest
     , cliqueTest
+    , averagePathTest
+    , diameterTest
+    , eccentricityTest
+    , radiusTest
     , subGraphs
     , decomposeTest
+    , articulationTest
+    , bridgeTest
     , pagerankTest
+    , kleinbergTest
+    , densityTest
+    , reciprocityTest
     ]
 
 graphIsomorphism :: TestTree
@@ -54,6 +64,37 @@ cliqueTest = testGroup "Clique"
     c3 = [ [0,3,4], [0,4,5], [1,2,3], [1,2,4], [1,2,5], [1,3,4], [1,4,5],
         [2,3,4], [2,4,5] ]
     c4 = [[1, 2, 3, 4], [1, 2, 4, 5]]
+
+averagePathTest :: TestTree
+averagePathTest = testGroup "Average path lengths"
+    [ testCase "clique" $ averagePathLength (full @'U 10 False) U True @?= 1
+    , testCase "star" $ averagePathLength (star 10) U True @?~ 1.8
+    , testCase "ring" $ averagePathLength (ring 11) U True @?= 3
+    ]
+
+diameterTest :: TestTree
+diameterTest = testGroup "Diameters"
+    [ testCase "clique" $ fst (diameter (full @'U 10 False) U True)  @?= 1
+    , testCase "star"   $ fst (diameter (star 10)          D False) @?= 2
+    , testCase "ring"   $ fst (diameter (ring 10)          U False) @?= 5
+    ]
+
+eccentricityTest :: TestTree
+eccentricityTest = testGroup "Eccentricity"
+    [ testCase "clique" $
+        eccentricity (full @'U 10 False) IgraphAll [0..9] @?= replicate 10 1
+    , testCase "star" $
+        eccentricity (star 10) IgraphAll [0..9] @?= (1 : replicate 9 2)
+    , testCase "ring" $
+        eccentricity (ring 10) IgraphAll [0..9] @?= replicate 10 5
+    ]
+
+radiusTest :: TestTree
+radiusTest = testGroup "Radius"
+    [ testCase "clique" $ radius (full @'U 10 False) IgraphAll @?= 1
+    , testCase "star" $ radius (star 10) IgraphAll @?= 1
+    , testCase "ring" $ radius (ring 10) IgraphAll @?= 5
+    ]
 
 subGraphs :: TestTree
 subGraphs = testGroup "generate induced subgraphs"
@@ -87,6 +128,18 @@ decomposeTest = testGroup "Decompose"
 		 , (8,9), (9,10) ]
     gr = mkGraph (replicate 11 ()) $ zip es $ repeat () :: Graph 'U () ()
 
+articulationTest :: TestTree
+articulationTest = testCase "Articulation points" $
+  articulationPoints (star 3) @?= [0]
+
+bridgeTest :: TestTree
+bridgeTest = testCase "Bridges" $ edgeLab g <$> bridges g @?= ["bridge"]
+  where g = fromLabeledEdges @'U
+            [ (("a","b"),"ab") , (("b","c"),"bc") , (("c","a"),"ca")
+            , (("i","j"),"ij") , (("j","k"),"jk") , (("k","i"),"ki")
+            , (("a","i"),"bridge")
+            ]
+
 {-
 communityTest :: TestTree
 communityTest = testGroup "Community"
@@ -110,3 +163,28 @@ pagerankTest = testGroup "PageRank"
     ranks = [0.47,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05]
     ranks' = map ((/100) . fromIntegral . round. (*100)) $
         pagerank gr 0.85 Nothing Nothing
+
+kleinbergTest :: TestTree
+kleinbergTest = testGroup "Kleinberg"
+    [ testCase "Hub score" $
+        fst (hubScore (full @'U 16 False) True) @?= replicate 16 1
+    , testCase "Authority score" $
+        fst (authorityScore (ring 4) False) @?= replicate 4 0.5
+    ]
+
+densityTest :: TestTree
+densityTest = testGroup "Density"
+    [ testCase "clique" $ density (full @'U 16 False) False @?= 1
+    , testCase "ring" $ density (ring 9) False @?= 1/4
+    ]
+
+reciprocityTest :: TestTree
+reciprocityTest = testGroup "Reciprocity"
+    [ testCase "clique" $ reciprocity (full @'D 10 False) False @?= 1
+    , testCase "ring" $ reciprocity g False @?= 0
+    ]
+  where g = fromLabeledEdges @'D [(("a","b"),()),(("b","c"),()),(("c","a"),())]
+
+-- approximate equality helper
+(@?~) :: (Ord n,Fractional n) => n -> n -> Assertion
+a @?~ b = assertBool "" $ abs (b-a) < 1/65536
