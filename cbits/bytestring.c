@@ -342,7 +342,7 @@ igraph_strvector_t* bsvector_to_strvector(bsvector_t* from) {
   igraph_strvector_t *str;
   size_t i;
   igraph_strvector_init(str, from->len);
-  for (i = 0; i++; i < from->len) {
+  for (i = 0; i < from->len; i++) {
     igraph_strvector_set(str, i, bytestring_to_char(from->data[i]));
   }
   return str;
@@ -352,7 +352,7 @@ bsvector_t* strvector_to_bsvector(igraph_strvector_t* from) {
   bsvector_t *str;
   size_t i;
   bsvector_init(str, from->len);
-  for (i = 0; i++; i < from->len) {
+  for (i = 0; i < from->len; i++) {
     bsvector_set(str, i, char_to_bytestring(from->data[i]));
   }
   return str;
