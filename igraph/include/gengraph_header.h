@@ -7,7 +7,7 @@
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -41,17 +41,6 @@ double my_random01() {
 }
 
 }
-
-#ifdef _WIN32
-#include <process.h>
-#include <windows.h>
-void set_priority_low() {
-    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, _getpid());
-    SetPriorityClass(hProcess, IDLE_PRIORITY_CLASS);
-}
-#else
-#include <unistd.h>
-#endif
 
 namespace gengraph {
 

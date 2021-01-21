@@ -1,3 +1,8 @@
+
+/* Defining _GNU_SOURCE enables the GNU extensions fedisableexcept() and feenableexcept()
+ * when using glibc. It must be defined before any standard headers are included. */
+#define _GNU_SOURCE 1
+#include <fenv.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -253,9 +258,7 @@ ieee0(Void)
 #ifdef __GLIBC__
 #define IEEE0_done
 
-#if ((__GLIBC__>=2) && (__GLIBC_MINOR__>=2))
-#define _GNU_SOURCE 1
-#include <fenv.h>
+#if ((__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 2)))
  static void
   ieee0(Void)
         

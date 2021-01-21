@@ -100,18 +100,18 @@ int igraph_create(igraph_t *graph, const igraph_vector_t *edges,
     return 0;
 }
 
-int igraph_i_adjacency_directed(igraph_matrix_t *adjmatrix,
-                                igraph_vector_t *edges);
-int igraph_i_adjacency_max(igraph_matrix_t *adjmatrix,
-                           igraph_vector_t *edges);
-int igraph_i_adjacency_upper(igraph_matrix_t *adjmatrix,
-                             igraph_vector_t *edges);
-int igraph_i_adjacency_lower(igraph_matrix_t *adjmatrix,
-                             igraph_vector_t *edges);
-int igraph_i_adjacency_min(igraph_matrix_t *adjmatrix,
-                           igraph_vector_t *edges);
+static int igraph_i_adjacency_directed(igraph_matrix_t *adjmatrix,
+                                       igraph_vector_t *edges);
+static int igraph_i_adjacency_max(igraph_matrix_t *adjmatrix,
+                                  igraph_vector_t *edges);
+static int igraph_i_adjacency_upper(igraph_matrix_t *adjmatrix,
+                                    igraph_vector_t *edges);
+static int igraph_i_adjacency_lower(igraph_matrix_t *adjmatrix,
+                                    igraph_vector_t *edges);
+static int igraph_i_adjacency_min(igraph_matrix_t *adjmatrix,
+                                  igraph_vector_t *edges);
 
-int igraph_i_adjacency_directed(igraph_matrix_t *adjmatrix, igraph_vector_t *edges) {
+static int igraph_i_adjacency_directed(igraph_matrix_t *adjmatrix, igraph_vector_t *edges) {
 
     long int no_of_nodes = igraph_matrix_nrow(adjmatrix);
     long int i, j, k;
@@ -129,7 +129,7 @@ int igraph_i_adjacency_directed(igraph_matrix_t *adjmatrix, igraph_vector_t *edg
     return 0;
 }
 
-int igraph_i_adjacency_max(igraph_matrix_t *adjmatrix, igraph_vector_t *edges) {
+static int igraph_i_adjacency_max(igraph_matrix_t *adjmatrix, igraph_vector_t *edges) {
 
     long int no_of_nodes = igraph_matrix_nrow(adjmatrix);
     long int i, j, k;
@@ -151,7 +151,7 @@ int igraph_i_adjacency_max(igraph_matrix_t *adjmatrix, igraph_vector_t *edges) {
     return 0;
 }
 
-int igraph_i_adjacency_upper(igraph_matrix_t *adjmatrix, igraph_vector_t *edges) {
+static int igraph_i_adjacency_upper(igraph_matrix_t *adjmatrix, igraph_vector_t *edges) {
 
     long int no_of_nodes = igraph_matrix_nrow(adjmatrix);
     long int i, j, k;
@@ -168,7 +168,7 @@ int igraph_i_adjacency_upper(igraph_matrix_t *adjmatrix, igraph_vector_t *edges)
     return 0;
 }
 
-int igraph_i_adjacency_lower(igraph_matrix_t *adjmatrix, igraph_vector_t *edges) {
+static int igraph_i_adjacency_lower(igraph_matrix_t *adjmatrix, igraph_vector_t *edges) {
 
     long int no_of_nodes = igraph_matrix_nrow(adjmatrix);
     long int i, j, k;
@@ -185,7 +185,7 @@ int igraph_i_adjacency_lower(igraph_matrix_t *adjmatrix, igraph_vector_t *edges)
     return 0;
 }
 
-int igraph_i_adjacency_min(igraph_matrix_t *adjmatrix, igraph_vector_t *edges) {
+static int igraph_i_adjacency_min(igraph_matrix_t *adjmatrix, igraph_vector_t *edges) {
 
     long int no_of_nodes = igraph_matrix_nrow(adjmatrix);
     long int i, j, k;
@@ -311,32 +311,39 @@ int igraph_adjacency(igraph_t *graph, igraph_matrix_t *adjmatrix,
     return 0;
 }
 
-int igraph_i_weighted_adjacency_directed(const igraph_matrix_t *adjmatrix,
+static int igraph_i_weighted_adjacency_directed(
+        const igraph_matrix_t *adjmatrix,
         igraph_vector_t *edges,
         igraph_vector_t *weights,
         igraph_bool_t loops);
-int igraph_i_weighted_adjacency_plus(const igraph_matrix_t *adjmatrix,
-                                     igraph_vector_t *edges,
-                                     igraph_vector_t *weights,
-                                     igraph_bool_t loops);
-int igraph_i_weighted_adjacency_max(const igraph_matrix_t *adjmatrix,
-                                    igraph_vector_t *edges,
-                                    igraph_vector_t *weights,
-                                    igraph_bool_t loops);
-int igraph_i_weighted_adjacency_upper(const igraph_matrix_t *adjmatrix,
-                                      igraph_vector_t *edges,
-                                      igraph_vector_t *weights,
-                                      igraph_bool_t loops);
-int igraph_i_weighted_adjacency_lower(const igraph_matrix_t *adjmatrix,
-                                      igraph_vector_t *edges,
-                                      igraph_vector_t *weights,
-                                      igraph_bool_t loops);
-int igraph_i_weighted_adjacency_min(const igraph_matrix_t *adjmatrix,
-                                    igraph_vector_t *edges,
-                                    igraph_vector_t *weights,
-                                    igraph_bool_t loops);
+static int igraph_i_weighted_adjacency_plus(
+        const igraph_matrix_t *adjmatrix,
+        igraph_vector_t *edges,
+        igraph_vector_t *weights,
+        igraph_bool_t loops);
+static int igraph_i_weighted_adjacency_max(
+        const igraph_matrix_t *adjmatrix,
+        igraph_vector_t *edges,
+        igraph_vector_t *weights,
+        igraph_bool_t loops);
+static int igraph_i_weighted_adjacency_upper(
+        const igraph_matrix_t *adjmatrix,
+        igraph_vector_t *edges,
+        igraph_vector_t *weights,
+        igraph_bool_t loops);
+static int igraph_i_weighted_adjacency_lower(
+        const igraph_matrix_t *adjmatrix,
+        igraph_vector_t *edges,
+        igraph_vector_t *weights,
+        igraph_bool_t loops);
+static int igraph_i_weighted_adjacency_min(
+        const igraph_matrix_t *adjmatrix,
+        igraph_vector_t *edges,
+        igraph_vector_t *weights,
+        igraph_bool_t loops);
 
-int igraph_i_weighted_adjacency_directed(const igraph_matrix_t *adjmatrix,
+static int igraph_i_weighted_adjacency_directed(
+        const igraph_matrix_t *adjmatrix,
         igraph_vector_t *edges,
         igraph_vector_t *weights,
         igraph_bool_t loops) {
@@ -362,10 +369,11 @@ int igraph_i_weighted_adjacency_directed(const igraph_matrix_t *adjmatrix,
     return 0;
 }
 
-int igraph_i_weighted_adjacency_plus(const igraph_matrix_t *adjmatrix,
-                                     igraph_vector_t *edges,
-                                     igraph_vector_t *weights,
-                                     igraph_bool_t loops) {
+static int igraph_i_weighted_adjacency_plus(
+        const igraph_matrix_t *adjmatrix,
+        igraph_vector_t *edges,
+        igraph_vector_t *weights,
+        igraph_bool_t loops) {
 
     long int no_of_nodes = igraph_matrix_nrow(adjmatrix);
     long int i, j;
@@ -391,10 +399,11 @@ int igraph_i_weighted_adjacency_plus(const igraph_matrix_t *adjmatrix,
     return 0;
 }
 
-int igraph_i_weighted_adjacency_max(const igraph_matrix_t *adjmatrix,
-                                    igraph_vector_t *edges,
-                                    igraph_vector_t *weights,
-                                    igraph_bool_t loops) {
+static int igraph_i_weighted_adjacency_max(
+        const igraph_matrix_t *adjmatrix,
+        igraph_vector_t *edges,
+        igraph_vector_t *weights,
+        igraph_bool_t loops) {
 
     long int no_of_nodes = igraph_matrix_nrow(adjmatrix);
     long int i, j;
@@ -420,10 +429,11 @@ int igraph_i_weighted_adjacency_max(const igraph_matrix_t *adjmatrix,
     return 0;
 }
 
-int igraph_i_weighted_adjacency_upper(const igraph_matrix_t *adjmatrix,
-                                      igraph_vector_t *edges,
-                                      igraph_vector_t *weights,
-                                      igraph_bool_t loops) {
+static int igraph_i_weighted_adjacency_upper(
+        const igraph_matrix_t *adjmatrix,
+        igraph_vector_t *edges,
+        igraph_vector_t *weights,
+        igraph_bool_t loops) {
 
     long int no_of_nodes = igraph_matrix_nrow(adjmatrix);
     long int i, j;
@@ -445,10 +455,11 @@ int igraph_i_weighted_adjacency_upper(const igraph_matrix_t *adjmatrix,
     return 0;
 }
 
-int igraph_i_weighted_adjacency_lower(const igraph_matrix_t *adjmatrix,
-                                      igraph_vector_t *edges,
-                                      igraph_vector_t *weights,
-                                      igraph_bool_t loops) {
+static int igraph_i_weighted_adjacency_lower(
+        const igraph_matrix_t *adjmatrix,
+        igraph_vector_t *edges,
+        igraph_vector_t *weights,
+        igraph_bool_t loops) {
 
     long int no_of_nodes = igraph_matrix_nrow(adjmatrix);
     long int i, j;
@@ -470,10 +481,11 @@ int igraph_i_weighted_adjacency_lower(const igraph_matrix_t *adjmatrix,
     return 0;
 }
 
-int igraph_i_weighted_adjacency_min(const igraph_matrix_t *adjmatrix,
-                                    igraph_vector_t *edges,
-                                    igraph_vector_t *weights,
-                                    igraph_bool_t loops) {
+static int igraph_i_weighted_adjacency_min(
+        const igraph_matrix_t *adjmatrix,
+        igraph_vector_t *edges,
+        igraph_vector_t *weights,
+        igraph_bool_t loops) {
 
     long int no_of_nodes = igraph_matrix_nrow(adjmatrix);
     long int i, j;
@@ -750,18 +762,31 @@ int igraph_star(igraph_t *graph, igraph_integer_t n, igraph_star_mode_t mode,
 /**
  * \ingroup generators
  * \function igraph_lattice
- * \brief Creates most kinds of lattices.
+ * \brief Arbitrary dimensional square lattices.
+ *
+ * Creates d-dimensional square lattices of the given size. Optionally,
+ * the lattice can be made periodic, and the neighbors within a given
+ * graph distance can be connected.
+ *
+ * </para><para>
+ * In the zero-dimensional case, the singleton graph is returned.
+ *
+ * </para><para>
+ * The vertices of the resulting graph are ordered such that the
+ * index of the vertex at position <code>(i_0, i_1, i_2, ..., i_d)</code>
+ * in a lattice of size <code>(n_0, n_1, ..., n_d)</code> will be
+ * <code>i_0 + n_0 * i_1 + n_0 * n_1 * i_2 + ...</code>.
  *
  * \param graph An uninitialized graph object.
  * \param dimvector Vector giving the sizes of the lattice in each of
- *        its dimensions. Ie. the dimension of the lattice will be the
+ *        its dimensions. The dimension of the lattice will be the
  *        same as the length of this vector.
  * \param nei Integer value giving the distance (number of steps)
  *        within which two vertices will be connected.
- * \param directed Boolean, whether to create a directed graph. The
- *        direction of the edges is determined by the generation
- *        algorithm and is unlikely to suit you, so this isn't a very
- *        useful option.
+ * \param directed Boolean, whether to create a directed graph. 
+ *        If the \c mutual and \c circular arguments are not set to true,
+ *        edges will be directed from lower-index vertices towards
+ *        higher-index ones.
  * \param mutual Boolean, if the graph is directed this gives whether
  *        to create all connections as mutual.
  * \param circular Boolean, defines whether the generated lattice is
@@ -770,10 +795,10 @@ int igraph_star(igraph_t *graph, igraph_integer_t n, igraph_star_mode_t mode,
  *         \c IGRAPH_EINVAL: invalid (negative)
  *         dimension vector.
  *
- * Time complexity: if \p nei is less than two then it is O(|V|+|E|) (as
+ * Time complexity: If \p nei is less than two then it is O(|V|+|E|) (as
  * far as I remember), |V| and |E| are the number of vertices
- * and edges in the generated graph. Otherwise it is O(|V|*d^o+|E|), d
- * is the average degree of the graph, o is the \p nei argument.
+ * and edges in the generated graph. Otherwise it is O(|V|*d^k+|E|), d
+ * is the average degree of the graph, k is the \p nei argument.
  */
 int igraph_lattice(igraph_t *graph, const igraph_vector_t *dimvector,
                    igraph_integer_t nei, igraph_bool_t directed, igraph_bool_t mutual,
@@ -794,14 +819,14 @@ int igraph_lattice(igraph_t *graph, const igraph_vector_t *dimvector,
 
     coords = igraph_Calloc(dims, long int);
     if (coords == 0) {
-        IGRAPH_ERROR("lattice failed", IGRAPH_ENOMEM);
+        IGRAPH_ERROR("Lattice creation failed", IGRAPH_ENOMEM);
     }
-    IGRAPH_FINALLY(free, coords); /* TODO: hack */
+    IGRAPH_FINALLY(igraph_free, coords);
     weights = igraph_Calloc(dims, long int);
     if (weights == 0) {
-        IGRAPH_ERROR("lattice failed", IGRAPH_ENOMEM);
+        IGRAPH_ERROR("Lattice creation failed", IGRAPH_ENOMEM);
     }
-    IGRAPH_FINALLY(free, weights);
+    IGRAPH_FINALLY(igraph_free, weights);
     if (dims > 0) {
         weights[0] = 1;
         for (i = 1; i < dims; i++) {
@@ -1991,9 +2016,7 @@ const igraph_real_t igraph_i_famous_zachary[] = {
     32, 33
 };
 
-int igraph_i_famous(igraph_t *graph, const igraph_real_t *data);
-
-int igraph_i_famous(igraph_t *graph, const igraph_real_t *data) {
+static int igraph_i_famous(igraph_t *graph, const igraph_real_t *data) {
     long int no_of_nodes = (long int) data[0];
     long int no_of_edges = (long int) data[1];
     igraph_bool_t directed = (igraph_bool_t) data[2];
@@ -2110,11 +2133,11 @@ int igraph_i_famous(igraph_t *graph, const igraph_real_t *data) {
  *           vertices and 12 edges.
  *   \cli Petersen
  *           A 3-regular graph with 10 vertices and 15 edges. It is
- *           the smallest hypohamiltonian graph, ie. it is
+ *           the smallest hypohamiltonian graph, i.e. it is
  *           non-hamiltonian but removing any single vertex from it makes it
  *           Hamiltonian.
  *   \cli Robertson
- *           The unique (4,5)-cage graph, ie. a 4-regular
+ *           The unique (4,5)-cage graph, i.e. a 4-regular
  *           graph of girth 5. It has 19 vertices and 38 edges.
  *   \cli Smallestcyclicgroup
  *           A smallest nontrivial graph
@@ -2370,7 +2393,7 @@ int igraph_adjlist(igraph_t *graph, const igraph_adjlist_t *adjlist,
  *             invalid Pr&uuml;fer sequence given
  *          \endclist
  *
- * \sa \ref igraph_tree(), \ref igraph_tree_game()
+ * \sa \ref igraph_to_prufer(), \ref igraph_tree(), \ref igraph_tree_game()
  *
  */
 

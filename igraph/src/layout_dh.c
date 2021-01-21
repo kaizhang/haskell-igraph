@@ -26,9 +26,11 @@
 #include "igraph_interface.h"
 #include "igraph_random.h"
 #include "igraph_math.h"
+#include "igraph_interrupt_internal.h"
 
 #include <math.h>
 
+/* not 'static', used in tests */
 igraph_bool_t igraph_i_segments_intersect(float p0_x, float p0_y,
         float p1_x, float p1_y,
         float p2_x, float p2_y,
@@ -52,6 +54,7 @@ igraph_bool_t igraph_i_segments_intersect(float p0_x, float p0_y,
     return s >= 0 && s <= 1 && t >= 0 && t <= 1 ? 1 : 0;
 }
 
+/* not 'static', used in tests */
 float igraph_i_point_segment_dist2(float v_x, float v_y,
                                    float u1_x, float u1_y,
                                    float u2_x, float u2_y) {
@@ -240,6 +243,8 @@ int igraph_layout_davidson_harel(const igraph_t *graph, igraph_matrix_t *res,
     for (round = 0; round < maxiter + fineiter; round++) {
         igraph_integer_t p;
         igraph_vector_int_shuffle(&perm);
+
+        IGRAPH_ALLOW_INTERRUPTION();
 
         fine_tuning = round >= maxiter;
         if (fine_tuning) {

@@ -11,6 +11,7 @@
 #define HAVE_RINTF 1
 #define HAVE_ROUND 1
 #define HAVE_SNPRINTF 1
+#undef HAVE_ISFINITE
 
 /* libraries */
 #define HAVE_MEMORY_H 1
@@ -37,3 +38,4 @@
 #define PACKAGE_VERSION "0.8.0"
 #define STDC_HEADERS 1
 #define VERSION "0.8.0"
+#undef YYTEXT_POINTER

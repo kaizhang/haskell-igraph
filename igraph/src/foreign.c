@@ -22,7 +22,6 @@
 */
 
 #include "igraph_foreign.h"
-#include "config.h"
 #include "igraph_math.h"
 #include "igraph_gml_tree.h"
 #include "igraph_memory.h"
@@ -31,6 +30,7 @@
 #include "igraph_interrupt_internal.h"
 #include "igraph_constructors.h"
 #include "igraph_types_internal.h"
+#include "config.h"
 
 #include <ctype.h>      /* isspace */
 #include <string.h>
@@ -53,10 +53,10 @@
  * \brief Reads an edge list from a file and creates a graph.
  *
  * </para><para>
- * This format is simply a series of even number integers separated by
- * whitespace. The one edge (ie. two integers) per line format is thus
- * not required (but recommended for readability). Edges of directed
- * graphs are assumed to be in from, to order.
+ * This format is simply a series of an even number of non-negative integers separated by
+ * whitespace. The integers represent vertex IDs. Placing each edge (i.e. pair of integers) 
+ * on a separate line is not required, but it is recommended for readability. 
+ * Edges of directed graphs are assumed to be in "from, to" order.
  * \param graph Pointer to an uninitialized graph object.
  * \param instream Pointer to a stream, it should be readable.
  * \param n The number of vertices in the graph. If smaller than the
@@ -485,7 +485,7 @@ void igraph_pajek_yyset_in  (FILE * in_str, void* yyscanner );
  * project files (<filename>.paj</filename>) are not. These might be
  * supported in the future if there is need for it.
  * \oli Time events networks are not supported.
- * \oli Hypergraphs (ie. graphs with non-binary edges) are not
+ * \oli Hypergraphs (i.e. graphs with non-binary edges) are not
  * supported.
  * \oli Graphs with both directed and non-directed edges are not
  * supported, are they cannot be represented in
@@ -499,35 +499,35 @@ void igraph_pajek_yyset_in  (FILE * in_str, void* yyscanner );
  * If there are attribute handlers installed,
  * <command>igraph</command> also reads the vertex and edge attributes
  * from the file. Most attributes are renamed to be more informative:
- * `\c color' instead of `\c c', `\c xfact' instead of `\c x_fact',
- * `\c yfact' instead of `y_fact', `\c labeldist' instead of `\c lr',
- * `\c labeldegree2' instead of `\c lphi', `\c framewidth' instead of `\c bw',
- * `\c fontsize'
- * instead of `\c fos', `\c rotation' instead of `\c phi', `\c radius' instead
- * of `\c r',
- * `\c diamondratio' instead of `\c q', `\c labeldegree' instead of `\c la',
- * `\c vertexsize'
- * instead of `\c size', `\c color' instead of `\c ic', `\c framecolor' instead of
- * `\c bc', `\c labelcolor' instead of `\c lc', these belong to vertices.
+ * \c color instead of \c c, \c xfact instead of \c x_fact,
+ * \c yfact instead of y_fact, \c labeldist instead of \c lr,
+ * \c labeldegree2 instead of \c lphi, \c framewidth instead of \c bw,
+ * \c fontsize
+ * instead of \c fos, \c rotation instead of \c phi, \c radius instead
+ * of \c r,
+ * \c diamondratio instead of \c q, \c labeldegree instead of \c la,
+ * \c vertexsize
+ * instead of \c size, \c color instead of \c ic, \c framecolor instead of
+ * \c bc, \c labelcolor instead of \c lc, these belong to vertices.
  *
  * </para><para>
- * Edge attributes are also renamed, `\c s' to `\c arrowsize', `\c w'
- * to `\c edgewidth', `\c h1' to `\c hook1', `\c h2' to `\c hook2',
- * `\c a1' to `\c angle1', `\c a2' to `\c angle2', `\c k1' to
- * `\c velocity1', `\c k2' to `\c velocity2', `\c ap' to `\c
- * arrowpos', `\c lp' to `\c labelpos', `\c lr' to
- * `\c labelangle', `\c lphi' to `\c labelangle2', `\c la' to `\c
- * labeldegree', `\c fos' to
- * `\c fontsize', `\c a' to `\c arrowtype', `\c p' to `\c
- * linepattern', `\c l' to `\c label', `\c lc' to
- * `\c labelcolor', `\c c' to `\c color'.
+ * Edge attributes are also renamed, \c s to \c arrowsize, \c w
+ * to \c edgewidth, \c h1 to \c hook1, \c h2 to \c hook2,
+ * \c a1 to \c angle1, \c a2 to \c angle2, \c k1 to
+ * \c velocity1, \c k2 to \c velocity2, \c ap to \c
+ * arrowpos, \c lp to \c labelpos, \c lr to
+ * \c labelangle, \c lphi to \c labelangle2, \c la to \c
+ * labeldegree, \c fos to
+ * \c fontsize, \c a to \c arrowtype, \c p to \c
+ * linepattern, \c l to \c label, \c lc to
+ * \c labelcolor, \c c to \c color.
  *
  * </para><para>
- * In addition the following vertex attributes might be added: `\c id'
- * if there are vertex ids in the file, `\c x' and `\c y' or `\c x'
- * and `\c y' and `\c z' if there are vertex coordinates in the file.
+ * In addition the following vertex attributes might be added: \c id
+ * if there are vertex ids in the file, \c x and \c y or \c x
+ * and \c y and \c z if there are vertex coordinates in the file.
  *
- * </para><para>The `\c weight' edge attribute might be
+ * </para><para>The \c weight edge attribute might be
  * added if there are edge weights present.
  *
  * </para><para>
@@ -878,7 +878,7 @@ int igraph_read_graph_dimacs(igraph_t *graph, FILE *instream,
     return 0;
 }
 
-int igraph_i_read_graph_graphdb_getword(FILE *instream) {
+static int igraph_i_read_graph_graphdb_getword(FILE *instream) {
     int b1, b2;
     unsigned char c1, c2;
     b1 = fgetc(instream);
@@ -977,7 +977,7 @@ int igraph_gml_yylex_destroy (void *scanner );
 int igraph_gml_yyparse (igraph_i_gml_parsedata_t* context);
 void igraph_gml_yyset_in  (FILE * in_str, void* yyscanner );
 
-void igraph_i_gml_destroy_attrs(igraph_vector_ptr_t **ptr) {
+static void igraph_i_gml_destroy_attrs(igraph_vector_ptr_t **ptr) {
     long int i;
     igraph_vector_ptr_t *vec;
     for (i = 0; i < 3; i++) {
@@ -1005,7 +1005,7 @@ void igraph_i_gml_destroy_attrs(igraph_vector_ptr_t **ptr) {
     }
 }
 
-igraph_real_t igraph_i_gml_toreal(igraph_gml_tree_t *node, long int pos) {
+static igraph_real_t igraph_i_gml_toreal(igraph_gml_tree_t *node, long int pos) {
 
     igraph_real_t value = 0.0;
     int type = igraph_gml_tree_type(node, pos);
@@ -1025,10 +1025,10 @@ igraph_real_t igraph_i_gml_toreal(igraph_gml_tree_t *node, long int pos) {
     return value;
 }
 
-const char *igraph_i_gml_tostring(igraph_gml_tree_t *node, long int pos) {
+static const char *igraph_i_gml_tostring(igraph_gml_tree_t *node, long int pos) {
 
     int type = igraph_gml_tree_type(node, pos);
-    char tmp[256];
+    static char tmp[256];
     const char *p = tmp;
     long int i;
     igraph_real_t d;
@@ -1155,7 +1155,7 @@ int igraph_read_graph_gml(igraph_t *graph, FILE *instream) {
     }
     gtree = igraph_gml_tree_get_tree(context.tree, gidx);
 
-    IGRAPH_FINALLY(igraph_i_gml_destroy_attrs, &attrs);
+    IGRAPH_FINALLY(igraph_i_gml_destroy_attrs, attrs);
     igraph_vector_ptr_init(&gattrs, 0);
     igraph_vector_ptr_init(&vattrs, 0);
     igraph_vector_ptr_init(&eattrs, 0);
@@ -1942,7 +1942,7 @@ int igraph_write_graph_lgl(const igraph_t *graph, FILE *outstream,
 #define E_COLOR            22
 #define E_LAST             23
 
-int igraph_i_pajek_escape(char* src, char** dest) {
+static int igraph_i_pajek_escape(char* src, char** dest) {
     long int destlen = 0;
     igraph_bool_t need_escape = 0;
 
@@ -2010,18 +2010,30 @@ int igraph_i_pajek_escape(char* src, char** dest) {
  * the attributes of the vertices and edges, of course this requires
  * an attribute handler to be installed. The names of the
  * corresponding vertex and edge attributes are listed at \ref
- * igraph_read_graph_pajek(), eg. the `\c color' vertex attributes
- * determines the color (`\c c' in Pajek) parameter.
+ * igraph_read_graph_pajek(), eg. the \c color vertex attributes
+ * determines the color (\c c in Pajek) parameter.
  *
  * </para><para>
  * As of version 0.6.1 igraph writes bipartite graphs into Pajek files
  * correctly, i.e. they will be also bipartite when read into Pajek.
- * As Pajek is less flexible for bipartite graphs (the numeric ids of
+ * As Pajek is less flexible for bipartite graphs (the numeric IDs of
  * the vertices must be sorted according to vertex type), igraph might
  * need to reorder the vertices when writing a bipartite Pajek file.
- * This effectively means that numeric vertex ids usually change when
+ * This effectively means that numeric vertex IDs usually change when
  * a bipartite graph is written to a Pajek file, and then read back
  * into igraph.
+ *
+ * </para><para>
+ * Early versions of Pajek supported only Windows-style line endings
+ * in Pajek files, but recent versions support both Windows and Unix
+ * line endings. igraph therefore uses the platform-native line endings
+ * when the input file is opened in text mode, and uses Unix-style
+ * line endings when the input file is opened in binary mode. If you
+ * are using an old version of Pajek, you are on Unix and you are having
+ * problems reading files written by igraph on a Windows machine, convert the
+ * line endings manually with a text editor or with \c unix2dos or \c iconv
+ * from the command line).
+ *
  * \param graph The graph object to write.
  * \param outstream The file to write to. It should be opened and
  * writable. Make sure that you open the file in binary format if you use MS Windows,
@@ -2091,7 +2103,10 @@ int igraph_write_graph_pajek(const igraph_t *graph, FILE *outstream) {
                               };
     const char *estrnames2[] = { "a", "p", "l", "lc", "c" };
 
-    const char *newline = "\x0d\x0a";
+    /* Newer Pajek versions support both Unix and Windows-style line endings,
+     * so we just use Unix style. This will get converted to CRLF on Windows
+     * when the file is opened in text mode */
+    const char *newline = "\n";
 
     igraph_es_t es;
     igraph_eit_t eit;
@@ -2466,7 +2481,7 @@ int igraph_write_graph_dimacs(const igraph_t *graph, FILE *outstream,
     return 0;
 }
 
-int igraph_i_gml_convert_to_key(const char *orig, char **key) {
+static int igraph_i_gml_convert_to_key(const char *orig, char **key) {
     int no = 1;
     char strno[50];
     size_t i, len = strlen(orig), newlen = 0, plen = 0;
@@ -2741,7 +2756,7 @@ int igraph_write_graph_gml(const igraph_t *graph, FILE *outstream,
     return 0;
 }
 
-int igraph_i_dot_escape(const char *orig, char **result) {
+static int igraph_i_dot_escape(const char *orig, char **result) {
     /* do we have to escape the string at all? */
     long int i, j, len = (long int) strlen(orig), newlen = 0;
     igraph_bool_t need_quote = 0, is_number = 1;
@@ -3386,5 +3401,3 @@ int igraph_write_graph_leda(const igraph_t *graph, FILE *outstream,
 }
 
 #undef CHECK
-
-

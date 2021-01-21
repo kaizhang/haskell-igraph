@@ -47,8 +47,8 @@ typedef struct {
     igraph_psumtree_t *sumtrees;
 } igraph_i_citing_cited_type_game_struct_t;
 
-void igraph_i_citing_cited_type_game_free (
-    igraph_i_citing_cited_type_game_struct_t *s);
+static void igraph_i_citing_cited_type_game_free (
+        igraph_i_citing_cited_type_game_struct_t *s);
 /**
  * \section about_games
  *
@@ -56,39 +56,39 @@ void igraph_i_citing_cited_type_game_free (
  * they generate a different graph every time you call them. </para>
  */
 
-int igraph_i_barabasi_game_bag(igraph_t *graph, igraph_integer_t n,
-                               igraph_integer_t m,
-                               const igraph_vector_t *outseq,
-                               igraph_bool_t outpref,
-                               igraph_bool_t directed,
-                               const igraph_t *start_from);
+static int igraph_i_barabasi_game_bag(igraph_t *graph, igraph_integer_t n,
+                                      igraph_integer_t m,
+                                      const igraph_vector_t *outseq,
+                                      igraph_bool_t outpref,
+                                      igraph_bool_t directed,
+                                      const igraph_t *start_from);
 
-int igraph_i_barabasi_game_psumtree_multiple(igraph_t *graph,
-        igraph_integer_t n,
-        igraph_real_t power,
-        igraph_integer_t m,
-        const igraph_vector_t *outseq,
-        igraph_bool_t outpref,
-        igraph_real_t A,
-        igraph_bool_t directed,
-        const igraph_t *start_from);
+static int igraph_i_barabasi_game_psumtree_multiple(igraph_t *graph,
+                                                    igraph_integer_t n,
+                                                    igraph_real_t power,
+                                                    igraph_integer_t m,
+                                                    const igraph_vector_t *outseq,
+                                                    igraph_bool_t outpref,
+                                                    igraph_real_t A,
+                                                    igraph_bool_t directed,
+                                                    const igraph_t *start_from);
 
-int igraph_i_barabasi_game_psumtree(igraph_t *graph,
-                                    igraph_integer_t n,
-                                    igraph_real_t power,
-                                    igraph_integer_t m,
-                                    const igraph_vector_t *outseq,
-                                    igraph_bool_t outpref,
-                                    igraph_real_t A,
-                                    igraph_bool_t directed,
-                                    const igraph_t *start_from);
+static int igraph_i_barabasi_game_psumtree(igraph_t *graph,
+                                           igraph_integer_t n,
+                                           igraph_real_t power,
+                                           igraph_integer_t m,
+                                           const igraph_vector_t *outseq,
+                                           igraph_bool_t outpref,
+                                           igraph_real_t A,
+                                           igraph_bool_t directed,
+                                           const igraph_t *start_from);
 
-int igraph_i_barabasi_game_bag(igraph_t *graph, igraph_integer_t n,
-                               igraph_integer_t m,
-                               const igraph_vector_t *outseq,
-                               igraph_bool_t outpref,
-                               igraph_bool_t directed,
-                               const igraph_t *start_from) {
+static int igraph_i_barabasi_game_bag(igraph_t *graph, igraph_integer_t n,
+                                      igraph_integer_t m,
+                                      const igraph_vector_t *outseq,
+                                      igraph_bool_t outpref,
+                                      igraph_bool_t directed,
+                                      const igraph_t *start_from) {
 
     long int no_of_nodes = n;
     long int no_of_neighbors = m;
@@ -124,7 +124,7 @@ int igraph_i_barabasi_game_bag(igraph_t *graph, igraph_integer_t n,
     if (bag == 0) {
         IGRAPH_ERROR("barabasi_game failed", IGRAPH_ENOMEM);
     }
-    IGRAPH_FINALLY(free, bag);    /* TODO: hack */
+    IGRAPH_FINALLY(igraph_free, bag);
 
     /* The first node(s) in the bag */
     if (start_from) {
@@ -190,15 +190,15 @@ int igraph_i_barabasi_game_bag(igraph_t *graph, igraph_integer_t n,
     return 0;
 }
 
-int igraph_i_barabasi_game_psumtree_multiple(igraph_t *graph,
-        igraph_integer_t n,
-        igraph_real_t power,
-        igraph_integer_t m,
-        const igraph_vector_t *outseq,
-        igraph_bool_t outpref,
-        igraph_real_t A,
-        igraph_bool_t directed,
-        const igraph_t *start_from) {
+static int igraph_i_barabasi_game_psumtree_multiple(igraph_t *graph,
+                                                    igraph_integer_t n,
+                                                    igraph_real_t power,
+                                                    igraph_integer_t m,
+                                                    const igraph_vector_t *outseq,
+                                                    igraph_bool_t outpref,
+                                                    igraph_real_t A,
+                                                    igraph_bool_t directed,
+                                                    const igraph_t *start_from) {
 
     long int no_of_nodes = n;
     long int no_of_neighbors = m;
@@ -296,15 +296,15 @@ int igraph_i_barabasi_game_psumtree_multiple(igraph_t *graph,
     return 0;
 }
 
-int igraph_i_barabasi_game_psumtree(igraph_t *graph,
-                                    igraph_integer_t n,
-                                    igraph_real_t power,
-                                    igraph_integer_t m,
-                                    const igraph_vector_t *outseq,
-                                    igraph_bool_t outpref,
-                                    igraph_real_t A,
-                                    igraph_bool_t directed,
-                                    const igraph_t *start_from) {
+static int igraph_i_barabasi_game_psumtree(igraph_t *graph,
+                                           igraph_integer_t n,
+                                           igraph_real_t power,
+                                           igraph_integer_t m,
+                                           const igraph_vector_t *outseq,
+                                           igraph_bool_t outpref,
+                                           igraph_real_t A,
+                                           igraph_bool_t directed,
+                                           const igraph_t *start_from) {
 
     long int no_of_nodes = n;
     long int no_of_neighbors = m;
@@ -437,7 +437,7 @@ int igraph_i_barabasi_game_psumtree(igraph_t *graph,
  *        no outgoing edges, so the first number in this vector is
  *        ignored.
  * \param outpref Boolean, if true not only the in- but also the out-degree
- *        of a vertex increases its citation probability. Ie. the
+ *        of a vertex increases its citation probability. I.e., the
  *        citation probability is determined by the total degree of
  *        the vertices. Ignored and assumed to be true if the graph
  *        being generated is undirected.
@@ -860,7 +860,7 @@ int igraph_degree_sequence_game_simple(igraph_t *graph,
     if (bag1 == 0) {
         IGRAPH_ERROR("degree sequence game (simple)", IGRAPH_ENOMEM);
     }
-    IGRAPH_FINALLY(free, bag1);   /* TODO: hack */
+    IGRAPH_FINALLY(igraph_free, bag1);
 
     for (i = 0; i < no_of_nodes; i++) {
         for (j = 0; j < VECTOR(*out_seq)[i]; j++) {
@@ -872,7 +872,7 @@ int igraph_degree_sequence_game_simple(igraph_t *graph,
         if (bag2 == 0) {
             IGRAPH_ERROR("degree sequence game (simple)", IGRAPH_ENOMEM);
         }
-        IGRAPH_FINALLY(free, bag2);
+        IGRAPH_FINALLY(igraph_free, bag2);
         for (i = 0; i < no_of_nodes; i++) {
             for (j = 0; j < VECTOR(*in_seq)[i]; j++) {
                 bag2[bagp2++] = i;
@@ -965,6 +965,8 @@ int igraph_degree_sequence_game_no_multiple_undirected(
      * until it finally succeeds. */
     finished = 0;
     while (!finished) {
+        IGRAPH_ALLOW_INTERRUPTION();
+
         /* Be optimistic :) */
         failed = 0;
 
@@ -1111,6 +1113,8 @@ int igraph_degree_sequence_game_no_multiple_directed(igraph_t *graph,
      * until it finally succeeds. */
     finished = 0;
     while (!finished) {
+        IGRAPH_ALLOW_INTERRUPTION();
+
         /* Be optimistic :) */
         failed = 0;
 
@@ -1210,15 +1214,24 @@ int igraph_degree_sequence_game_no_multiple_directed(igraph_t *graph,
     return IGRAPH_SUCCESS;
 }
 
+/* swap two elements of a vector_int */
+#define SWAP_INT_ELEM(vec, i, j) \
+    { \
+        igraph_integer_t temp; \
+        temp = VECTOR(vec)[i]; \
+        VECTOR(vec)[i] = VECTOR(vec)[j]; \
+        VECTOR(vec)[j] = temp; \
+    }
+
 int igraph_degree_sequence_game_no_multiple_undirected_uniform(igraph_t *graph, const igraph_vector_t *degseq) {
     igraph_vector_int_t stubs;
     igraph_vector_t edges;
     igraph_bool_t degseq_ok;
     igraph_vector_ptr_t adjlist;
-    long i, j, k;
+    long i, j;
     long vcount, ecount, stub_count;
 
-    IGRAPH_CHECK(igraph_is_graphical_degree_sequence(degseq, 0, &degseq_ok));
+    IGRAPH_CHECK(igraph_is_graphical_degree_sequence(degseq, NULL, &degseq_ok));
     if (!degseq_ok) {
         IGRAPH_ERROR("No simple undirected graph can realize the given degree sequence", IGRAPH_EINVAL);
     }
@@ -1230,16 +1243,21 @@ int igraph_degree_sequence_game_no_multiple_undirected_uniform(igraph_t *graph, 
     IGRAPH_VECTOR_INT_INIT_FINALLY(&stubs, stub_count);
     IGRAPH_VECTOR_INIT_FINALLY(&edges, stub_count);
 
-    k = 0;
-    for (i = 0; i < vcount; ++i) {
-        long deg = (long) VECTOR(*degseq)[i];
-        for (j = 0; j < deg; ++j) {
-            VECTOR(stubs)[k++] = i;
+    /* Fill stubs vector. */
+    {
+        long k = 0;
+        for (i = 0; i < vcount; ++i) {
+            long deg = (long) VECTOR(*degseq)[i];
+            for (j = 0; j < deg; ++j) {
+                VECTOR(stubs)[k++] = i;
+            }
         }
     }
 
+    /* Build an adjacency list in terms of sets; used to check for multi-edges. */
     IGRAPH_CHECK(igraph_vector_ptr_init(&adjlist, vcount));
     IGRAPH_VECTOR_PTR_SET_ITEM_DESTRUCTOR(&adjlist, igraph_set_destroy);
+    IGRAPH_FINALLY(igraph_vector_ptr_destroy_all, &adjlist);
     for (i = 0; i < vcount; ++i) {
         igraph_set_t *set = igraph_malloc(sizeof(igraph_set_t));
         if (! set) {
@@ -1248,21 +1266,28 @@ int igraph_degree_sequence_game_no_multiple_undirected_uniform(igraph_t *graph, 
         IGRAPH_CHECK(igraph_set_init(set, 0));
         VECTOR(adjlist)[i] = set;
         IGRAPH_CHECK(igraph_set_reserve(set, (long) VECTOR(*degseq)[i]));
-    }
-    IGRAPH_FINALLY(igraph_vector_ptr_destroy_all, &adjlist);
+    }    
 
     RNG_BEGIN();
 
     for (;;) {
         igraph_bool_t success = 1;
-        IGRAPH_CHECK(igraph_vector_int_shuffle(&stubs));
 
+        /* Shuffle stubs vector with Fisher-Yates and check for self-loops and multi-edges as we go. */
         for (i = 0; i < ecount; ++i) {
-            igraph_integer_t from = VECTOR(stubs)[2 * i];
-            igraph_integer_t to = VECTOR(stubs)[2 * i + 1];
+            long k, from, to;
 
-            /* loop edge, fail */
-            if (to == from) {
+            k = RNG_INTEGER(2*i, stub_count-1);
+            SWAP_INT_ELEM(stubs, 2*i, k);
+
+            k = RNG_INTEGER(2*i+1, stub_count-1);
+            SWAP_INT_ELEM(stubs, 2*i+1, k);
+
+            from = VECTOR(stubs)[2*i];
+            to   = VECTOR(stubs)[2*i+1];
+
+            /* self-loop, fail */
+            if (from == to) {
                 success = 0;
                 break;
             }
@@ -1286,11 +1311,12 @@ int igraph_degree_sequence_game_no_multiple_undirected_uniform(igraph_t *graph, 
             break;
         }
 
-        IGRAPH_ALLOW_INTERRUPTION();
-
+        /* Clear adjacency list. */
         for (j = 0; j < vcount; ++j) {
             igraph_set_clear((igraph_set_t *) VECTOR(adjlist)[j]);
         }
+
+        IGRAPH_ALLOW_INTERRUPTION();
     }
 
     RNG_END();
@@ -1307,13 +1333,14 @@ int igraph_degree_sequence_game_no_multiple_undirected_uniform(igraph_t *graph, 
     return IGRAPH_SUCCESS;
 }
 
+
 int igraph_degree_sequence_game_no_multiple_directed_uniform(
     igraph_t *graph, const igraph_vector_t *out_deg, const igraph_vector_t *in_deg) {
     igraph_vector_int_t out_stubs, in_stubs;
     igraph_vector_t edges;
     igraph_bool_t degseq_ok;
     igraph_vector_ptr_t adjlist;
-    long i, j, k, l;
+    long i, j;
     long vcount, ecount;
 
     IGRAPH_CHECK(igraph_is_graphical_degree_sequence(out_deg, in_deg, &degseq_ok));
@@ -1328,23 +1355,28 @@ int igraph_degree_sequence_game_no_multiple_directed_uniform(
     IGRAPH_VECTOR_INT_INIT_FINALLY(&in_stubs, ecount);
     IGRAPH_VECTOR_INIT_FINALLY(&edges, 2 * ecount);
 
-    k = 0; l = 0;
-    for (i = 0; i < vcount; ++i) {
-        long dout, din;
+    /* Fill in- and out-stubs vectors. */
+    {
+        long k = 0, l = 0;
+        for (i = 0; i < vcount; ++i) {
+            long dout, din;
 
-        dout = (long) VECTOR(*out_deg)[i];
-        for (j = 0; j < dout; ++j) {
-            VECTOR(out_stubs)[k++] = i;
-        }
+            dout = (long) VECTOR(*out_deg)[i];
+            for (j = 0; j < dout; ++j) {
+                VECTOR(out_stubs)[k++] = i;
+            }
 
-        din  = (long) VECTOR(*in_deg)[i];
-        for (j = 0; j < din; ++j) {
-            VECTOR(in_stubs)[l++] = i;
+            din  = (long) VECTOR(*in_deg)[i];
+            for (j = 0; j < din; ++j) {
+                VECTOR(in_stubs)[l++] = i;
+            }
         }
     }
 
+    /* Build an adjacency list in terms of sets; used to check for multi-edges. */
     IGRAPH_CHECK(igraph_vector_ptr_init(&adjlist, vcount));
     IGRAPH_VECTOR_PTR_SET_ITEM_DESTRUCTOR(&adjlist, igraph_set_destroy);
+    IGRAPH_FINALLY(igraph_vector_ptr_destroy_all, &adjlist);
     for (i = 0; i < vcount; ++i) {
         igraph_set_t *set = igraph_malloc(sizeof(igraph_set_t));
         if (! set) {
@@ -1353,21 +1385,25 @@ int igraph_degree_sequence_game_no_multiple_directed_uniform(
         IGRAPH_CHECK(igraph_set_init(set, 0));
         VECTOR(adjlist)[i] = set;
         IGRAPH_CHECK(igraph_set_reserve(set, (long) VECTOR(*out_deg)[i]));
-    }
-    IGRAPH_FINALLY(igraph_vector_ptr_destroy_all, &adjlist);
+    }    
 
     RNG_BEGIN();
 
     for (;;) {
         igraph_bool_t success = 1;
-        IGRAPH_CHECK(igraph_vector_int_shuffle(&out_stubs));
 
+        /* Shuffle out-stubs vector with Fisher-Yates and check for self-loops and multi-edges as we go. */
         for (i = 0; i < ecount; ++i) {
-            igraph_integer_t from = VECTOR(out_stubs)[i];
-            igraph_integer_t to = VECTOR(in_stubs)[i];
+            long k, from, to;
             igraph_set_t *set;
 
-            /* loop edge, fail */
+            k = RNG_INTEGER(i, ecount-1);
+            SWAP_INT_ELEM(out_stubs, i, k);
+
+            from = VECTOR(out_stubs)[i];
+            to   = VECTOR(in_stubs)[i];
+
+            /* self-loop, fail */
             if (to == from) {
                 success = 0;
                 break;
@@ -1392,11 +1428,12 @@ int igraph_degree_sequence_game_no_multiple_directed_uniform(
             break;
         }
 
-        IGRAPH_ALLOW_INTERRUPTION();
-
+        /* Clear adjacency list. */
         for (j = 0; j < vcount; ++j) {
             igraph_set_clear((igraph_set_t *) VECTOR(adjlist)[j]);
         }
+
+        IGRAPH_ALLOW_INTERRUPTION();
     }
 
     RNG_END();
@@ -1414,6 +1451,9 @@ int igraph_degree_sequence_game_no_multiple_directed_uniform(
     return IGRAPH_SUCCESS;
 }
 
+#undef SWAP_INT_ELEM
+
+
 /* This is in gengraph_mr-connected.cpp */
 
 int igraph_degree_sequence_game_vl(igraph_t *graph,
@@ -1426,9 +1466,9 @@ int igraph_degree_sequence_game_vl(igraph_t *graph,
  *
  * \param graph Pointer to an uninitialized graph object.
  * \param out_deg The degree sequence for an undirected graph (if
- *        \p in_seq is of length zero), or the out-degree
+ *        \p in_seq is \c NULL or of length zero), or the out-degree
  *        sequence of a directed graph (if \p in_deq is not
- *        of length zero.
+ *        of length zero).
  * \param in_deg It is either a zero-length vector or
  *        \c NULL (if an undirected
  *        graph is generated), or the in-degree sequence.
@@ -1439,34 +1479,36 @@ int igraph_degree_sequence_game_vl(igraph_t *graph,
  *          For undirected graphs, it puts all vertex IDs in a bag
  *          such that the multiplicity of a vertex in the bag is the same as
  *          its degree. Then it draws pairs from the bag until the bag becomes
- *          empty. This method can generate both loop (self) edges and multiple
+ *          empty. This method may generate both loop (self) edges and multiple
  *          edges. For directed graphs, the algorithm is basically the same,
  *          but two separate bags are used for the in- and out-degrees.
  *          Undirected graphs are generated with probability proportional to
  *          <code>(\prod_{i&lt;j} A_{ij} ! \prod_i A_{ii} !!)^{-1}</code>,
  *          where \c A denotes the adjacency matrix and <code>!!</code> denotes
- *          the double factorial.
- *          The corresponding  expression for directed ones is
+ *          the double factorial. Here \c A is assumed to have twice the number of
+ *          self-loops on its diagonal.
+ *          The corresponding  expression for directed graphs is
  *          <code>(\prod_{i,j} A_{ij}!)^{-1}</code>.
  *          Thus the probability of all simple graphs (which only have 0s and 1s
  *          in the adjacency matrix) is the same, while that of
- *          non-simple ones depends on their structure.
+ *          non-simple ones depends on their edge and self-loop multiplicities.
  *          \cli IGRAPH_DEGSEQ_SIMPLE_NO_MULTIPLE
- *          This method is similar to \c IGRAPH_DEGSEQ_SIMPLE
+ *          This method generates simple graphs.
+ *          It is similar to \c IGRAPH_DEGSEQ_SIMPLE
  *          but tries to avoid multiple and loop edges and restarts the
- *          generation from scratch if it gets stuck. It is not guaranteed
- *          to sample uniformly from the space of all possible graphs with
- *          the given sequence, but it is relatively fast and it will
+ *          generation from scratch if it gets stuck. It can generate all simple
+ *          realizations of a degree sequence, but it is not guaranteed
+ *          to sample them uniformly. This method is relatively fast and it will
  *          eventually succeed if the provided degree sequence is graphical,
  *          but there is no upper bound on the number of iterations.
  *          \cli IGRAPH_DEGSEQ_SIMPLE_NO_MULTIPLE_UNIFORM
  *          This method is identical to \c IGRAPH_DEGSEQ_SIMPLE, but if the
  *          generated graph is not simple, it rejects it and re-starts the
- *          generation. It samples all simple graphs with the same probability.
+ *          generation. It generates all simple graphs with the same probability.
  *          \cli IGRAPH_DEGSEQ_VL
- *          This method is a much more sophisticated generator than the
- *          previous ones. It can sample undirected, connected simple graphs
- *          uniformly and uses Monte-Carlo methods to randomize the graphs.
+ *          This method samples undirected connected graphs approximately
+ *          uniformly. It is a Monte Carlo method based on degree-preserving
+ *          edge swaps.
  *          This generator should be favoured if undirected and connected
  *          graphs are to be generated and execution time is not a concern.
  *          igraph uses the original implementation of Fabien Viger; for the algorithm,
@@ -1540,7 +1582,7 @@ int igraph_degree_sequence_game(igraph_t *graph, const igraph_vector_t *out_deg,
  * growing) random graphs.
  * \param graph Uninitialized graph object.
  * \param n The number of vertices in the graph.
- * \param m The number of edges to add in a time step (ie. after
+ * \param m The number of edges to add in a time step (i.e. after
  *        adding a vertex).
  * \param directed Boolean, whether to generate a directed graph.
  * \param citation Boolean, if \c TRUE, the edges always
@@ -2268,7 +2310,7 @@ int igraph_recent_degree_aging_game(igraph_t *graph,
  * \param nodes The number of vertices in the graph.
  * \param radius The radius within which the vertices will be connected.
  * \param torus Logical constant, if true periodic boundary conditions
- *        will be used, ie. the vertices are assumed to be on a torus
+ *        will be used, i.e. the vertices are assumed to be on a torus
  *        instead of a square.
  * \return Error code.
  *
@@ -2382,9 +2424,7 @@ int igraph_grg_game(igraph_t *graph, igraph_integer_t nodes,
 }
 
 
-void igraph_i_preference_game_free_vids_by_type(igraph_vector_ptr_t *vecs);
-
-void igraph_i_preference_game_free_vids_by_type(igraph_vector_ptr_t *vecs) {
+static void igraph_i_preference_game_free_vids_by_type(igraph_vector_ptr_t *vecs) {
     int i = 0, n;
     igraph_vector_t *v;
 
@@ -2926,13 +2966,9 @@ int igraph_asymmetric_preference_game(igraph_t *graph, igraph_integer_t nodes,
     return 0;
 }
 
-int igraph_i_rewire_edges_no_multiple(igraph_t *graph, igraph_real_t prob,
-                                      igraph_bool_t loops,
-                                      igraph_vector_t *edges);
-
-int igraph_i_rewire_edges_no_multiple(igraph_t *graph, igraph_real_t prob,
-                                      igraph_bool_t loops,
-                                      igraph_vector_t *edges) {
+static int igraph_i_rewire_edges_no_multiple(igraph_t *graph, igraph_real_t prob,
+                                             igraph_bool_t loops,
+                                             igraph_vector_t *edges) {
 
     int no_verts = igraph_vcount(graph);
     int no_edges = igraph_ecount(graph);
@@ -3386,7 +3422,7 @@ int igraph_watts_strogatz_game(igraph_t *graph, igraph_integer_t dim,
  *
  * </para><para>
  * The \p preference argument specifies the preferences for the
- * citation lags, ie. its first elements contains the attractivity
+ * citation lags, i.e. its first elements contains the attractivity
  * of the very recently cited vertices, etc. The last element is
  * special, it contains the attractivity of the vertices which were
  * never cited. This element should be bigger than zero.
@@ -3627,7 +3663,7 @@ int igraph_cited_type_game(igraph_t *graph, igraph_integer_t nodes,
     return 0;
 }
 
-void igraph_i_citing_cited_type_game_free(igraph_i_citing_cited_type_game_struct_t *s) {
+static void igraph_i_citing_cited_type_game_free(igraph_i_citing_cited_type_game_struct_t *s) {
     long int i;
     if (!s->sumtrees) {
         return;
@@ -3651,7 +3687,7 @@ void igraph_i_citing_cited_type_game_free(igraph_i_citing_cited_type_game_struct
  * category of both the citing and the cited vertex and is given in
  * the \p pref matrix. The categories of the citing vertex correspond
  * to the rows, the categories of the cited vertex to the columns of
- * this matrix. Ie. the element in row \c i and column \c j gives the
+ * this matrix. I.e. the element in row \c i and column \c j gives the
  * probability that a \c j vertex is cited, if the category of the
  * citing vertex is \c i.
  *
@@ -3783,16 +3819,15 @@ int igraph_citing_cited_type_game(igraph_t *graph, igraph_integer_t nodes,
  *
  */
 int igraph_simple_interconnected_islands_game(
-    igraph_t        *graph,
-    igraph_integer_t    islands_n,
-    igraph_integer_t    islands_size,
-    igraph_real_t       islands_pin,
-    igraph_integer_t    n_inter) {
+        igraph_t *graph,
+        igraph_integer_t islands_n,
+        igraph_integer_t islands_size,
+        igraph_real_t islands_pin,
+        igraph_integer_t n_inter) {
 
 
     igraph_vector_t edges = IGRAPH_VECTOR_NULL;
     igraph_vector_t s = IGRAPH_VECTOR_NULL;
-    int retval = 0;
     int nbNodes;
     double maxpossibleedgesPerIsland;
     double maxedgesPerIsland;
@@ -3816,73 +3851,63 @@ int igraph_simple_interconnected_islands_game(
         IGRAPH_ERROR("Invalid number of inter-islands links", IGRAPH_EINVAL);
     }
 
-    // how much memory ?
+    /* how much memory ? */
     nbNodes = islands_n * islands_size;
     maxpossibleedgesPerIsland = ((double)islands_size * ((double)islands_size - (double)1)) / (double)2;
     maxedgesPerIsland = islands_pin * maxpossibleedgesPerIsland;
     nbEdgesInterIslands = n_inter * (islands_n * (islands_n - 1)) / 2;
-    maxedges = maxedgesPerIsland * islands_n + nbEdgesInterIslands;
+    maxedges = maxedgesPerIsland * islands_n + nbEdgesInterIslands;    
 
-    // debug&tests : printf("total nodes %d, maxedgesperisland %f, maxedgesinterislands %d, maxedges %f\n", nbNodes, maxedgesPerIsland, nbEdgesInterIslands, maxedges);
-
-    // reserve enough place for all the edges, thanks !
+    /* reserve enough space for all the edges */
     IGRAPH_VECTOR_INIT_FINALLY(&edges, 0);
     IGRAPH_CHECK(igraph_vector_reserve(&edges, (long int) maxedges));
 
     RNG_BEGIN();
 
-    // first create all the islands
-    for (is = 1; is <= islands_n; is++) { // for each island
+    /* first create all the islands */
+    for (is = 1; is <= islands_n; is++) { /* for each island */
 
-        // index for start and end of nodes in this island
+        /* index for start and end of nodes in this island */
         startIsland = islands_size * (is - 1);
         endIsland = startIsland + islands_size - 1;
 
-
-        // debug&tests : printf("start %d,end %d\n", startIsland, endIsland);
-
-        // create the random numbers to be used (into s)
+        /* create the random numbers to be used (into s) */
         IGRAPH_VECTOR_INIT_FINALLY(&s, 0);
         IGRAPH_CHECK(igraph_vector_reserve(&s, (long int) maxedgesPerIsland));
 
         last = RNG_GEOM(islands_pin);
-        // debug&tests : printf("last=%f \n", last);
-        while (last < maxpossibleedgesPerIsland) { // maxedgesPerIsland
+        while (last < maxpossibleedgesPerIsland) { /* maxedgesPerIsland */
             IGRAPH_CHECK(igraph_vector_push_back(&s, last));
             myrand = RNG_GEOM(islands_pin);
-            last += myrand; //RNG_GEOM(islands_pin);
-            //printf("myrand=%f , last=%f \n", myrand, last);
+            last += myrand; /* RNG_GEOM(islands_pin); */
             last += 1;
         }
 
 
 
-        // change this to edges !
+        /* change this to edges ! */
         for (i = 0; i < igraph_vector_size(&s); i++) {
-
             long int to = (long int) floor((sqrt(8 * VECTOR(s)[i] + 1) + 1) / 2);
             long int from = (long int) (VECTOR(s)[i] - (((igraph_real_t)to) * (to - 1)) / 2);
             to += startIsland;
             from += startIsland;
-            // debug&tests : printf("from %d to %d\n", from, to);
+
             igraph_vector_push_back(&edges, from);
             igraph_vector_push_back(&edges, to);
         }
 
-        // clear the memory used for random number for this island
+        /* clear the memory used for random number for this island */
         igraph_vector_destroy(&s);
         IGRAPH_FINALLY_CLEAN(1);
 
 
-        // create the links with other islands
-        for (i = is + 1; i <= islands_n; i++) { // for each other island (not the previous ones)
+        /* create the links with other islands */
+        for (i = is + 1; i <= islands_n; i++) { /* for each other island (not the previous ones) */
 
-            // debug&tests : printf("link islands %d and %d\n", is, i);
-            for (j = 0; j < n_inter; j++) { // for each link between islands
-
+            for (j = 0; j < n_inter; j++) { /* for each link between islands */
                 long int from = (long int) RNG_UNIF(startIsland, endIsland);
                 long int to = (long int) RNG_UNIF((i - 1) * islands_size, i * islands_size);
-                //printf("from %d to %d\n", from, to);
+
                 igraph_vector_push_back(&edges, from);
                 igraph_vector_push_back(&edges, to);
             }
@@ -3892,14 +3917,14 @@ int igraph_simple_interconnected_islands_game(
 
     RNG_END();
 
-    // actually fill the graph object
-    IGRAPH_CHECK(retval = igraph_create(graph, &edges, nbNodes, 0));
+    /* actually fill the graph object */
+    IGRAPH_CHECK(igraph_create(graph, &edges, nbNodes, 0));
 
-    // an clear remaining things
+    /* clean remaining things */
     igraph_vector_destroy(&edges);
     IGRAPH_FINALLY_CLEAN(1);
 
-    return retval;
+    return IGRAPH_SUCCESS;
 }
 
 
@@ -4318,8 +4343,11 @@ int igraph_static_power_law_game(igraph_t *graph,
  * graphs, at least one of k and the number of vertices must be even.
  *
  * </para><para>
- * The game simply uses \ref igraph_degree_sequence_game with appropriately
- * constructed degree sequences.
+ * Currently, this game simply uses \ref igraph_degree_sequence_game with 
+ * the \c SIMPLE_NO_MULTIPLE method and appropriately constructed degree sequences.
+ * Thefore, it does not sample uniformly: while it can generate all k-regular graphs
+ * with the given number of vertices, it does not generate each one with the same
+ * probability.
  *
  * \param graph        Pointer to an uninitialized graph object.
  * \param no_of_nodes  The number of nodes in the generated graph.
@@ -4744,7 +4772,7 @@ static int igraph_i_tree_game_loop_erased_random_walk(igraph_t *graph, igraph_in
  * \brief Generates a random tree with the given number of nodes
  *
  * This function samples uniformly from the set of labelled trees,
- * i.e. it can generate each labelled tree with the same probability.
+ * i.e. it generates each labelled tree with the same probability.
  *
  * \param graph Pointer to an uninitialized graph object.
  * \param n The number of nodes in the tree.
@@ -4752,7 +4780,7 @@ static int igraph_i_tree_game_loop_erased_random_walk(igraph_t *graph, igraph_in
  * \param method The algorithm to use to generate the tree. Possible values:
  *        \clist
  *        \cli IGRAPH_RANDOM_TREE_PRUFER
- *          This algorithm samples Pr&uuml;fer sequences unformly, then converts them to trees.
+ *          This algorithm samples Pr&uuml;fer sequences uniformly, then converts them to trees.
  *          Directed trees are not currently supported.
  *        \cli IGRAPH_RANDOM_LERW
  *          This algorithm effectively performs a loop-erased random walk on the complete graph

@@ -31,6 +31,7 @@
 #include "igraph_stack.h"
 #include "igraph_attributes.h"
 #include "igraph_structural.h"
+#include "igraph_isoclasses.h"
 #include "config.h"
 
 const unsigned int igraph_i_isoclass_3[] = {  0, 1, 1, 3, 1, 5, 6, 7,
@@ -689,6 +690,9 @@ const unsigned int igraph_i_classedges_4u[] = { 2, 3, 1, 3, 0, 3, 1, 2, 0, 2, 0,
  * (between 0 and 15), for undirected graph it is only 4. For graphs
  * with four vertices it is 218 (directed) and 11 (undirected).
  *
+ * </para><para>
+ * Multi-edges and self-loops are ignored by this function.
+ *
  * \param graph The graph object.
  * \param isoclass Pointer to an integer, the isomorphism class will
  *        be stored here.
@@ -754,26 +758,31 @@ int igraph_isoclass(const igraph_t *graph, igraph_integer_t *isoclass) {
  * \brief Decides whether two graphs are isomorphic
  *
  * </para><para>
- * From Wikipedia: The graph isomorphism problem or GI problem is the
- * graph theory problem of determining whether, given two graphs G1
- * and G2, it is possible to permute (or relabel) the vertices of one
- * graph so that it is equal to the other. Such a permutation is
- * called a graph isomorphism.</para>
+ * In simple terms, two graphs are isomorphic if they become indistinguishable
+ * from each other once their vertex labels are removed (rendering the vertices
+ * within each graph indistiguishable). More precisely, two graphs are isomorphic
+ * if there is a one-to-one mapping from the vertices of the first one
+ * to the vertices of the second such that it transforms the edge set of the
+ * first graph into the edge set of the second. This mapping is called
+ * an \em isomorphism.
  *
- * <para>This function decides which graph isomorphism algorithm to be
+ * </para><para>Currently, this function supports simple graphs and graphs
+ * with self-loops, but does not support multigraphs.
+ *
+ * </para><para>This function decides which graph isomorphism algorithm to be
  * used based on the input graphs. Right now it does the following:
  * \olist
  * \oli If one graph is directed and the other undirected then an
  *    error is triggered.
+ * \oli If one of the graphs has multi-edges then an error is triggered.
  * \oli If the two graphs does not have the same number of vertices
  *    and edges it returns with \c FALSE.
  * \oli Otherwise, if the graphs have three or four vertices then an O(1)
  *    algorithm is used with precomputed data.
  * \oli Otherwise BLISS is used, see \ref igraph_isomorphic_bliss().
  * \endolist
- * </para>
  *
- * <para> Please call the VF2 and BLISS functions directly if you need
+ * </para><para>Please call the VF2 and BLISS functions directly if you need
  * something more sophisticated, e.g. you need the isomorphic mapping.
  *
  * \param graph1 The first graph.
@@ -793,7 +802,14 @@ int igraph_isomorphic(const igraph_t *graph1, const igraph_t *graph2,
     long int nodes1 = igraph_vcount(graph1), nodes2 = igraph_vcount(graph2);
     long int edges1 = igraph_ecount(graph1), edges2 = igraph_ecount(graph2);
     igraph_bool_t dir1 = igraph_is_directed(graph1), dir2 = igraph_is_directed(graph2);
-    igraph_bool_t loop1, loop2;
+    igraph_bool_t loop1, loop2, multi1, multi2;
+
+    IGRAPH_CHECK(igraph_has_multiple(graph1, &multi1));
+    IGRAPH_CHECK(igraph_has_multiple(graph2, &multi2));
+
+    if (multi1 || multi2) {
+        IGRAPH_ERROR("Isomorphism testing is not implemented for multigraphs", IGRAPH_UNIMPLEMENTED);
+    }
 
     if (dir1 != dir2) {
         IGRAPH_ERROR("Cannot compare directed and undirected graphs", IGRAPH_EINVAL);
@@ -821,7 +837,8 @@ int igraph_isomorphic(const igraph_t *graph1, const igraph_t *graph2,
  * Graph isomorphism for 3-4 vertices
  *
  * This function uses precomputed indices to decide isomorphism
- * problems for graphs with only 3 or 4 vertices.
+ * problems for graphs with only 3 or 4 vertices. Multi-edges
+ * and self-loops are ignored by this function.
  * \param graph1 The first input graph.
  * \param graph2 The second input graph. Must have the same
  *   directedness as \p graph1.
@@ -1640,7 +1657,8 @@ typedef struct {
     void *arg, *carg;
 } igraph_i_iso_cb_data_t;
 
-igraph_bool_t igraph_i_isocompat_node_cb(const igraph_t *graph1,
+static igraph_bool_t igraph_i_isocompat_node_cb(
+        const igraph_t *graph1,
         const igraph_t *graph2,
         const igraph_integer_t g1_num,
         const igraph_integer_t g2_num,
@@ -1649,7 +1667,8 @@ igraph_bool_t igraph_i_isocompat_node_cb(const igraph_t *graph1,
     return data->node_compat_fn(graph1, graph2, g1_num, g2_num, data->carg);
 }
 
-igraph_bool_t igraph_i_isocompat_edge_cb(const igraph_t *graph1,
+static igraph_bool_t igraph_i_isocompat_edge_cb(
+        const igraph_t *graph1,
         const igraph_t *graph2,
         const igraph_integer_t g1_num,
         const igraph_integer_t g2_num,
@@ -1658,9 +1677,9 @@ igraph_bool_t igraph_i_isocompat_edge_cb(const igraph_t *graph1,
     return data->edge_compat_fn(graph1, graph2, g1_num, g2_num, data->carg);
 }
 
-igraph_bool_t igraph_i_isomorphic_vf2(igraph_vector_t *map12,
-                                      igraph_vector_t *map21,
-                                      void *arg) {
+static igraph_bool_t igraph_i_isomorphic_vf2(igraph_vector_t *map12,
+                                             igraph_vector_t *map21,
+                                             void *arg) {
     igraph_i_iso_cb_data_t *data = arg;
     igraph_bool_t *iso = data->arg;
     IGRAPH_UNUSED(map12); IGRAPH_UNUSED(map21);
@@ -1699,11 +1718,11 @@ igraph_bool_t igraph_i_isomorphic_vf2(igraph_vector_t *map12,
  * \param map12 Pointer to an initialized vector or a NULL pointer. If not
  *    a NULL pointer then the mapping from \p graph1 to \p graph2 is
  *    stored here. If the graphs are not isomorphic then the vector is
- *    cleared (ie. has zero elements).
+ *    cleared (i.e. has zero elements).
  * \param map21 Pointer to an initialized vector or a NULL pointer. If not
  *    a NULL pointer then the mapping from \p graph2 to \p graph1 is
  *    stored here. If the graphs are not isomorphic then the vector is
- *    cleared (ie. has zero elements).
+ *    cleared (i.e. has zero elements).
  * \param node_compat_fn A pointer to a function of type \ref
  *   igraph_isocompat_t. This function will be called by the algorithm to
  *   determine whether two nodes are compatible.
@@ -1756,7 +1775,8 @@ int igraph_isomorphic_vf2(const igraph_t *graph1, const igraph_t *graph2,
     return 0;
 }
 
-igraph_bool_t igraph_i_count_isomorphisms_vf2(const igraph_vector_t *map12,
+static igraph_bool_t igraph_i_count_isomorphisms_vf2(
+        const igraph_vector_t *map12,
         const igraph_vector_t *map21,
         void *arg) {
     igraph_i_iso_cb_data_t *data = arg;
@@ -1828,7 +1848,7 @@ int igraph_count_isomorphisms_vf2(const igraph_t *graph1, const igraph_t *graph2
     return 0;
 }
 
-void igraph_i_get_isomorphisms_free(igraph_vector_ptr_t *data) {
+static void igraph_i_get_isomorphisms_free(igraph_vector_ptr_t *data) {
     long int i, n = igraph_vector_ptr_size(data);
     for (i = 0; i < n; i++) {
         igraph_vector_t *vec = VECTOR(*data)[i];
@@ -1837,7 +1857,8 @@ void igraph_i_get_isomorphisms_free(igraph_vector_ptr_t *data) {
     }
 }
 
-igraph_bool_t igraph_i_get_isomorphisms_vf2(const igraph_vector_t *map12,
+static igraph_bool_t igraph_i_get_isomorphisms_vf2(
+        const igraph_vector_t *map12,
         const igraph_vector_t *map21,
         void *arg) {
 
@@ -1883,11 +1904,11 @@ igraph_bool_t igraph_i_get_isomorphisms_vf2(const igraph_vector_t *map12,
  * \param edge_color2 The edge color vector for the second graph.
  * \param maps Pointer vector. On return it is empty if the input graphs
  *   are no isomorphic. Otherwise it contains pointers to
- *   <type>igraph_vector_t</type> objects, each vector is an
+ *   \ref igraph_vector_t objects, each vector is an
  *   isomorphic mapping of \p graph2 to \p graph1. Please note that
  *   you need to 1) Destroy the vectors via \ref
  *   igraph_vector_destroy(), 2) free them via
- *   <function>free()</function> and then 3) call \ref
+ *   \ref igraph_free() and then 3) call \ref
  *   igraph_vector_ptr_destroy() on the pointer vector to deallocate all
  *   memory when \p maps is no longer needed.
  * \param node_compat_fn A pointer to a function of type \ref
@@ -2473,7 +2494,8 @@ int igraph_subisomorphic_function_vf2(const igraph_t *graph1,
     return 0;
 }
 
-igraph_bool_t igraph_i_subisomorphic_vf2(const igraph_vector_t *map12,
+static igraph_bool_t igraph_i_subisomorphic_vf2(
+        const igraph_vector_t *map12,
         const igraph_vector_t *map21,
         void *arg) {
     igraph_i_iso_cb_data_t *data = arg;
@@ -2560,7 +2582,8 @@ int igraph_subisomorphic_vf2(const igraph_t *graph1, const igraph_t *graph2,
     return 0;
 }
 
-igraph_bool_t igraph_i_count_subisomorphisms_vf2(const igraph_vector_t *map12,
+static igraph_bool_t igraph_i_count_subisomorphisms_vf2(
+        const igraph_vector_t *map12,
         const igraph_vector_t *map21,
         void *arg) {
     igraph_i_iso_cb_data_t *data = arg;
@@ -2635,7 +2658,7 @@ int igraph_count_subisomorphisms_vf2(const igraph_t *graph1, const igraph_t *gra
     return 0;
 }
 
-void igraph_i_get_subisomorphisms_free(igraph_vector_ptr_t *data) {
+static void igraph_i_get_subisomorphisms_free(igraph_vector_ptr_t *data) {
     long int i, n = igraph_vector_ptr_size(data);
     for (i = 0; i < n; i++) {
         igraph_vector_t *vec = VECTOR(*data)[i];
@@ -2644,7 +2667,8 @@ void igraph_i_get_subisomorphisms_free(igraph_vector_ptr_t *data) {
     }
 }
 
-igraph_bool_t igraph_i_get_subisomorphisms_vf2(const igraph_vector_t *map12,
+static igraph_bool_t igraph_i_get_subisomorphisms_vf2(
+        const igraph_vector_t *map12,
         const igraph_vector_t *map21,
         void *arg) {
 
@@ -2690,11 +2714,11 @@ igraph_bool_t igraph_i_get_subisomorphisms_vf2(const igraph_vector_t *map12,
  *   edge-colored.
  * \param edge_color2 The edge color vector for the second graph.
  * \param maps Pointer vector. On return it contains pointers to
- *   <type>igraph_vector_t</type> objects, each vector is an
+ *   \ref igraph_vector_t objects, each vector is an
  *   isomorphic mapping of \p graph2 to a subgraph of \p graph1. Please note that
  *   you need to 1) Destroy the vectors via \ref
  *   igraph_vector_destroy(), 2) free them via
- *   <function>free()</function> and then 3) call \ref
+ *   \ref igraph_free() and then 3) call \ref
  *   igraph_vector_ptr_destroy() on the pointer vector to deallocate all
  *   memory when \p maps is no longer needed.
  * \param node_compat_fn A pointer to a function of type \ref

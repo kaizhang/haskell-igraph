@@ -7,7 +7,7 @@
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -265,7 +265,7 @@ public:
       bool try_shuffle(int T, int K);
 
     //___________________________________________________________________________________
-    //*/
+    */
 
     /*___________________________________________________________________________________
       Not to use anymore : replaced by vertex_betweenness()     22/04/2005
@@ -277,7 +277,7 @@ public:
       // same, but when multiple shortest path are possible, average the weights.
       double *vertex_betweenness_asp(bool trivial_path);
     //___________________________________________________________________________________
-    //*/
+    */
 
 };
 

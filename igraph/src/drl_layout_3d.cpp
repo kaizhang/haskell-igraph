@@ -45,12 +45,7 @@
 // 5/6/2005
 
 // C++ library routines
-#include <iostream>
-#include <fstream>
 #include <map>
-#include <set>
-#include <string>
-#include <deque>
 #include <vector>
 
 using namespace std;
@@ -69,6 +64,8 @@ using namespace drl3d;
 #include "igraph_layout.h"
 #include "igraph_random.h"
 #include "igraph_interface.h"
+
+#include "igraph_handle_exceptions.h"
 
 /**
  * \function igraph_layout_drl_3d
@@ -106,18 +103,19 @@ int igraph_layout_drl_3d(const igraph_t *graph, igraph_matrix_t *res,
                          igraph_layout_drl_options_t *options,
                          const igraph_vector_t *weights,
                          const igraph_vector_bool_t *fixed) {
+    IGRAPH_HANDLE_EXCEPTIONS(
+        RNG_BEGIN();
 
-    RNG_BEGIN();
+        drl3d::graph neighbors(graph, options, weights);
+        neighbors.init_parms(options);
+        if (use_seed) {
+            IGRAPH_CHECK(igraph_matrix_resize(res, igraph_vcount(graph), 3));
+            neighbors.read_real(res, fixed);
+        }
+        neighbors.draw_graph(res);
 
-    drl3d::graph neighbors(graph, options, weights);
-    neighbors.init_parms(options);
-    if (use_seed) {
-        IGRAPH_CHECK(igraph_matrix_resize(res, igraph_vcount(graph), 3));
-        neighbors.read_real(res, fixed);
-    }
-    neighbors.draw_graph(res);
-
-    RNG_END();
+        RNG_END();
+    );
 
     return 0;
 }

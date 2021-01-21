@@ -33,9 +33,7 @@
 #endif
 
 int igraph_finite(double x) {
-#ifdef isfinite
-    return isfinite(x);
-#elif HAVE_ISFINITE == 1
+#if HAVE_DECL_ISFINITE
     return isfinite(x);
 #elif HAVE_FINITE == 1
     return finite(x);
@@ -79,11 +77,13 @@ double igraph_chebyshev_eval(double x, const double *a, const int n) {
     int i;
 
     if (n < 1 || n > 1000) {
-        IGRAPH_NAN;
+        IGRAPH_WARNING("chebyshev_eval: argument out of domain");
+        return IGRAPH_NAN;
     }
 
     if (x < -1.1 || x > 1.1) {
-        IGRAPH_NAN;
+        IGRAPH_WARNING("chebyshev_eval: argument out of domain");
+        return IGRAPH_NAN;
     }
 
     twox = x * 2;
@@ -256,11 +256,11 @@ int igraph_is_inf(double x) {
 }
 
 int igraph_is_posinf(double x) {
-    return isinf(x) == 1;
+    return isinf(x) && x > 0;
 }
 
 int igraph_is_neginf(double x) {
-    return isinf(x) == -1;
+    return isinf(x) && x < 0;
 }
 
 /**

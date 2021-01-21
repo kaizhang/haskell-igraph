@@ -21,8 +21,8 @@
 
 */
 
-#ifndef BLAS_H
-#define BLAS_H
+#ifndef IGRAPH_BLAS_H
+#define IGRAPH_BLAS_H
 
 #include "igraph_types.h"
 #include "igraph_vector.h"
@@ -59,6 +59,9 @@ DECLDIR void igraph_blas_dgemv_array(igraph_bool_t transpose, igraph_real_t alph
                                      igraph_real_t beta, igraph_real_t* y);
 
 DECLDIR igraph_real_t igraph_blas_dnrm2(const igraph_vector_t *v);
+
+DECLDIR int igraph_blas_ddot(const igraph_vector_t *v1, const igraph_vector_t *v2,
+                               igraph_real_t *res);
 
 __END_DECLS
 

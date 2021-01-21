@@ -35,13 +35,14 @@
 #define CONCAT2(a,b) CONCAT2x(a,b)
 #define FUNCTION(name,sfx) CONCAT2(name,sfx)
 
-int igraph_i_maximal_cliques_reorder_adjlists(
-    const igraph_vector_int_t *PX,
-    int PS, int PE, int XS, int XE,
-    const igraph_vector_int_t *pos,
-    igraph_adjlist_t *adjlist);
+static int igraph_i_maximal_cliques_reorder_adjlists(
+        const igraph_vector_int_t *PX,
+        int PS, int PE, int XS, int XE,
+        const igraph_vector_int_t *pos,
+        igraph_adjlist_t *adjlist);
 
-int igraph_i_maximal_cliques_select_pivot(const igraph_vector_int_t *PX,
+static int igraph_i_maximal_cliques_select_pivot(
+        const igraph_vector_int_t *PX,
         int PS, int PE, int XS, int XE,
         const igraph_vector_int_t *pos,
         const igraph_adjlist_t *adjlist,
@@ -49,23 +50,26 @@ int igraph_i_maximal_cliques_select_pivot(const igraph_vector_int_t *PX,
         igraph_vector_int_t *nextv,
         int oldPS, int oldXE);
 
-int igraph_i_maximal_cliques_down(igraph_vector_int_t *PX,
-                                  int PS, int PE, int XS, int XE,
-                                  igraph_vector_int_t *pos,
-                                  igraph_adjlist_t *adjlist, int mynextv,
-                                  igraph_vector_int_t *R,
-                                  int *newPS, int *newXE);
+static int igraph_i_maximal_cliques_down(
+        igraph_vector_int_t *PX,
+        int PS, int PE, int XS, int XE,
+        igraph_vector_int_t *pos,
+        igraph_adjlist_t *adjlist, int mynextv,
+        igraph_vector_int_t *R,
+        int *newPS, int *newXE);
 
-int igraph_i_maximal_cliques_PX(igraph_vector_int_t *PX, int PS, int *PE,
-                                int *XS, int XE, igraph_vector_int_t *pos,
-                                igraph_adjlist_t *adjlist, int v,
-                                igraph_vector_int_t *H);
+static int igraph_i_maximal_cliques_PX(
+        igraph_vector_int_t *PX, int PS, int *PE,
+        int *XS, int XE, igraph_vector_int_t *pos,
+        igraph_adjlist_t *adjlist, int v,
+        igraph_vector_int_t *H);
 
-int igraph_i_maximal_cliques_up(igraph_vector_int_t *PX, int PS, int PE,
-                                int XS, int XE, igraph_vector_int_t *pos,
-                                igraph_adjlist_t *adjlist,
-                                igraph_vector_int_t *R,
-                                igraph_vector_int_t *H);
+static int igraph_i_maximal_cliques_up(
+        igraph_vector_int_t *PX, int PS, int PE,
+        int XS, int XE, igraph_vector_int_t *pos,
+        igraph_adjlist_t *adjlist,
+        igraph_vector_int_t *R,
+        igraph_vector_int_t *H);
 
 #define PRINT_PX do {                              \
         int j;                                 \
@@ -109,11 +113,11 @@ int igraph_i_maximal_cliques_up(igraph_vector_int_t *PX, int PS, int PE,
         printf("\n");                              \
     } while (0)
 
-int igraph_i_maximal_cliques_reorder_adjlists(
-    const igraph_vector_int_t *PX,
-    int PS, int PE, int XS, int XE,
-    const igraph_vector_int_t *pos,
-    igraph_adjlist_t *adjlist) {
+static int igraph_i_maximal_cliques_reorder_adjlists(
+        const igraph_vector_int_t *PX,
+        int PS, int PE, int XS, int XE,
+        const igraph_vector_int_t *pos,
+        igraph_adjlist_t *adjlist) {
     int j;
     int sPS = PS + 1, sPE = PE + 1;
 
@@ -140,7 +144,8 @@ int igraph_i_maximal_cliques_reorder_adjlists(
     return 0;
 }
 
-int igraph_i_maximal_cliques_select_pivot(const igraph_vector_int_t *PX,
+static int igraph_i_maximal_cliques_select_pivot(
+        const igraph_vector_int_t *PX,
         int PS, int PE, int XS, int XE,
         const igraph_vector_int_t *pos,
         const igraph_adjlist_t *adjlist,
@@ -216,12 +221,12 @@ int igraph_i_maximal_cliques_select_pivot(const igraph_vector_int_t *PX,
         VECTOR(*pos)[v2] = (p1)+1;          \
     } while (0)
 
-int igraph_i_maximal_cliques_down(igraph_vector_int_t *PX,
-                                  int PS, int PE, int XS, int XE,
-                                  igraph_vector_int_t *pos,
-                                  igraph_adjlist_t *adjlist, int mynextv,
-                                  igraph_vector_int_t *R,
-                                  int *newPS, int *newXE) {
+static int igraph_i_maximal_cliques_down(igraph_vector_int_t *PX,
+                                         int PS, int PE, int XS, int XE,
+                                         igraph_vector_int_t *pos,
+                                         igraph_adjlist_t *adjlist, int mynextv,
+                                         igraph_vector_int_t *R,
+                                         int *newPS, int *newXE) {
 
     igraph_vector_int_t *vneis = igraph_adjlist_get(adjlist, mynextv);
     int j, vneislen = igraph_vector_int_size(vneis);
@@ -247,10 +252,10 @@ int igraph_i_maximal_cliques_down(igraph_vector_int_t *PX,
 
 #undef SWAP
 
-int igraph_i_maximal_cliques_PX(igraph_vector_int_t *PX, int PS, int *PE,
-                                int *XS, int XE, igraph_vector_int_t *pos,
-                                igraph_adjlist_t *adjlist, int v,
-                                igraph_vector_int_t *H) {
+static int igraph_i_maximal_cliques_PX(igraph_vector_int_t *PX, int PS, int *PE,
+                                       int *XS, int XE, igraph_vector_int_t *pos,
+                                       igraph_adjlist_t *adjlist, int v,
+                                       igraph_vector_int_t *H) {
 
     int vpos = VECTOR(*pos)[v] - 1;
     int tmp = VECTOR(*PX)[*PE];
@@ -264,11 +269,11 @@ int igraph_i_maximal_cliques_PX(igraph_vector_int_t *PX, int PS, int *PE,
     return 0;
 }
 
-int igraph_i_maximal_cliques_up(igraph_vector_int_t *PX, int PS, int PE,
-                                int XS, int XE, igraph_vector_int_t *pos,
-                                igraph_adjlist_t *adjlist,
-                                igraph_vector_int_t *R,
-                                igraph_vector_int_t *H) {
+static int igraph_i_maximal_cliques_up(igraph_vector_int_t *PX, int PS, int PE,
+                                       int XS, int XE, igraph_vector_int_t *pos,
+                                       igraph_adjlist_t *adjlist,
+                                       igraph_vector_int_t *R,
+                                       igraph_vector_int_t *H) {
     int vv;
     igraph_vector_int_pop_back(R);
 
@@ -287,7 +292,7 @@ int igraph_i_maximal_cliques_up(igraph_vector_int_t *PX, int PS, int PE,
 
 /**
  * \function igraph_maximal_cliques
- * \brief Find all maximal cliques of a graph
+ * \brief Finds all maximal cliques in a graph.
  *
  * </para><para>
  * A maximal clique is a clique which can't be extended any more by
@@ -311,7 +316,7 @@ int igraph_i_maximal_cliques_up(igraph_vector_int_t *PX, int PS, int PE,
  *
  * \param graph The input graph.
  * \param res Pointer to a pointer vector, the result will be stored
- *   here, ie. \c res will contain pointers to \c igraph_vector_t
+ *   here, i.e. \p res will contain pointers to \ref igraph_vector_t
  *   objects which contain the indices of vertices involved in a clique.
  *   The pointer vector will be resized if needed but note that the
  *   objects in the pointer vector will not be freed. Note that vertices
@@ -415,11 +420,11 @@ int igraph_maximal_cliques_subset(const igraph_t *graph,
 
 /**
  * \function igraph_maximal_cliques_callback
- * \brief Finds maximal cliques in a graph and calls a function for each one
+ * \brief Finds maximal cliques in a graph and calls a function for each one.
  *
  * This function enumerates all maximal cliques within the given size range
  * and calls \p cliquehandler_fn for each of them. The cliques are passed to the
- * callback function as an <type>igraph_vector_t *</type>.  Destroying and
+ * callback function as a pointer to an \ref igraph_vector_t.  Destroying and
  * freeing this vector is left up to the user.  Use \ref igraph_vector_destroy()
  * to destroy it first, then free it using \ref igraph_free().
  *
@@ -457,7 +462,7 @@ int igraph_maximal_cliques_callback(const igraph_t *graph,
 
 /**
  * \function igraph_maximal_cliques_hist
- * \brief Count the number of maximal cliques of each size in a graph.
+ * \brief Counts the number of maximal cliques of each size in a graph.
  *
  * This function counts how many maximal cliques of each size are present in
  * the graph. Size-1 maximal cliques are simply isolated vertices.
@@ -472,7 +477,7 @@ int igraph_maximal_cliques_callback(const igraph_t *graph,
  * \param hist Pointer to an initialized vector. The result will be stored
  * here. The first element will store the number of size-1 maximal cliques,
  * the second element the number of size-2 maximal cliques, etc.
- * For cliques smaller than \c min_size, zero counts will be returned.
+ * For cliques smaller than \p min_size, zero counts will be returned.
  * \param min_size Integer giving the minimum size of the cliques to be
  *   returned. If negative or zero, no lower bound will be used.
  * \param max_size Integer giving the maximum size of the cliques to be

@@ -3,6 +3,8 @@
 
 #include "igraph.h"
 
+__BEGIN_DECLS
+
 typedef struct bytestring_t {
   unsigned long int len;
   char *value;
@@ -15,7 +17,7 @@ typedef struct bsvector_t {
 
 #define BSVECTOR_INIT_FINALLY(v, size) \
   do { IGRAPH_CHECK(bsvector_init(v, size)); \
-  IGRAPH_FINALLY( (igraph_finally_func_t*) bsvector_destroy, v); } while (0)
+  IGRAPH_FINALLY(bsvector_destroy, v); } while (0)
 
 /**
  * \define STR
@@ -34,15 +36,15 @@ typedef struct bsvector_t {
 
 int bsvector_init(bsvector_t *sv, long int len);
 
-void bsvector_destroy(bsvector_t *sv);
+DECLDIR void bsvector_destroy(bsvector_t *sv);
 
-void bsvector_get(const bsvector_t *sv, long int idx, bytestring_t **value);
+DECLDIR void bsvector_get(const bsvector_t *sv, long int idx, bytestring_t **value);
 
-int bsvector_set(bsvector_t *sv, long int idx, const bytestring_t *value);
+DECLDIR int bsvector_set(bsvector_t *sv, long int idx, const bytestring_t *value);
 
-void bsvector_remove_section(bsvector_t *v, long int from, long int to);
+DECLDIR void bsvector_remove_section(bsvector_t *v, long int from, long int to);
 
-void bsvector_remove(bsvector_t *v, long int elem);
+DECLDIR void bsvector_remove(bsvector_t *v, long int elem);
 
 /*
 void bsvector_move_interval(bsvector_t *v, long int begin,
@@ -107,5 +109,7 @@ bytestring_t* char_to_bytestring(char* from);
 igraph_strvector_t* bsvector_to_strvector(bsvector_t* from);
 
 bsvector_t* strvector_to_bsvector(igraph_strvector_t* from);
+
+__END_DECLS
 
 #endif

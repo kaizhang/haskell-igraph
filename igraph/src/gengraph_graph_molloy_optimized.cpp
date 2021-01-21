@@ -7,7 +7,7 @@
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -34,9 +34,6 @@
 #include "igraph_statusbar.h"
 #include "igraph_progress.h"
 
-#ifndef register
-    #define register
-#endif
 
 using namespace std;
 
@@ -1051,7 +1048,7 @@ void graph_molloy_opt::explore_asp(double *target, int nb_vertices, int *buff, d
             int dv = deg[v];
             double f = target[v] / paths[v];
             // pick ALL fathers
-            register int father;
+            int father;
             for (int k = 0; k < dv; k++) if (dist[father = ww[k]] == pd) {
                     // increase target[] of father
                     target[father] += paths[father] * f;
@@ -2081,7 +2078,7 @@ double graph_molloy_opt::effective_K(int K, int quality) {
 
 
 //___________________________________________________________________________________
-//*/
+*/
 
 
 
@@ -2216,6 +2213,6 @@ double *graph_molloy_opt::vertex_betweenness_asp(bool trivial_paths) {
   return b;
 }
 
-//*/
+*/
 
 } // namespace gengraph

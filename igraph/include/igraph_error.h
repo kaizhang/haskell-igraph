@@ -112,7 +112,7 @@ __BEGIN_DECLS
  * function of type \ref igraph_error_handler_t and calling
  * \ref igraph_set_error_handler(). This feature is useful for interface
  * writers, as \a igraph will have the chance to
- * signal errors the appropriate way, eg. the R interface defines an
+ * signal errors the appropriate way, e.g. the R interface defines an
  * error handler which calls the <function>error()</function>
  * function, as required by R, while the Python interface has an error
  * handler which raises an exception according to the Python way.
@@ -217,7 +217,7 @@ typedef void igraph_error_handler_t (const char * reason, const char * file,
  * program.
  */
 
-extern igraph_error_handler_t igraph_error_handler_abort;
+DECLDIR igraph_error_handler_t igraph_error_handler_abort;
 
 /**
  * \var igraph_error_handler_ignore
@@ -227,7 +227,7 @@ extern igraph_error_handler_t igraph_error_handler_abort;
  * with the error code.
  */
 
-extern igraph_error_handler_t igraph_error_handler_ignore;
+DECLDIR igraph_error_handler_t igraph_error_handler_ignore;
 
 /**
  * \var igraph_error_handler_printignore
@@ -237,7 +237,7 @@ extern igraph_error_handler_t igraph_error_handler_ignore;
  * standard error and returns with the error code.
  */
 
-extern igraph_error_handler_t igraph_error_handler_printignore;
+DECLDIR igraph_error_handler_t igraph_error_handler_printignore;
 
 /**
  * \function igraph_set_error_handler
@@ -268,7 +268,7 @@ DECLDIR igraph_error_handler_t* igraph_set_error_handler(igraph_error_handler_t*
  * \enumval IGRAPH_ENOMEM There wasn't enough memory to allocate
  *    on the heap.
  * \enumval IGRAPH_PARSEERROR A parse error was found in a file.
- * \enumval IGRAPH_EINVAL A parameter's value is invalid. Eg. negative
+ * \enumval IGRAPH_EINVAL A parameter's value is invalid. E.g. negative
  *    number was specified as the number of vertices.
  * \enumval IGRAPH_EXISTS A graph/vertex/edge attribute is already
  *    installed with the given name.
@@ -278,7 +278,7 @@ DECLDIR igraph_error_handler_t* igraph_set_error_handler(igraph_error_handler_t*
  * \enumval IGRAPH_NONSQUARE A non-square matrix was received while a
  *    square matrix was expected.
  * \enumval IGRAPH_EINVMODE Invalid mode parameter.
- * \enumval IGRAPH_EFILE A file operation failed. Eg. a file doesn't exist,
+ * \enumval IGRAPH_EFILE A file operation failed. E.g. a file doesn't exist,
  *   or the user has no rights to open it.
  * \enumval IGRAPH_UNIMPLEMENTED Attempted to call an unimplemented or
  *   disabled (at compile-time) function.
@@ -330,8 +330,6 @@ DECLDIR igraph_error_handler_t* igraph_set_error_handler(igraph_error_handler_t*
  * \enumval IGRAPH_ERWSTUCK Random walk got stuck.
  */
 
-/* Each enum value below must have a corresponding error string in
- * igraph_i_error_strings[] in igraph_error.c */
 typedef enum {
     IGRAPH_SUCCESS           = 0,
     IGRAPH_FAILURE           = 1,
@@ -394,6 +392,8 @@ typedef enum {
     IGRAPH_ERWSTUCK          = 59,
     IGRAPH_STOP              = 60, /* undocumented, used internally; signals a request to stop in functions like igraph_i_maximal_cliques_bk */
 } igraph_error_type_t;
+/* Each enum value above must have a corresponding error string in
+ * igraph_i_error_strings[] in igraph_error.c */
 
 /**
  * \define IGRAPH_ERROR
@@ -408,7 +408,7 @@ typedef enum {
  * \ref igraph_error() directly.
  * \param reason Textual description of the error. This should be
  *   something more descriptive than the text associated with the error
- *   code. Eg. if the error code is \c IGRAPH_EINVAL,
+ *   code. E.g. if the error code is \c IGRAPH_EINVAL,
  *   its associated text (see  \ref igraph_strerror()) is "Invalid
  *   value" and this string should explain which parameter was invalid
  *   and maybe why.
@@ -448,7 +448,7 @@ DECLDIR int igraph_error(const char *reason, const char *file, int line,
  * \brief Trigger an error, printf-like version.
  *
  * \param reason Textual description of the error, interpreted as
- *               a printf format string.
+ *               a \c printf format string.
  * \param file The source file in which the error was noticed.
  * \param line The line in the source file which triggered the error.
  * \param igraph_errno The \a igraph error code.
@@ -564,7 +564,13 @@ DECLDIR int IGRAPH_FINALLY_STACK_SIZE(void);
  */
 
 #define IGRAPH_FINALLY(func,ptr) \
-    IGRAPH_FINALLY_REAL((igraph_finally_func_t*)(func), (ptr))
+    { \
+        /* the following branch makes the compiler check the compatibility of \
+         * func and ptr to detect cases when we are accidentally invoking an \
+         * incorrect destructor function with the pointer */ \
+        if (0) { func(ptr); } \
+        IGRAPH_FINALLY_REAL((igraph_finally_func_t*)(func), (ptr)); \
+    }
 
 #if !defined(GCC_VERSION_MAJOR) && defined(__GNUC__)
     #define GCC_VERSION_MAJOR  __GNUC__
@@ -578,6 +584,19 @@ DECLDIR int IGRAPH_FINALLY_STACK_SIZE(void);
     #define IGRAPH_LIKELY(a)   a
 #endif
 
+#if IGRAPH_VERIFY_FINALLY_STACK == 1
+#define IGRAPH_CHECK(a) \
+        do { \
+            int enter_stack_size = IGRAPH_FINALLY_STACK_SIZE(); \
+            int igraph_i_ret=(a); \
+            if (IGRAPH_UNLIKELY(igraph_i_ret != 0)) {\
+                IGRAPH_ERROR("", igraph_i_ret); \
+            } \
+            if (IGRAPH_UNLIKELY(enter_stack_size != IGRAPH_FINALLY_STACK_SIZE())) { \
+                IGRAPH_ERROR("Non-matching number of IGRAPH_FINALLY and IGRAPH_FINALLY_CLEAN", IGRAPH_FAILURE); \
+            } \
+        } while (0)
+#else
 /**
  * \define IGRAPH_CHECK
  * \brief Check the return value of a function call.
@@ -596,16 +615,17 @@ DECLDIR int IGRAPH_FINALLY_STACK_SIZE(void);
  * igraph_error_handler_printignore), and the \a igraph function
  * signalling the error is called from another \a igraph function
  * then we need to make sure that the error is propagated back to
- * the auxiliary (ie. non-igraph) calling function. This is achieved
+ * the auxiliary (i.e. non-igraph) calling function. This is achieved
  * by using <function>IGRAPH_CHECK</function> on every \a igraph
  * call which can return an error code.
  */
-
 #define IGRAPH_CHECK(a) do { \
         int igraph_i_ret=(a); \
         if (IGRAPH_UNLIKELY(igraph_i_ret != 0)) {\
             IGRAPH_ERROR("", igraph_i_ret); \
         } } while (0)
+#endif
+
 
 
 /**
@@ -658,8 +678,8 @@ typedef igraph_error_handler_t igraph_warning_handler_t;
 
 DECLDIR igraph_warning_handler_t* igraph_set_warning_handler(igraph_warning_handler_t* new_handler);
 
-extern igraph_warning_handler_t igraph_warning_handler_ignore;
-extern igraph_warning_handler_t igraph_warning_handler_print;
+DECLDIR igraph_warning_handler_t igraph_warning_handler_ignore;
+DECLDIR igraph_warning_handler_t igraph_warning_handler_print;
 
 /**
  * \function igraph_warning

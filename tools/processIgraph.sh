@@ -1,3 +1,5 @@
+# Usage: ./processIgraph.sh source target
+
 wd=`pwd`
 cd $1
 

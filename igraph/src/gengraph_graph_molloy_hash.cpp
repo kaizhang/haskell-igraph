@@ -7,7 +7,7 @@
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -132,7 +132,7 @@ int *graph_molloy_hash::hard_copy() {
     int *p = hc + 2 + n;
     int *l = links;
     for (int i = 0; i < n; i++) for (int j = HASH_SIZE(deg[i]); j--; l++) {
-            register int d;
+            int d;
             if ((d = *l) != HASH_NONE && d >= i) {
                 *(p++) = d;
             }
@@ -1168,6 +1168,6 @@ double *graph_molloy_hash::vertex_betweenness_asp(bool trivial_paths) {
 }
 
 //___________________________________________________________________________________
-//*/
+*/
 
 } // namespace gengraph

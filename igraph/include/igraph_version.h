@@ -28,13 +28,13 @@
 
 __BEGIN_DECLS
 
-#define IGRAPH_VERSION "0.8.0"
+#define IGRAPH_VERSION "0.8.5"
 #define IGRAPH_VERSION_MAJOR 0
 #define IGRAPH_VERSION_MINOR 8
-#define IGRAPH_VERSION_PATCH 0
+#define IGRAPH_VERSION_PATCH 5
 #define IGRAPH_VERSION_PRERELEASE ""
 
-int igraph_version(const char **version_string,
+DECLDIR int igraph_version(const char **version_string,
                    int *major,
                    int *minor,
                    int *subminor);

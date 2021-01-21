@@ -46,7 +46,8 @@
  * and is updated in-place.
  *
  */
-int igraph_i_community_leiden_fastmovenodes(const igraph_t *graph,
+static int igraph_i_community_leiden_fastmovenodes(
+        const igraph_t *graph,
         const igraph_inclist_t *edges_per_node,
         const igraph_vector_t *edge_weights, const igraph_vector_t *node_weights,
         const igraph_real_t resolution_parameter,
@@ -121,7 +122,7 @@ int igraph_i_community_leiden_fastmovenodes(const igraph_t *graph,
         VECTOR(cluster_weights)[current_cluster] -= VECTOR(*node_weights)[v];
         VECTOR(nb_nodes_per_cluster)[current_cluster]--;
         if (VECTOR(nb_nodes_per_cluster)[current_cluster] == 0) {
-            igraph_stack_push(&empty_clusters, current_cluster);
+            IGRAPH_CHECK(igraph_stack_push(&empty_clusters, current_cluster));
         }
 
         /* Find out neighboring clusters */
@@ -136,12 +137,14 @@ int igraph_i_community_leiden_fastmovenodes(const igraph_t *graph,
         for (i = 0; i < degree; i++) {
             long int e = VECTOR(*edges)[i];
             long int u = (long int)IGRAPH_OTHER(graph, e, v);
-            c = VECTOR(*membership)[u];
-            if (!VECTOR(neighbor_cluster_added)[c]) {
-                VECTOR(neighbor_cluster_added)[c] = 1;
-                VECTOR(neighbor_clusters)[nb_neigh_clusters++] = c;
+            if (u != v) {
+                c = VECTOR(*membership)[u];
+                if (!VECTOR(neighbor_cluster_added)[c]) {
+                    VECTOR(neighbor_cluster_added)[c] = 1;
+                    VECTOR(neighbor_clusters)[nb_neigh_clusters++] = c;
+                }
+                VECTOR(edge_weights_per_cluster)[c] += VECTOR(*edge_weights)[e];
             }
-            VECTOR(edge_weights_per_cluster)[c] += VECTOR(*edge_weights)[e];
         }
 
         /* Calculate maximum diff */
@@ -176,7 +179,7 @@ int igraph_i_community_leiden_fastmovenodes(const igraph_t *graph,
                 long int e = VECTOR(*edges)[i];
                 long int u = (long int)IGRAPH_OTHER(graph, e, v);
                 if (VECTOR(node_is_stable)[u] && VECTOR(*membership)[u] != best_cluster) {
-                    igraph_dqueue_push(&unstable_nodes, u);
+                    IGRAPH_CHECK(igraph_dqueue_push(&unstable_nodes, u));
                     VECTOR(node_is_stable)[u] = 0;
                 }
             }
@@ -215,7 +218,10 @@ int igraph_i_community_leiden_fastmovenodes(const igraph_t *graph,
  * resulting \c nb_refined_clusters, then nodes in \c node_subset are numbered
  * C, C + 1, ..., C' - 1.
  */
-int igraph_i_community_leiden_clean_refined_membership(const igraph_vector_t* node_subset, igraph_vector_t *refined_membership, igraph_integer_t* nb_refined_clusters) {
+static int igraph_i_community_leiden_clean_refined_membership(
+        const igraph_vector_t* node_subset,
+        igraph_vector_t *refined_membership,
+        igraph_integer_t* nb_refined_clusters) {
     long int i, n = igraph_vector_size(node_subset);
     igraph_vector_t new_cluster;
 
@@ -280,7 +286,8 @@ int igraph_i_community_leiden_clean_refined_membership(const igraph_vector_t* no
  * igraph_i_community_leiden_clean_refined_membership for more information about
  * this aspect.
  */
-int igraph_i_community_leiden_mergenodes(const igraph_t *graph,
+static int igraph_i_community_leiden_mergenodes(
+        const igraph_t *graph,
         const igraph_inclist_t *edges_per_node,
         const igraph_vector_t *edge_weights, const igraph_vector_t *node_weights,
         const igraph_vector_t *node_subset,
@@ -324,7 +331,7 @@ int igraph_i_community_leiden_mergenodes(const igraph_t *graph,
         for (j = 0; j < degree; j++) {
             long int e = VECTOR(*edges)[j];
             long int u = (long int)IGRAPH_OTHER(graph, e, v);
-            if (VECTOR(*membership)[u] == cluster_subset) {
+            if (u != v && VECTOR(*membership)[u] == cluster_subset) {
                 VECTOR(external_edge_weight_per_cluster_in_subset)[i] += VECTOR(*edge_weights)[e];
             }
         }
@@ -378,7 +385,7 @@ int igraph_i_community_leiden_mergenodes(const igraph_t *graph,
             for (j = 0; j < degree; j++) {
                 long int e = (long int)VECTOR(*edges)[j];
                 long int u = (long int)IGRAPH_OTHER(graph, e, v);
-                if (VECTOR(*membership)[u] == cluster_subset) {
+                if (u != v && VECTOR(*membership)[u] == cluster_subset) {
                     long int c = VECTOR(*refined_membership)[u];
                     if (!VECTOR(neighbor_cluster_added)[c]) {
                         VECTOR(neighbor_cluster_added)[c] = 1;
@@ -420,7 +427,7 @@ int igraph_i_community_leiden_mergenodes(const igraph_t *graph,
             if (total_cum_trans_diff < IGRAPH_INFINITY) {
                 igraph_real_t r = igraph_rng_get_unif(igraph_rng_default(), 0, total_cum_trans_diff);
                 long int chosen_idx;
-                igraph_i_vector_binsearch_slice(&cum_trans_diff, r, &chosen_idx, 0, nb_neigh_clusters);
+                igraph_vector_binsearch_slice(&cum_trans_diff, r, &chosen_idx, 0, nb_neigh_clusters);
                 chosen_cluster = VECTOR(neighbor_clusters)[chosen_idx];
             } else {
                 chosen_cluster = best_cluster;
@@ -479,7 +486,7 @@ int igraph_i_community_leiden_mergenodes(const igraph_t *graph,
  * should be ensured that all clusters are always properly empty (or
  * non-existing) before calling this function.
  */
-int igraph_i_community_get_clusters(const igraph_vector_t *membership, igraph_vector_ptr_t *clusters) {
+static int igraph_i_community_get_clusters(const igraph_vector_t *membership, igraph_vector_ptr_t *clusters) {
     long int i, c, n = igraph_vector_size(membership);
     igraph_vector_t *cluster;
     for (i = 0; i < n; i++) {
@@ -498,7 +505,7 @@ int igraph_i_community_get_clusters(const igraph_vector_t *membership, igraph_ve
         }
 
         /* Add node i to cluster vector */
-        igraph_vector_push_back(cluster, i);
+        IGRAPH_CHECK(igraph_vector_push_back(cluster, i));
     }
 
     return IGRAPH_SUCCESS;
@@ -518,7 +525,7 @@ int igraph_i_community_get_clusters(const igraph_vector_t *membership, igraph_ve
  * aggregated_membership are all expected to be initialized.
  *
  */
-int igraph_i_community_leiden_aggregate(
+static int igraph_i_community_leiden_aggregate(
     const igraph_t *graph, const igraph_inclist_t *edges_per_node, const igraph_vector_t *edge_weights, const igraph_vector_t *node_weights,
     const igraph_vector_t *membership, const igraph_vector_t *refined_membership, const igraph_integer_t nb_refined_clusters,
     igraph_t *aggregated_graph, igraph_vector_t *aggregated_edge_weights, igraph_vector_t *aggregated_node_weights, igraph_vector_t *aggregated_membership) {
@@ -531,7 +538,7 @@ int igraph_i_community_leiden_aggregate(
 
     /* Get refined clusters */
     IGRAPH_CHECK(igraph_vector_ptr_init(&refined_clusters, nb_refined_clusters));
-    igraph_vector_ptr_set_item_destructor(&refined_clusters, igraph_vector_destroy);
+    IGRAPH_VECTOR_PTR_SET_ITEM_DESTRUCTOR(&refined_clusters, igraph_vector_destroy);
     IGRAPH_FINALLY(igraph_vector_ptr_destroy_all, &refined_clusters);
     IGRAPH_CHECK(igraph_i_community_get_clusters(refined_membership, &refined_clusters));
 
@@ -591,10 +598,11 @@ int igraph_i_community_leiden_aggregate(
             long int c2 = VECTOR(neighbor_clusters)[i];
 
             /* Add edge */
-            igraph_vector_push_back(&aggregated_edges, c); igraph_vector_push_back(&aggregated_edges, c2);
+            IGRAPH_CHECK(igraph_vector_push_back(&aggregated_edges, c));
+            IGRAPH_CHECK(igraph_vector_push_back(&aggregated_edges, c2));
 
             /* Add edge weight */
-            igraph_vector_push_back(aggregated_edge_weights, VECTOR(edge_weight_to_cluster)[c2]);
+            IGRAPH_CHECK(igraph_vector_push_back(aggregated_edge_weights, VECTOR(edge_weight_to_cluster)[c2]));
 
             VECTOR(edge_weight_to_cluster)[c2] = 0.0;
             VECTOR(neighbor_cluster_added)[c2] = 0;
@@ -604,16 +612,20 @@ int igraph_i_community_leiden_aggregate(
 
     }
 
-    IGRAPH_CHECK(igraph_create(aggregated_graph, &aggregated_edges, nb_refined_clusters,
-                               IGRAPH_UNDIRECTED));
-
     igraph_vector_destroy(&neighbor_clusters);
     igraph_vector_bool_destroy(&neighbor_cluster_added);
     igraph_vector_destroy(&edge_weight_to_cluster);
-    igraph_vector_destroy(&aggregated_edges);
     igraph_vector_ptr_destroy_all(&refined_clusters);
 
-    IGRAPH_FINALLY_CLEAN(5);
+    IGRAPH_FINALLY_CLEAN(4);
+
+    igraph_destroy(aggregated_graph);
+    IGRAPH_CHECK(igraph_create(aggregated_graph, &aggregated_edges, nb_refined_clusters,
+                               IGRAPH_UNDIRECTED));
+
+    igraph_vector_destroy(&aggregated_edges);
+
+    IGRAPH_FINALLY_CLEAN(1);
 
     return IGRAPH_SUCCESS;
 }
@@ -641,9 +653,10 @@ int igraph_i_community_leiden_aggregate(
  * weights inside cluster c. This is how the quality is calculated in practice.
  *
  */
-int igraph_i_community_leiden_quality(const igraph_t *graph, const igraph_vector_t *edge_weights, const igraph_vector_t *node_weights,
-                                      const igraph_vector_t *membership, const igraph_integer_t nb_comms, const igraph_real_t resolution_parameter,
-                                      igraph_real_t *quality) {
+static int igraph_i_community_leiden_quality(
+        const igraph_t *graph, const igraph_vector_t *edge_weights, const igraph_vector_t *node_weights,
+        const igraph_vector_t *membership, const igraph_integer_t nb_comms, const igraph_real_t resolution_parameter,
+        igraph_real_t *quality) {
     igraph_vector_t cluster_weights;
     igraph_real_t total_edge_weight = 0.0;
     igraph_eit_t eit;
@@ -697,13 +710,14 @@ int igraph_i_community_leiden_quality(const igraph_t *graph, const igraph_vector
  * partition for the aggregate network.
  */
 int igraph_i_community_leiden(const igraph_t *graph,
-                              const igraph_vector_t *edge_weights, const igraph_vector_t *node_weights,
+                              igraph_vector_t *edge_weights, igraph_vector_t *node_weights,
                               const igraph_real_t resolution_parameter, const igraph_real_t beta,
                               igraph_vector_t *membership, igraph_integer_t *nb_clusters, igraph_real_t *quality) {
     igraph_integer_t nb_refined_clusters;
     long int i, c, n = igraph_vcount(graph);
-    igraph_t *aggregated_graph, *tmp_graph;
-    igraph_vector_t *aggregated_edge_weights, *aggregated_node_weights, *aggregated_membership;
+    igraph_t aggregated_graph, *i_graph;
+    igraph_vector_t aggregated_edge_weights, aggregated_node_weights, aggregated_membership;
+    igraph_vector_t *i_edge_weights, *i_node_weights, *i_membership;
     igraph_vector_t tmp_edge_weights, tmp_node_weights, tmp_membership;
     igraph_vector_t refined_membership;
     igraph_vector_int_t aggregate_node;
@@ -722,8 +736,9 @@ int igraph_i_community_leiden(const igraph_t *graph,
 
     /* Initialize clusters */
     IGRAPH_CHECK(igraph_vector_ptr_init(&clusters, n));
-    igraph_vector_ptr_set_item_destructor(&clusters, igraph_vector_destroy);
+    IGRAPH_VECTOR_PTR_SET_ITEM_DESTRUCTOR(&clusters, igraph_vector_destroy);
     IGRAPH_FINALLY(igraph_vector_ptr_destroy_all, &clusters);
+
     /* Initialize aggregate nodes, which initially is identical to simply the
      * nodes in the graph. */
     IGRAPH_CHECK(igraph_vector_int_init(&aggregate_node, n));
@@ -732,17 +747,35 @@ int igraph_i_community_leiden(const igraph_t *graph,
         VECTOR(aggregate_node)[i] = i;
     }
 
+    /* Initialize refined membership */
     IGRAPH_CHECK(igraph_vector_init(&refined_membership, 0));
     IGRAPH_FINALLY(igraph_vector_destroy, &refined_membership);
 
-    /* Initialize aggregated graph, weights and membership. */
-    aggregated_graph = graph;
-    aggregated_edge_weights = edge_weights;
-    aggregated_node_weights = node_weights;
-    aggregated_membership = membership;
+    /* Initialize aggregated graph */
+    IGRAPH_CHECK(igraph_empty(&aggregated_graph, 0, IGRAPH_UNDIRECTED));
+    IGRAPH_FINALLY(igraph_destroy, &aggregated_graph);
+
+    /* Initialize aggregated edge weights */
+    IGRAPH_CHECK(igraph_vector_init(&aggregated_edge_weights, 0));
+    IGRAPH_FINALLY(igraph_vector_destroy, &aggregated_edge_weights);
+
+    /* Initialize aggregated node weights */
+    IGRAPH_CHECK(igraph_vector_init(&aggregated_node_weights, 0));
+    IGRAPH_FINALLY(igraph_vector_destroy, &aggregated_node_weights);
+
+    /* Initialize aggregated membership */
+    IGRAPH_CHECK(igraph_vector_init(&aggregated_membership, 0));
+    IGRAPH_FINALLY(igraph_vector_destroy, &aggregated_membership);
+
+    /* Set actual graph, weights and membership to be used. */
+    i_graph = (igraph_t*)graph;
+    i_edge_weights = edge_weights;
+    i_node_weights = node_weights;
+    i_membership = membership;
 
     /* Clean membership and count number of *clusters */
-    IGRAPH_CHECK(igraph_reindex_membership(aggregated_membership, NULL, nb_clusters));
+
+    IGRAPH_CHECK(igraph_reindex_membership(i_membership, NULL, nb_clusters));
 
     if (*nb_clusters > n) {
         IGRAPH_ERROR("Too many communities in membership vector", IGRAPH_EINVAL);
@@ -751,45 +784,45 @@ int igraph_i_community_leiden(const igraph_t *graph,
     do {
 
         /* Get incidence list for fast iteration */
-        IGRAPH_CHECK(igraph_inclist_init(aggregated_graph, &edges_per_node, IGRAPH_ALL));
+        IGRAPH_CHECK(igraph_inclist_init( i_graph, &edges_per_node, IGRAPH_ALL));
         IGRAPH_FINALLY(igraph_inclist_destroy, &edges_per_node);
 
         /* Move around the nodes in order to increase the quality */
-        IGRAPH_CHECK(igraph_i_community_leiden_fastmovenodes(aggregated_graph,
+        IGRAPH_CHECK(igraph_i_community_leiden_fastmovenodes(i_graph,
                      &edges_per_node,
-                     aggregated_edge_weights, aggregated_node_weights,
+                     i_edge_weights, i_node_weights,
                      resolution_parameter,
                      nb_clusters,
-                     aggregated_membership));
+                     i_membership));
 
         /* We only continue clustering if not all clusters are represented by a
          * single node yet
          */
-        continue_clustering = (*nb_clusters < igraph_vcount(aggregated_graph));
+        continue_clustering = (*nb_clusters < igraph_vcount(i_graph));
 
         if (continue_clustering) {
             /* Set original membership */
             if (level > 0) {
                 for (i = 0; i < n; i++) {
                     long int v_aggregate = VECTOR(aggregate_node)[i];
-                    VECTOR(*membership)[i] = VECTOR(*aggregated_membership)[v_aggregate];
+                    VECTOR(*membership)[i] = VECTOR(*i_membership)[v_aggregate];
                 }
             }
 
             /* Get node sets for each cluster. */
-            IGRAPH_CHECK(igraph_i_community_get_clusters(aggregated_membership, &clusters));
+            IGRAPH_CHECK(igraph_i_community_get_clusters(i_membership, &clusters));
 
             /* Ensure refined membership is correct size */
-            IGRAPH_CHECK(igraph_vector_resize(&refined_membership, igraph_vcount(aggregated_graph)));
+            IGRAPH_CHECK(igraph_vector_resize(&refined_membership, igraph_vcount(i_graph)));
 
             /* Refine each cluster */
             nb_refined_clusters = 0;
             for (c = 0; c < *nb_clusters; c++) {
                 igraph_vector_t* cluster = (igraph_vector_t*)VECTOR(clusters)[c];
-                IGRAPH_CHECK(igraph_i_community_leiden_mergenodes(aggregated_graph,
+                IGRAPH_CHECK(igraph_i_community_leiden_mergenodes(i_graph,
                              &edges_per_node,
-                             aggregated_edge_weights, aggregated_node_weights,
-                             cluster, aggregated_membership, c,
+                             i_edge_weights, i_node_weights,
+                             cluster, i_membership, c,
                              resolution_parameter, beta,
                              &nb_refined_clusters, &refined_membership));
                 /* Empty cluster */
@@ -798,8 +831,9 @@ int igraph_i_community_leiden(const igraph_t *graph,
 
             /* If refinement didn't aggregate anything, we aggregate on the basis of
              * the actual clustering */
-            if (nb_refined_clusters >= igraph_vcount(aggregated_graph)) {
-                igraph_vector_update(&refined_membership, aggregated_membership);
+            if (nb_refined_clusters >= igraph_vcount(i_graph)) {
+                igraph_vector_update(&refined_membership, i_membership);
+                nb_refined_clusters = *nb_clusters;
             }
 
             /* Keep track of aggregate node. */
@@ -810,70 +844,27 @@ int igraph_i_community_leiden(const igraph_t *graph,
                 VECTOR(aggregate_node)[i] = (igraph_integer_t)VECTOR(refined_membership)[v_aggregate];
             }
 
-            /* Allocate temporary graph */
-            tmp_graph = igraph_Calloc(1, igraph_t);
-            if (tmp_graph == 0) {
-                IGRAPH_ERROR("Leiden algorithm failed, could not allocate memory for aggregate graph", IGRAPH_ENOMEM);
-            }
-            IGRAPH_FINALLY(free, tmp_graph);
-
             IGRAPH_CHECK(igraph_i_community_leiden_aggregate(
-                             aggregated_graph, &edges_per_node, aggregated_edge_weights, aggregated_node_weights,
-                             aggregated_membership, &refined_membership, nb_refined_clusters,
-                             tmp_graph, &tmp_edge_weights, &tmp_node_weights, &tmp_membership));
-
-            /* Graph has been created by aggregation, ensure it is properly destroyed if
-             * an error occurs. */
-            IGRAPH_FINALLY(igraph_destroy, tmp_graph);
-
-            if (level >= 1) {
-                /* Destroy previously allocated graph (note that aggregated_graph points to
-                 * the previously allocated tmp_graph). */
-                igraph_destroy(aggregated_graph);
-                igraph_Free(aggregated_graph);
-                IGRAPH_FINALLY_CLEAN(2);
-            }
+                             i_graph, &edges_per_node, i_edge_weights, i_node_weights,
+                             i_membership, &refined_membership, nb_refined_clusters,
+                             &aggregated_graph, &tmp_edge_weights, &tmp_node_weights, &tmp_membership));
 
             /* On the lowest level, the actual graph and node and edge weights and
-             * membership are used. On higher levels, we will have to use a new graph
-             * and node and edge weights to represent them. We perform the allocation
-             * of memory here. We only allocate the memory once, and simply update
-             * them in any subsequent rounds.
+             * membership are used. On higher levels, we will use the aggregated graph
+             * and associated vectors.
              */
             if (level == 0) {
-                aggregated_edge_weights = igraph_Calloc(1, igraph_vector_t);
-                if (aggregated_edge_weights == 0) {
-                    IGRAPH_ERROR("Leiden algorithm failed, could not allocate memory for aggregate edge weights", IGRAPH_ENOMEM);
-                }
-                IGRAPH_FINALLY(free, aggregated_edge_weights);
-                IGRAPH_CHECK(igraph_vector_init(aggregated_edge_weights, 0));
-                IGRAPH_FINALLY(igraph_vector_destroy, aggregated_edge_weights);
-
-                aggregated_node_weights = igraph_Calloc(1, igraph_vector_t);
-                if (aggregated_node_weights == 0) {
-                    IGRAPH_ERROR("Leiden algorithm failed, could not allocate memory for aggregate node weights", IGRAPH_ENOMEM);
-                }
-                IGRAPH_FINALLY(free, aggregated_node_weights);
-                IGRAPH_CHECK(igraph_vector_init(aggregated_node_weights, 0));
-                IGRAPH_FINALLY(igraph_vector_destroy, aggregated_node_weights);
-
-                aggregated_membership = igraph_Calloc(1, igraph_vector_t);
-                if (aggregated_membership == 0) {
-                    IGRAPH_ERROR("Leiden algorithm failed, could not allocate memory for aggregate membership", IGRAPH_ENOMEM);
-                }
-                IGRAPH_FINALLY(free, aggregated_membership);
-                IGRAPH_CHECK(igraph_vector_init(aggregated_membership, 0));
-                IGRAPH_FINALLY(igraph_vector_destroy, aggregated_membership);
+                /* Set actual graph, weights and membership to be used. */
+                i_graph = &aggregated_graph;
+                i_edge_weights = &aggregated_edge_weights;
+                i_node_weights = &aggregated_node_weights;
+                i_membership = &aggregated_membership;
             }
 
-            /* Set the aggregated graph correctly */
-            aggregated_graph = tmp_graph;
-
-            /* Update the aggregated administration. This does not allocate memory,
-             * it will always fit in existing memory allocated previously. */
-            igraph_vector_update(aggregated_edge_weights, &tmp_edge_weights);
-            igraph_vector_update(aggregated_node_weights, &tmp_node_weights);
-            igraph_vector_update(aggregated_membership, &tmp_membership);
+            /* Update the aggregated administration. */
+            IGRAPH_CHECK(igraph_vector_update(i_edge_weights, &tmp_edge_weights));
+            IGRAPH_CHECK(igraph_vector_update(i_node_weights, &tmp_node_weights));
+            IGRAPH_CHECK(igraph_vector_update(i_membership, &tmp_membership));
 
             level += 1;
         }
@@ -883,21 +874,12 @@ int igraph_i_community_leiden(const igraph_t *graph,
         IGRAPH_FINALLY_CLEAN(1);
     } while (continue_clustering);
 
-    /* If memory was allocated to represent the aggregated administration we need
-     * to make sure it is properly freed. This is only done if we have at least
-     * passed on to the next level of aggregation.
-     */
-    if (level > 0) {
-        igraph_destroy(aggregated_graph);
-        igraph_Free(aggregated_graph);
-        igraph_vector_destroy(aggregated_membership);
-        igraph_Free(aggregated_membership);
-        igraph_vector_destroy(aggregated_node_weights);
-        igraph_Free(aggregated_node_weights);
-        igraph_vector_destroy(aggregated_edge_weights);
-        igraph_Free(aggregated_edge_weights);
-        IGRAPH_FINALLY_CLEAN(8);
-    }
+    /* Free aggregated graph and associated vectors */
+    igraph_vector_destroy(&aggregated_membership);
+    igraph_vector_destroy(&aggregated_node_weights);
+    igraph_vector_destroy(&aggregated_edge_weights);
+    igraph_destroy(&aggregated_graph);
+    IGRAPH_FINALLY_CLEAN(4);
 
     /* Free remaining memory */
     igraph_vector_destroy(&refined_membership);
@@ -910,7 +892,7 @@ int igraph_i_community_leiden(const igraph_t *graph,
 
     /* Calculate quality */
     if (quality) {
-        igraph_i_community_leiden_quality(graph, edge_weights, node_weights, membership, *nb_clusters, resolution_parameter, quality);
+        IGRAPH_CHECK(igraph_i_community_leiden_quality(graph, edge_weights, node_weights, membership, *nb_clusters, resolution_parameter, quality));
     }
 
     return IGRAPH_SUCCESS;
@@ -924,7 +906,7 @@ int igraph_i_community_leiden(const igraph_t *graph,
  * This function implements the Leiden algorithm for finding community
  * structure, see Traag, V. A., Waltman, L., &amp; van Eck, N. J. (2019). From
  * Louvain to Leiden: guaranteeing well-connected communities. Scientific
- * reports, 9(1), 5233.  http://dx.doi.org/10.1038/s41598-019-41695-z.
+ * reports, 9(1), 5233. http://dx.doi.org/10.1038/s41598-019-41695-z
  *
  * </para><para>
  * It is similar to the multilevel algorithm, often called the Louvain
@@ -1002,7 +984,6 @@ int igraph_community_leiden(const igraph_t *graph,
                             const igraph_real_t resolution_parameter, const igraph_real_t beta, const igraph_bool_t start,
                             igraph_vector_t *membership, igraph_integer_t *nb_clusters, igraph_real_t *quality) {
     igraph_vector_t *i_edge_weights, *i_node_weights;
-    int ret;
     igraph_integer_t n = igraph_vcount(graph);
 
     if (start) {
@@ -1036,12 +1017,12 @@ int igraph_community_leiden(const igraph_t *graph,
         if (i_edge_weights == 0) {
             IGRAPH_ERROR("Leiden algorithm failed, could not allocate memory for edge weights", IGRAPH_ENOMEM);
         }
+        IGRAPH_FINALLY(igraph_free, i_edge_weights);
         IGRAPH_CHECK(igraph_vector_init(i_edge_weights, igraph_ecount(graph)));
-        IGRAPH_FINALLY(free, i_edge_weights);
         IGRAPH_FINALLY(igraph_vector_destroy, i_edge_weights);
         igraph_vector_fill(i_edge_weights, 1);
     } else {
-        i_edge_weights = edge_weights;
+        i_edge_weights = (igraph_vector_t*)edge_weights;
     }
 
     /* Check edge weights to possibly use default */
@@ -1050,18 +1031,18 @@ int igraph_community_leiden(const igraph_t *graph,
         if (i_node_weights == 0) {
             IGRAPH_ERROR("Leiden algorithm failed, could not allocate memory for node weights", IGRAPH_ENOMEM);
         }
+        IGRAPH_FINALLY(igraph_free, i_node_weights);
         IGRAPH_CHECK(igraph_vector_init(i_node_weights, n));
-        IGRAPH_FINALLY(free, i_node_weights);
         IGRAPH_FINALLY(igraph_vector_destroy, i_node_weights);
         igraph_vector_fill(i_node_weights, 1);
     } else {
-        i_node_weights = node_weights;
+        i_node_weights = (igraph_vector_t*)node_weights;
     }
 
     /* Perform actual Leiden algorithm */
-    ret = igraph_i_community_leiden(graph, i_edge_weights, i_node_weights,
-                                    resolution_parameter, beta,
-                                    membership, nb_clusters, quality);
+    IGRAPH_CHECK(igraph_i_community_leiden(graph, i_edge_weights, i_node_weights,
+                                           resolution_parameter, beta,
+                                           membership, nb_clusters, quality));
 
     if (!edge_weights) {
         igraph_vector_destroy(i_edge_weights);
@@ -1075,5 +1056,5 @@ int igraph_community_leiden(const igraph_t *graph,
         IGRAPH_FINALLY_CLEAN(2);
     }
 
-    return ret;
+    return IGRAPH_SUCCESS;
 }

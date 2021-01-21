@@ -1554,7 +1554,7 @@ int igraph_pagerank_old(const igraph_t *graph, igraph_vector_t *res,
 }
 
 /* Not declared static so that the testsuite can use it, but not part of the public API. */
-int igraph_rewire_core(igraph_t *graph, igraph_integer_t n, igraph_rewiring_t mode, igraph_bool_t use_adjlist) {
+int igraph_i_rewire(igraph_t *graph, igraph_integer_t n, igraph_rewiring_t mode, igraph_bool_t use_adjlist) {
     long int no_of_nodes = igraph_vcount(graph);
     long int no_of_edges = igraph_ecount(graph);
     char message[256];
@@ -1785,7 +1785,7 @@ int igraph_rewire_core(igraph_t *graph, igraph_integer_t n, igraph_rewiring_t mo
 int igraph_rewire(igraph_t *graph, igraph_integer_t n, igraph_rewiring_t mode) {
 
     igraph_bool_t use_adjlist = n >= REWIRE_ADJLIST_THRESHOLD;
-    return igraph_rewire_core(graph, n, mode, use_adjlist);
+    return igraph_i_rewire(graph, n, mode, use_adjlist);
 
 }
 
@@ -1915,11 +1915,13 @@ int igraph_i_subgraph_create_from_scratch(const igraph_t *graph,
     for (i = 0; i < no_of_new_nodes; i++) {
         long int old_vid = (long int) VECTOR(*my_vids_new2old)[i];
         long int new_vid = i;
+        igraph_bool_t skip_loop_edge;
 
         IGRAPH_CHECK(igraph_incident(graph, &nei_edges, old_vid, IGRAPH_OUT));
         n = igraph_vector_size(&nei_edges);
 
         if (directed) {
+            /* directed graph; this is easier */
             for (j = 0; j < n; j++) {
                 eid = (igraph_integer_t) VECTOR(nei_edges)[j];
 
@@ -1933,10 +1935,15 @@ int igraph_i_subgraph_create_from_scratch(const igraph_t *graph,
                 IGRAPH_CHECK(igraph_vector_push_back(&eids_new2old, eid));
             }
         } else {
+            /* undirected graph. We need to be careful with loop edges as each
+             * loop edge will appear twice. We use a boolean flag to skip every
+             * second loop edge */
+            skip_loop_edge = 0;
             for (j = 0; j < n; j++) {
                 eid = (igraph_integer_t) VECTOR(nei_edges)[j];
 
-                if (IGRAPH_FROM(graph, eid) != old_vid) { /* avoid processing edges twice */
+                if (IGRAPH_FROM(graph, eid) != old_vid) {
+                    /* avoid processing edges twice */
                     continue;
                 }
 
@@ -1944,9 +1951,18 @@ int igraph_i_subgraph_create_from_scratch(const igraph_t *graph,
                 if (!to) {
                     continue;
                 }
+                to -= 1;
+
+                if (new_vid == to) {
+                    /* this is a loop edge; check whether we need to skip it */
+                    skip_loop_edge = !skip_loop_edge;
+                    if (skip_loop_edge) {
+                        continue;
+                    }
+                }
 
                 IGRAPH_CHECK(igraph_vector_push_back(&new_edges, new_vid));
-                IGRAPH_CHECK(igraph_vector_push_back(&new_edges, to - 1));
+                IGRAPH_CHECK(igraph_vector_push_back(&new_edges, to));
                 IGRAPH_CHECK(igraph_vector_push_back(&eids_new2old, eid));
             }
         }
@@ -2540,7 +2556,7 @@ int igraph_reciprocity(const igraph_t *graph, igraph_real_t *res,
  * C[i] = sum( sum( (p[i,q] p[q,j])^2, q in V[i], q != i,j ), j in
  * V[], j != i)
  * </para></blockquote>
- * for a graph of order (ie. number of vertices) N, where proportional
+ * for a graph of order (i.e. number of vertices) N, where proportional
  * tie strengths are defined as
  * <blockquote><para>
  * p[i,j]=(a[i,j]+a[j,i]) / sum(a[i,k]+a[k,i], k in V[i], k != i),
@@ -2948,7 +2964,7 @@ int igraph_density(const igraph_t *graph, igraph_real_t *res,
  * \brief Calculates the size of the neighborhood of a given vertex.
  *
  * The neighborhood of a given order of a vertex includes all vertices
- * which are closer to the vertex than the order. Ie. order 0 is
+ * which are closer to the vertex than the order. I.e., order 0 is
  * always the vertex itself, order 1 is the vertex plus its immediate
  * neighbors, order 2 is order 1 plus the immediate neighbors of the
  * vertices in order 1, etc.
@@ -3074,7 +3090,7 @@ int igraph_neighborhood_size(const igraph_t *graph, igraph_vector_t *res,
  * Calculate the neighborhood of vertices.
  *
  * The neighborhood of a given order of a vertex includes all vertices
- * which are closer to the vertex than the order. Ie. order 0 is
+ * which are closer to the vertex than the order. I.e., order 0 is
  * always the vertex itself, order 1 is the vertex plus its immediate
  * neighbors, order 2 is order 1 plus the immediate neighbors of the
  * vertices in order 1, etc.
@@ -3085,15 +3101,15 @@ int igraph_neighborhood_size(const igraph_t *graph, igraph_vector_t *res,
  * \param res An initialized pointer vector. Note that the objects
  *    (pointers) in the vector will \em not be freed, but the pointer
  *    vector will be resized as needed. The result of the calculation
- *    will be stored here in \c vector_t objects.
+ *    will be stored here in \ref igraph_vector_t objects.
  * \param vids The vertices for which the calculation is performed.
  * \param order Integer giving the order of the neighborhood.
  * \param mode Specifies how to use the direction of the edges if a
  *   directed graph is analyzed. For \c IGRAPH_OUT only the outgoing
  *   edges are followed, so all vertices reachable from the source
- *   vertex in at most \c order steps are included. For \c IGRAPH_IN
+ *   vertex in at most \p order steps are included. For \c IGRAPH_IN
  *   all vertices from which the source vertex is reachable in at most
- *   \c order steps are included. \c IGRAPH_ALL ignores the direction
+ *   \p order steps are included. \c IGRAPH_ALL ignores the direction
  *   of the edges. This argument is ignored for undirected graphs.
  * \param mindist The minimum distance to include a vertex in the counting.
  *   If this is one, then the starting vertex is not counted. If this is
@@ -3228,7 +3244,7 @@ int igraph_neighborhood(const igraph_t *graph, igraph_vector_ptr_t *res,
  * Vincent Matossian, thanks Vincent.
  * \param graph The input graph.
  * \param res Pointer to a pointer vector, the result will be stored
- *   here, ie. \c res will contain pointers to \c igraph_t
+ *   here, ie. \p res will contain pointers to \c igraph_t
  *   objects. It will be resized if needed but note that the
  *   objects in the pointer vector will not be freed.
  * \param vids The vertices for which the calculation is performed.
@@ -3236,9 +3252,9 @@ int igraph_neighborhood(const igraph_t *graph, igraph_vector_ptr_t *res,
  * \param mode Specifies how to use the direction of the edges if a
  *   directed graph is analyzed. For \c IGRAPH_OUT only the outgoing
  *   edges are followed, so all vertices reachable from the source
- *   vertex in at most \c order steps are counted. For \c IGRAPH_IN
+ *   vertex in at most \p order steps are counted. For \c IGRAPH_IN
  *   all vertices from which the source vertex is reachable in at most
- *   \c order steps are counted. \c IGRAPH_ALL ignores the direction
+ *   \p order steps are counted. \c IGRAPH_ALL ignores the direction
  *   of the edges. This argument is ignored for undirected graphs.
  * \param mindist The minimum distance to include a vertex in the counting.
  *   If this is one, then the starting vertex is not counted. If this is
@@ -3568,7 +3584,7 @@ int igraph_is_simple(const igraph_t *graph, igraph_bool_t *res) {
         igraph_bool_t found = 0;
         IGRAPH_VECTOR_INIT_FINALLY(&neis, 0);
         for (i = 0; i < vc; i++) {
-            igraph_neighbors(graph, &neis, (igraph_integer_t) i, IGRAPH_OUT);
+            IGRAPH_CHECK(igraph_neighbors(graph, &neis, (igraph_integer_t) i, IGRAPH_OUT));
             n = igraph_vector_size(&neis);
             for (j = 0; j < n; j++) {
                 if (VECTOR(neis)[j] == i) {
@@ -3781,6 +3797,7 @@ int igraph_is_multiple(const igraph_t *graph, igraph_vector_bool_t *res,
     return 0;
 }
 
+
 /**
  * \function igraph_count_multiple
  * \brief Count the number of appearances of the edges in a graph.
@@ -3801,15 +3818,15 @@ int igraph_is_multiple(const igraph_t *graph, igraph_vector_bool_t *res,
  *
  * \sa \ref igraph_is_multiple() and \ref igraph_simplify().
  *
- * Time complexity: O(e*d), e is the number of edges to check and d is the
+ * Time complexity: O(E d), E is the number of edges to check and d is the
  * average degree (out-degree in directed graphs) of the vertices at the
  * tail of the edges.
  */
 
-
 int igraph_count_multiple(const igraph_t *graph, igraph_vector_t *res, igraph_es_t es) {
     igraph_eit_t eit;
     long int i;
+    igraph_bool_t directed = igraph_is_directed(graph);
     igraph_lazy_inclist_t inclist;
 
     IGRAPH_CHECK(igraph_eit_create(graph, es, &eit));
@@ -3835,7 +3852,7 @@ int igraph_count_multiple(const igraph_t *graph, igraph_vector_t *res, igraph_es
             }
         }
         /* for loop edges, divide the result by two */
-        if (to == from) {
+        if (!directed && to == from) {
             VECTOR(*res)[i] /= 2;
         }
     }
@@ -3843,8 +3860,10 @@ int igraph_count_multiple(const igraph_t *graph, igraph_vector_t *res, igraph_es
     igraph_lazy_inclist_destroy(&inclist);
     igraph_eit_destroy(&eit);
     IGRAPH_FINALLY_CLEAN(2);
-    return 0;
+
+    return IGRAPH_SUCCESS;
 }
+
 
 /**
  * \function igraph_girth
@@ -5968,6 +5987,10 @@ int igraph_i_avg_nearest_neighbor_degree_weighted(const igraph_t *graph,
         }
     }
 
+    igraph_vector_destroy(&edge_neis);
+    igraph_vector_destroy(&neis);
+    IGRAPH_FINALLY_CLEAN(2);
+
     if (knnk) {
         for (i = 0; i < maxdeg; i++) {
             igraph_real_t dh = VECTOR(deghist)[i];
@@ -5982,7 +6005,7 @@ int igraph_i_avg_nearest_neighbor_degree_weighted(const igraph_t *graph,
         IGRAPH_FINALLY_CLEAN(1);
     }
 
-    igraph_vector_destroy(&neis);
+    igraph_vector_destroy(&strength);
     igraph_vector_destroy(&deg);
     IGRAPH_FINALLY_CLEAN(2);
 
@@ -5999,39 +6022,54 @@ int igraph_i_avg_nearest_neighbor_degree_weighted(const igraph_t *graph,
 
 /**
  * \function igraph_avg_nearest_neighbor_degree
- * Average nearest neighbor degree.
+ * Average neighbor degree.
  *
- * Calculates the average degree of the neighbors for each vertex, and
- * optionally, the same quantity in the function of vertex degree.
+ * Calculates the average degree of the neighbors for each vertex (\p knn), and
+ * optionally, the same quantity as a function of the vertex degree (\p knnk).
  *
- * </para><para>For isolate vertices \p knn is set to \c
- * IGRAPH_NAN. The same is done in \p knnk for vertex degrees that
+ * </para><para>
+ * For isolated vertices \p knn is set to NaN.
+ * The same is done in \p knnk for vertex degrees that
  * don't appear in the graph.
  *
- * \param graph The input graph, it can be directed but the
- *   directedness of the edges is ignored.
+ * </para><para>
+ * The weighted version computes a weighted average of the neighbor degrees as
+ *
+ * <code>k_nn_u = 1/s_u sum_v w_uv k_v</code>,
+ *
+ * where <code>s_u = sum_v w_uv</code> is the sum of the incident edge weights
+ * of vertex \c u, i.e. its strength.
+ * The sum runs over the neighbors \c v of vertex \c u
+ * as indicated by \p mode. <code>w_uv</code> denotes the weighted adjacency matrix
+ * and <code>k_v</code> is the neighbors' degree, specified by \p neighbor_degree_mode.
+ *
+ * </para><para>
+ * Reference:
+ * A. Barrat, M. Barthélemy, R. Pastor-Satorras, and A. Vespignani,
+ * The architecture of complex weighted networks,
+ * Proc. Natl. Acad. Sci. USA 101, 3747 (2004).
+ * https://dx.doi.org/10.1073/pnas.0400087101
+ *
+ * \param graph The input graph. It may be directed.
  * \param vids The vertices for which the calculation is performed.
- * \param mode The neighbors over which is averaged.
- * \param neighbor_degree_mode The degree of the neighbors which is
- *   averaged.
+ * \param mode The type of neighbors to consider in directed graphs.
+ *   \c IGRAPH_OUT considers out-neighbors, \c IGRAPH_IN in-neighbors
+ *   and \c IGRAPH_ALL ignores edge directions.
+ * \param neighbor_degree_mode The type of degree to average in directed graphs.
+ *   \c IGRAPH_OUT averages out-degrees, \c IGRAPH_IN averages in-degrees
+ *   and \c IGRAPH_ALL ignores edge directions for the degree calculation.
  * \param vids The vertices for which the calculation is performed.
  * \param knn Pointer to an initialized vector, the result will be
- *   stored here. It will be resized as needed. Supply a NULL pointer
+ *   stored here. It will be resized as needed. Supply a \c NULL pointer
  *   here, if you only want to calculate \c knnk.
- * \param knnk Pointer to an initialized vector, the average nearest
- *   neighbor degree in the function of vertex degree is stored
+ * \param knnk Pointer to an initialized vector, the average
+ *   neighbor degree as a function of the vertex degree is stored
  *   here. The first (zeroth) element is for degree one vertices,
- *   etc. Supply a NULL pointer here if you don't want to calculate
+ *   etc. Supply a \c NULL pointer here if you don't want to calculate
  *   this.
  * \param weights Optional edge weights. Supply a null pointer here
- *   for the non-weighted version. The weighted version computes
- *   a weighted average of the neighbor degrees, i.e.
+ *   for the non-weighted version.
  *
- *    k_nn_i = 1/s_i sum_j w_ij k_j
- *
- *   where s_i is the sum of the weights, the sum runs over
- *   the neighbors as indicated by \c mode (with appropriate weights)
- *   and k_j is the degree, specified by \c neighbor_degree_mode.
  * \return Error code.
  *
  * Time complexity: O(|V|+|E|), linear in the number of vertices and
@@ -6493,8 +6531,7 @@ int igraph_sort_vertex_ids_by_degree(const igraph_t *graph,
 
 int igraph_contract_vertices(igraph_t *graph,
                              const igraph_vector_t *mapping,
-                             const igraph_attribute_combination_t
-                             *vertex_comb) {
+                             const igraph_attribute_combination_t *vertex_comb) {
     igraph_vector_t edges;
     long int no_of_nodes = igraph_vcount(graph);
     long int no_of_edges = igraph_ecount(graph);
@@ -6907,15 +6944,22 @@ int igraph_is_graphical_degree_sequence(const igraph_vector_t *out_degrees,
     }
 }
 
-int igraph_i_is_graphical_degree_sequence_undirected(
-    const igraph_vector_t *degrees, igraph_bool_t *res) {
+int igraph_i_is_graphical_degree_sequence_undirected(const igraph_vector_t *degrees, igraph_bool_t *res) {
     igraph_vector_t work;
     long int w, b, s, c, n, k;
+
+    n = igraph_vector_size(degrees);
+
+    /* zero-length sequences are considered graphical */
+    if (n == 0) {
+        *res = 1;
+        return IGRAPH_SUCCESS;
+    }
 
     IGRAPH_CHECK(igraph_vector_copy(&work, degrees));
     IGRAPH_FINALLY(igraph_vector_destroy, &work);
 
-    igraph_vector_sort(&work);
+    igraph_vector_reverse_sort(&work);
 
     /* This algorithm is outlined in TR-2011-11 of the Egervary Research Group,
      * ISSN 1587-4451. The main loop of the algorithm is O(n) but it is dominated
@@ -6926,13 +6970,12 @@ int igraph_i_is_graphical_degree_sequence_undirected(
      * the degrees themselves. w and k are zero-based here; in the technical
      * report they are 1-based */
     *res = 1;
-    n = igraph_vector_size(&work);
     w = n - 1; b = 0; s = 0; c = 0;
     for (k = 0; k < n; k++) {
-        b += VECTOR(*degrees)[k];
+        b += VECTOR(work)[k];
         c += w;
-        while (w > k && VECTOR(*degrees)[w] <= k + 1) {
-            s += VECTOR(*degrees)[w];
+        while (w > k && VECTOR(work)[w] <= k + 1) {
+            s += VECTOR(work)[w];
             c -= (k + 1);
             w--;
         }
@@ -6948,7 +6991,7 @@ int igraph_i_is_graphical_degree_sequence_undirected(
     igraph_vector_destroy(&work);
     IGRAPH_FINALLY_CLEAN(1);
 
-    return 0;
+    return IGRAPH_SUCCESS;
 }
 
 typedef struct {

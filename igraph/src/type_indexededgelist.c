@@ -25,13 +25,13 @@
 #include "igraph_interface.h"
 #include "igraph_attributes.h"
 #include "igraph_memory.h"
-#include <string.h>     /* memset & co. */
 #include "config.h"
 
 /* Internal functions */
 
-int igraph_i_create_start(igraph_vector_t *res, igraph_vector_t *el, igraph_vector_t *index,
-                          igraph_integer_t nodes);
+static int igraph_i_create_start(
+        igraph_vector_t *res, igraph_vector_t *el,
+        igraph_vector_t *index, igraph_integer_t nodes);
 
 /**
  * \section about_basic_interface
@@ -829,8 +829,9 @@ int igraph_neighbors(const igraph_t *graph, igraph_vector_t *neis, igraph_intege
  *
  */
 
-int igraph_i_create_start(igraph_vector_t *res, igraph_vector_t *el, igraph_vector_t *iindex,
-                          igraph_integer_t nodes) {
+static int igraph_i_create_start(
+        igraph_vector_t *res, igraph_vector_t *el,
+        igraph_vector_t *iindex, igraph_integer_t nodes) {
 
 # define EDGE(i) (VECTOR(*el)[ (long int) VECTOR(*iindex)[(i)] ])
 
@@ -1018,7 +1019,9 @@ int igraph_degree(const igraph_t *graph, igraph_vector_t *res,
  * will be placed here.
  * \return Error code. The current implementation always returns with
  * success.
- * \sa \ref igraph_get_eid() for the opposite operation.
+ * \sa \ref igraph_get_eid() for the opposite operation;
+ *     \ref IGRAPH_TO(), \ref IGRAPH_FROM() and \ref IGRAPH_OTHER() for
+ *     a faster but non-error-checked version.
  *
  * Added in version 0.2.</para><para>
  *

@@ -4,11 +4,11 @@ cabal-version: 2.2
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e5c9cab5b533c80ffac98048499059d0975bb58a440e6f3442b9236eb85a1c72
+-- hash: bbfdc1145a70f4898ed7f7665e2915d76dd2f96f0ad9b19469e32540dfae8334
 
 name:           haskell-igraph
-version:        0.8.1
-synopsis:       Bindings to the igraph C library (v0.8.0).
+version:        0.8.5
+synopsis:       Bindings to the igraph C library (v0.8.5).
 description:    igraph<"http://igraph.org/c/"> is a library for creating and manipulating large graphs. This package provides the Haskell interface of igraph.
 category:       Math
 homepage:       https://github.com/kaizhang/haskell-igraph#readme
@@ -103,12 +103,14 @@ extra-source-files:
     igraph/include/igraph_gml_tree.h
     igraph/include/igraph_graphlets.h
     igraph/include/igraph_hacks_internal.h
+    igraph/include/igraph_handle_exceptions.h
     igraph/include/igraph_heap.h
     igraph/include/igraph_heap_pmt.h
     igraph/include/igraph_hrg.h
     igraph/include/igraph_interface.h
     igraph/include/igraph_interrupt.h
     igraph/include/igraph_interrupt_internal.h
+    igraph/include/igraph_isoclasses.h
     igraph/include/igraph_iterators.h
     igraph/include/igraph_lapack.h
     igraph/include/igraph_lapack_internal.h
@@ -218,11 +220,13 @@ extra-source-files:
     igraph/include/plfit/arithmetic_sse_float.h
     igraph/include/plfit/error.h
     igraph/include/plfit/gss.h
+    igraph/include/plfit/hzeta.h
     igraph/include/plfit/kolmogorov.h
     igraph/include/plfit/lbfgs.h
+    igraph/include/plfit/mt.h
     igraph/include/plfit/platform.h
     igraph/include/plfit/plfit.h
-    igraph/include/plfit/zeta.h
+    igraph/include/plfit/sampling.h
     igraph/AUTHORS
     igraph/COPYING
     stack.yaml
@@ -589,6 +593,7 @@ library
       igraph/src/hl_gt.c
       igraph/src/hl_le.c
       igraph/src/hl_lt.c
+      igraph/src/hzeta.c
       igraph/src/i77vers.c
       igraph/src/i_abs.c
       igraph/src/i_dim.c
@@ -652,12 +657,14 @@ library
       igraph/src/microscopic_update.c
       igraph/src/mixing.c
       igraph/src/motifs.c
+      igraph/src/mt.c
       igraph/src/open.c
       igraph/src/operators.c
       igraph/src/optimal_modularity.c
       igraph/src/options.c
       igraph/src/other.c
       igraph/src/paths.c
+      igraph/src/platform.c
       igraph/src/plfit.c
       igraph/src/pow_ci.c
       igraph/src/pow_dd.c
@@ -694,6 +701,7 @@ library
       igraph/src/r_tanh.c
       igraph/src/random.c
       igraph/src/random_walk.c
+      igraph/src/rbinom.c
       igraph/src/rdfmt.c
       igraph/src/reorder.c
       igraph/src/rewind.c
@@ -706,6 +714,7 @@ library
       igraph/src/s_paus.c
       igraph/src/s_rnge.c
       igraph/src/s_stop.c
+      igraph/src/sampling.c
       igraph/src/sbm.c
       igraph/src/scan.c
       igraph/src/scg.c
@@ -759,7 +768,6 @@ library
       igraph/src/z_sin.c
       igraph/src/z_sqrt.c
       igraph/src/zeroin.c
-      igraph/src/zeta.c
   cxx-sources:
       igraph/src/clustertool.cpp
       igraph/src/degree_sequence.cpp

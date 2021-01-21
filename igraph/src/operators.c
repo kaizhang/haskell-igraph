@@ -31,8 +31,8 @@
 #include "igraph_attributes.h"
 #include "igraph_conversion.h"
 #include "igraph_qsort.h"
-#include <limits.h>
 #include "config.h"
+#include <limits.h>
 
 /**
  * \function igraph_disjoint_union
@@ -47,7 +47,7 @@
  * and |E1|+|E2| edges.
  *
  * </para><para>
- * Both graphs need to have the same directedness, ie. either both
+ * Both graphs need to have the same directedness, i.e. either both
  * directed or both undirected.
  *
  * </para><para>
@@ -119,7 +119,7 @@ int igraph_disjoint_union(igraph_t *res, const igraph_t *left,
  * of vertices and edges in the graphs.
  *
  * </para><para>
- * Both graphs need to have the same directedness, ie. either both
+ * Both graphs need to have the same directedness, i.e. either both
  * directed or both undirected.
  *
  * </para><para>
@@ -183,8 +183,7 @@ int igraph_disjoint_union_many(igraph_t *res,
     return 0;
 }
 
-int igraph_i_order_edgelist_cmp(void *edges, const void *e1,
-                                const void *e2) {
+static int igraph_i_order_edgelist_cmp(void *edges, const void *e1, const void *e2) {
     igraph_vector_t *edgelist = edges;
     long int edge1 = (*(const long int*) e1) * 2;
     long int edge2 = (*(const long int*) e2) * 2;
@@ -210,9 +209,9 @@ int igraph_i_order_edgelist_cmp(void *edges, const void *e1,
 #define IGRAPH_MODE_UNION        1
 #define IGRAPH_MODE_INTERSECTION 2
 
-int igraph_i_merge(igraph_t *res, int mode,
-                   const igraph_t *left, const igraph_t *right,
-                   igraph_vector_t *edge_map1, igraph_vector_t *edge_map2) {
+static int igraph_i_merge(igraph_t *res, int mode,
+                          const igraph_t *left, const igraph_t *right,
+                          igraph_vector_t *edge_map1, igraph_vector_t *edge_map2) {
 
     long int no_of_nodes_left = igraph_vcount(left);
     long int no_of_nodes_right = igraph_vcount(right);
@@ -431,7 +430,7 @@ int igraph_intersection(igraph_t *res,
                           edge_map1, edge_map2);
 }
 
-void igraph_i_union_many_free(igraph_vector_ptr_t *v) {
+static void igraph_i_union_many_free(igraph_vector_ptr_t *v) {
     long int i, n = igraph_vector_ptr_size(v);
     for (i = 0; i < n; i++) {
         if (VECTOR(*v)[i] != 0) {
@@ -442,7 +441,7 @@ void igraph_i_union_many_free(igraph_vector_ptr_t *v) {
     igraph_vector_ptr_destroy(v);
 }
 
-void igraph_i_union_many_free2(igraph_vector_ptr_t *v) {
+static void igraph_i_union_many_free2(igraph_vector_ptr_t *v) {
     long int i, n = igraph_vector_ptr_size(v);
     for (i = 0; i < n; i++) {
         if (VECTOR(*v)[i] != 0) {
@@ -453,7 +452,7 @@ void igraph_i_union_many_free2(igraph_vector_ptr_t *v) {
     igraph_vector_ptr_destroy(v);
 }
 
-void igraph_i_union_many_free3(igraph_vector_ptr_t *v) {
+static void igraph_i_union_many_free3(igraph_vector_ptr_t *v) {
     long int i, n = igraph_vector_ptr_size(v);
     for (i = 0; i < n; i++) {
         if (VECTOR(*v)[i] != 0) {
@@ -469,8 +468,8 @@ void igraph_i_union_many_free3(igraph_vector_ptr_t *v) {
  *
  * </para><para>
  * This function calculates the intersection of the graphs stored in
- * the \c graphs argument. Only those edges will be included in the
- * result graph which are part of every graph in \c graphs.
+ * the \p graphs argument. Only those edges will be included in the
+ * result graph which are part of every graph in \p graphs.
  *
  * </para><para>
  * The number of vertices in the result graph will be the maximum
@@ -492,7 +491,7 @@ void igraph_i_union_many_free3(igraph_vector_ptr_t *v) {
  * igraph_difference() for other operators.
  *
  * Time complexity: O(|V|+|E|), |V| is the number of vertices,
- * |E| is the number of edges in the smallest graph (ie. the graph having
+ * |E| is the number of edges in the smallest graph (i.e. the graph having
  * the less vertices).
  */
 
@@ -924,9 +923,9 @@ int igraph_union_many(igraph_t *res, const igraph_vector_ptr_t *graphs,
  *
  * </para><para>
  * The number of vertices in the result is the number of vertices in
- * the original graph, ie. the left, first operand. In the results
- * graph only edges will be included from \c orig which are not
- * present in \c sub.
+ * the original graph, i.e. the left, first operand. In the results
+ * graph only edges will be included from \p orig which are not
+ * present in \p sub.
  *
  * \param res Pointer to an uninitialized graph object, the result
  * will be stored here.
@@ -999,6 +998,10 @@ int igraph_difference(igraph_t *res,
                 IGRAPH_CHECK(igraph_vector_push_back(&edges, i));
                 IGRAPH_CHECK(igraph_vector_push_back(&edges, v1));
                 n1--;
+                /* handle loop edges properly in undirected graphs */
+                if (!directed && i == v1) {
+                    n1--;
+                }
             } else if (v2 > v1) {
                 n2--;
             } else {
@@ -1015,6 +1018,11 @@ int igraph_difference(igraph_t *res,
                 IGRAPH_CHECK(igraph_vector_push_back(&edge_ids, e1));
                 IGRAPH_CHECK(igraph_vector_push_back(&edges, i));
                 IGRAPH_CHECK(igraph_vector_push_back(&edges, v1));
+
+                /* handle loop edges properly in undirected graphs */
+                if (!directed && v1 == i) {
+                    n1--;
+                }
             }
             n1--;
         }
@@ -1032,6 +1040,11 @@ int igraph_difference(igraph_t *res,
                 IGRAPH_CHECK(igraph_vector_push_back(&edge_ids, e1));
                 IGRAPH_CHECK(igraph_vector_push_back(&edges, i));
                 IGRAPH_CHECK(igraph_vector_push_back(&edges, v1));
+
+                /* handle loop edges properly in undirected graphs */
+                if (!directed && v1 == i) {
+                    n1--;
+                }
             }
             n1--;
         }

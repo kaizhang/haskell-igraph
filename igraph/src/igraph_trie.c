@@ -39,7 +39,7 @@
  *         igraph_vector_ptr_init() and igraph_vector_init() might be returned.
  */
 
-int igraph_i_trie_init_node(igraph_trie_node_t *t) {
+static int igraph_i_trie_init_node(igraph_trie_node_t *t) {
     IGRAPH_STRVECTOR_INIT_FINALLY(&t->strs, 0);
     IGRAPH_VECTOR_PTR_INIT_FINALLY(&t->children, 0);
     IGRAPH_VECTOR_INIT_FINALLY(&t->values, 0);
@@ -47,7 +47,7 @@ int igraph_i_trie_init_node(igraph_trie_node_t *t) {
     return 0;
 }
 
-void igraph_i_trie_destroy_node(igraph_trie_node_t *t, igraph_bool_t sfree);
+static void igraph_i_trie_destroy_node(igraph_trie_node_t *t);
 
 /**
  * \ingroup igraphtrie
@@ -59,8 +59,8 @@ void igraph_i_trie_destroy_node(igraph_trie_node_t *t, igraph_bool_t sfree);
 int igraph_trie_init(igraph_trie_t *t, igraph_bool_t storekeys) {
     t->maxvalue = -1;
     t->storekeys = storekeys;
-    IGRAPH_CHECK(igraph_i_trie_init_node( (igraph_trie_node_t *)t ));
-    IGRAPH_FINALLY(igraph_i_trie_destroy_node, t);
+    IGRAPH_CHECK(igraph_i_trie_init_node( (igraph_trie_node_t *) t ));
+    IGRAPH_FINALLY(igraph_i_trie_destroy_node, (igraph_trie_node_t *) t );
     if (storekeys) {
         IGRAPH_CHECK(igraph_strvector_init(&t->keys, 0));
     }
@@ -74,13 +74,13 @@ int igraph_trie_init(igraph_trie_t *t, igraph_bool_t storekeys) {
  * \brief Destroys a node of a trie (not to be called directly).
  */
 
-void igraph_i_trie_destroy_node(igraph_trie_node_t *t, igraph_bool_t sfree) {
+static void igraph_i_trie_destroy_node_helper(igraph_trie_node_t *t, igraph_bool_t sfree) {
     long int i;
     igraph_strvector_destroy(&t->strs);
     for (i = 0; i < igraph_vector_ptr_size(&t->children); i++) {
         igraph_trie_node_t *child = VECTOR(t->children)[i];
         if (child != 0) {
-            igraph_i_trie_destroy_node(child, 1);
+            igraph_i_trie_destroy_node_helper(child, 1);
         }
     }
     igraph_vector_ptr_destroy(&t->children);
@@ -88,6 +88,10 @@ void igraph_i_trie_destroy_node(igraph_trie_node_t *t, igraph_bool_t sfree) {
     if (sfree) {
         igraph_Free(t);
     }
+}
+
+static void igraph_i_trie_destroy_node(igraph_trie_node_t *t) {
+    igraph_i_trie_destroy_node_helper(t, 0);
 }
 
 /**
@@ -99,7 +103,7 @@ void igraph_trie_destroy(igraph_trie_t *t) {
     if (t->storekeys) {
         igraph_strvector_destroy(&t->keys);
     }
-    igraph_i_trie_destroy_node( (igraph_trie_node_t*) t, 0);
+    igraph_i_trie_destroy_node( (igraph_trie_node_t*) t);
 }
 
 
@@ -108,7 +112,7 @@ void igraph_trie_destroy(igraph_trie_t *t) {
  * \brief Internal helping function for igraph_trie_t
  */
 
-long int igraph_i_strdiff(const char *str, const char *key) {
+static long int igraph_i_strdiff(const char *str, const char *key) {
 
     long int diff = 0;
     while (key[diff] != '\0' && str[diff] != '\0' && str[diff] == key[diff]) {
@@ -210,9 +214,9 @@ int igraph_trie_get_node(igraph_trie_node_t *t, const char *key,
                 IGRAPH_ERROR("cannot add to trie", IGRAPH_ENOMEM);
             }
             str2[diff] = '\0';
-            IGRAPH_FINALLY(free, str2);
+            IGRAPH_FINALLY(igraph_free, str2);
             IGRAPH_CHECK(igraph_strvector_set(&t->strs, i, str2));
-            free(str2);
+            igraph_Free(str2);
             IGRAPH_FINALLY_CLEAN(4);
 
             VECTOR(t->values)[i] = newvalue;
@@ -246,9 +250,9 @@ int igraph_trie_get_node(igraph_trie_node_t *t, const char *key,
                 IGRAPH_ERROR("cannot add to trie", IGRAPH_ENOMEM);
             }
             str2[diff] = '\0';
-            IGRAPH_FINALLY(free, str2);
+            IGRAPH_FINALLY(igraph_free, str2);
             IGRAPH_CHECK(igraph_strvector_set(&t->strs, i, str2));
-            free(str2);
+            igraph_Free(str2);
             IGRAPH_FINALLY_CLEAN(4);
 
             VECTOR(t->values)[i] = -1;
@@ -345,7 +349,7 @@ int igraph_trie_get2(igraph_trie_t *t, const char *key, long int length,
 
     strncpy(tmp, key, length);
     tmp[length] = '\0';
-    IGRAPH_FINALLY(free, tmp);
+    IGRAPH_FINALLY(igraph_free, tmp);
     IGRAPH_CHECK(igraph_trie_get(t, tmp, id));
     igraph_Free(tmp);
     IGRAPH_FINALLY_CLEAN(1);

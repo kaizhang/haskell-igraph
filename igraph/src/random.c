@@ -22,22 +22,20 @@
 */
 
 #include "igraph_random.h"
+#include "igraph_nongraph.h"
 #include "igraph_error.h"
-#include "config.h"
-
-#include <math.h>
-#include <limits.h>
-#include <string.h>
 #include "igraph_math.h"
 #include "igraph_types.h"
 #include "igraph_vector.h"
 #include "igraph_memory.h"
-#include "igraph_matrix.h"
+#include "config.h"
+#include <math.h>
+#include <string.h>
 
 /**
  * \section about_rngs
  *
- * <section>
+ * <section id="about-random-numbers-in-igraph">
  * <title>About random numbers in igraph, use cases</title>
  *
  * <para>
@@ -54,9 +52,9 @@
 /**
  * \section rng_use_cases
  *
- * <section><title>Use cases</title>
+ * <section id="random-use-cases"><title>Use cases</title>
  *
- * <section><title>Normal (default) use</title>
+ * <section id="random-normal-use"><title>Normal (default) use</title>
  * <para>
  * If the user does not use any of the RNG functions explicitly, but calls
  * some of the randomized igraph functions, then a default RNG is set
@@ -73,7 +71,7 @@
  * </para>
  * </section>
  *
- * <section><title>Reproducible simulations</title>
+ * <section id="random-reproducible-simulations"><title>Reproducible simulations</title>
  * <para>
  * If reproducible results are needed, then the user should set the
  * seed of the default random number generator explicitly, using the
@@ -84,7 +82,7 @@
  * </para>
  * </section>
  *
- * <section><title>Changing the default generator</title>
+ * <section id="random-changing-default-generator"><title>Changing the default generator</title>
  * <para>
  * By default igraph uses the \ref igraph_rng_default() random number
  * generator. This can be changed any time by calling \ref
@@ -94,7 +92,7 @@
  * </para>
  * </section>
  *
- * <section><title>Using multiple generators</title>
+ * <section id="random-using-multiple-generators"><title>Using multiple generators</title>
  * <para>
  * igraph also provides functions to set up multiple random number
  * generators, using the \ref igraph_rng_init() function, and then
@@ -110,7 +108,7 @@
  * </para>
  * </section>
  *
- * <section><title>Example</title>
+ * <section id="random-example"><title>Example</title>
  * <para>
  * \example examples/simple/random_seed.c
  * </para>
@@ -126,8 +124,7 @@ typedef struct {
     long int x[31];
 } igraph_i_rng_glibc2_state_t;
 
-unsigned long int igraph_i_rng_glibc2_get(int *i, int *j, int n,
-        long int *x) {
+static unsigned long int igraph_i_rng_glibc2_get(int *i, int *j, int n, long int *x) {
     unsigned long int k;
 
     x[*i] += x[*j];
@@ -158,8 +155,8 @@ igraph_real_t igraph_rng_glibc2_get_real(void *state) {
 
 /* this function is independent of the bit size */
 
-void igraph_i_rng_glibc2_init(long int *x, int n,
-                              unsigned long int s) {
+static void igraph_i_rng_glibc2_init(long int *x, int n,
+                                     unsigned long int s) {
     int i;
 
     if (s == 0) {
@@ -514,7 +511,7 @@ IGRAPH_THREAD_LOCAL igraph_rng_t igraph_i_rng_default = {
  *
  * \param rng The random number generator to use as default from now
  *    on. Calling \ref igraph_rng_destroy() on it, while it is still
- *    being used as the default will result craches and/or
+ *    being used as the default will result crashes and/or
  *    unpredictable results.
  *
  * Time complexity: O(1).
@@ -977,8 +974,9 @@ float rintf (float x) {
  * result vector.
  */
 
-int igraph_i_random_sample_alga(igraph_vector_t *res, igraph_integer_t l, igraph_integer_t h,
-                                igraph_integer_t length) {
+static int igraph_i_random_sample_alga(igraph_vector_t *res,
+                                       igraph_integer_t l, igraph_integer_t h,
+                                       igraph_integer_t length) {
     igraph_real_t N = h - l + 1;
     igraph_real_t n = length;
 
@@ -1538,7 +1536,7 @@ int imin2(int x, int y) {
     return (x < y) ? x : y;
 }
 
-#if HAVE_WORKING_ISFINITE || HAVE_ISFINITE
+#if HAVE_WORKING_ISFINITE || HAVE_DECL_ISFINITE
     /* isfinite is defined in <math.h> according to C99 */
     #define R_FINITE(x)    isfinite(x)
 #elif HAVE_WORKING_FINITE || HAVE_FINITE
@@ -1556,7 +1554,7 @@ int imin2(int x, int y) {
 #endif
 
 int R_finite(double x) {
-#if HAVE_WORKING_ISFINITE || HAVE_ISFINITE
+#if HAVE_WORKING_ISFINITE || HAVE_DECL_ISFINITE
     return isfinite(x);
 #elif HAVE_WORKING_FINITE || HAVE_FINITE
     return finite(x);

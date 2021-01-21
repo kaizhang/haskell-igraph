@@ -7,7 +7,7 @@
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -28,16 +28,18 @@
 #include "igraph_types.h"
 #include "igraph_error.h"
 
+#include "igraph_handle_exceptions.h"
+
 namespace gengraph {
 
 // return negative number if program should exit
 int parse_options(int &argc, char** &argv);
 
 // options
-static const bool MONITOR_TIME = false;
+// static const bool MONITOR_TIME = false;
 static const int  SHUFFLE_TYPE = FINAL_HEURISTICS;
-static const bool RAW_DEGREES  = false;
-static const FILE *Fdeg = stdin;
+// static const bool RAW_DEGREES  = false;
+// static const FILE *Fdeg = stdin;
 
 //_________________________________________________________________________
 // int main(int argc, char** argv) {
@@ -137,48 +139,50 @@ extern "C" {
     int igraph_degree_sequence_game_vl(igraph_t *graph,
                                        const igraph_vector_t *out_seq,
                                        const igraph_vector_t *in_seq) {
-        long int sum = igraph_vector_sum(out_seq);
-        if (sum % 2 != 0) {
-            IGRAPH_ERROR("Sum of degrees should be even", IGRAPH_EINVAL);
-        }
+        IGRAPH_HANDLE_EXCEPTIONS(
+            long int sum = igraph_vector_sum(out_seq);
+            if (sum % 2 != 0) {
+                IGRAPH_ERROR("Sum of degrees should be even", IGRAPH_EINVAL);
+            }
 
-        RNG_BEGIN();
+            RNG_BEGIN();
 
-        if (in_seq && igraph_vector_size(in_seq) != 0) {
-            RNG_END();
-            IGRAPH_ERROR("This generator works with undirected graphs only", IGRAPH_EINVAL);
-        }
+            if (in_seq && igraph_vector_size(in_seq) != 0) {
+                RNG_END();
+                IGRAPH_ERROR("This generator works with undirected graphs only", IGRAPH_EINVAL);
+            }
 
-        degree_sequence *dd = new degree_sequence(out_seq);
+            degree_sequence *dd = new degree_sequence(out_seq);
 
-        graph_molloy_opt *g = new graph_molloy_opt(*dd);
-        delete dd;
+            graph_molloy_opt *g = new graph_molloy_opt(*dd);
+            delete dd;
 
-        if (!g->havelhakimi()) {
+            if (!g->havelhakimi()) {
+                delete g;
+                RNG_END();
+                IGRAPH_ERROR("Cannot realize the given degree sequence as an undirected, simple graph",
+                             IGRAPH_EINVAL);
+            }
+
+            if (!g->make_connected()) {
+                delete g;
+                RNG_END();
+                IGRAPH_ERROR("Cannot make a connected graph from the given degree sequence",
+                             IGRAPH_EINVAL);
+            }
+
+            int *hc = g->hard_copy();
             delete g;
+            graph_molloy_hash *gh = new graph_molloy_hash(hc);
+            delete [] hc;
+
+            gh->shuffle(5 * gh->nbarcs(), 100 * gh->nbarcs(), SHUFFLE_TYPE);
+
+            IGRAPH_CHECK(gh->print(graph));
+            delete gh;
+
             RNG_END();
-            IGRAPH_ERROR("Cannot realize the given degree sequence as an undirected, simple graph",
-                         IGRAPH_EINVAL);
-        }
-
-        if (!g->make_connected()) {
-            delete g;
-            RNG_END();
-            IGRAPH_ERROR("Cannot make a connected graph from the given degree sequence",
-                         IGRAPH_EINVAL);
-        }
-
-        int *hc = g->hard_copy();
-        delete g;
-        graph_molloy_hash *gh = new graph_molloy_hash(hc);
-        delete [] hc;
-
-        gh->shuffle(5 * gh->nbarcs(), 100 * gh->nbarcs(), SHUFFLE_TYPE);
-
-        IGRAPH_CHECK(gh->print(graph));
-        delete gh;
-
-        RNG_END();
+        );
 
         return 0;
     }

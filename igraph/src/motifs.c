@@ -27,31 +27,17 @@
 #include "igraph_adjlist.h"
 #include "igraph_interrupt_internal.h"
 #include "igraph_interface.h"
+#include "igraph_isoclasses.h"
 #include "igraph_nongraph.h"
-#include "igraph_structural.h"
 #include "igraph_stack.h"
 #include "config.h"
-
-#include <string.h>
-
-extern unsigned int igraph_i_isoclass_3[];
-extern unsigned int igraph_i_isoclass_4[];
-extern unsigned int igraph_i_isoclass_3u[];
-extern unsigned int igraph_i_isoclass_4u[];
-extern unsigned int igraph_i_isoclass2_3[];
-extern unsigned int igraph_i_isoclass2_4[];
-extern unsigned int igraph_i_isoclass2_3u[];
-extern unsigned int igraph_i_isoclass2_4u[];
-extern unsigned int igraph_i_isoclass_3_idx[];
-extern unsigned int igraph_i_isoclass_4_idx[];
-extern unsigned int igraph_i_isoclass_3u_idx[];
-extern unsigned int igraph_i_isoclass_4u_idx[];
 
 /**
  * Callback function for igraph_motifs_randesu that counts the motifs by
  * isomorphism class in a histogram.
  */
-igraph_bool_t igraph_i_motifs_randesu_update_hist(const igraph_t *graph,
+static igraph_bool_t igraph_i_motifs_randesu_update_hist(
+        const igraph_t *graph,
         igraph_vector_t *vids, int isoclass, void* extra) {
     igraph_vector_t *hist = (igraph_vector_t*)extra;
     IGRAPH_UNUSED(graph); IGRAPH_UNUSED(vids);
@@ -65,14 +51,14 @@ igraph_bool_t igraph_i_motifs_randesu_update_hist(const igraph_t *graph,
  *
  * </para><para>
  * Motifs are small connected subgraphs of a given structure in a
- * graph. It is argued that the motif profile (ie. the number of
+ * graph. It is argued that the motif profile (i.e. the number of
  * different motifs in the graph) is characteristic for different
  * types of networks and network function is related to the motifs in
  * the graph.
  *
  * </para><para>
  * This function is able to find the different motifs of size three
- * and four (ie. the number of different subgraphs with three and four
+ * and four (i.e. the number of different subgraphs with three and four
  * vertices) in the network.
  *
  * </para><para>
@@ -108,7 +94,7 @@ igraph_bool_t igraph_i_motifs_randesu_update_hist(const igraph_t *graph,
  *        in a graph.
  * \return Error code.
  * \sa \ref igraph_motifs_randesu_estimate() for estimating the number
- * of motifs in a graph, this can help to set the \c cut_prob
+ * of motifs in a graph, this can help to set the \p cut_prob
  * parameter; \ref igraph_motifs_randesu_no() to calculate the total
  * number of motifs of a given size in a graph;
  * \ref igraph_motifs_randesu_callback() for calling a callback function
@@ -169,14 +155,14 @@ int igraph_motifs_randesu(const igraph_t *graph, igraph_vector_t *hist,
  *
  * </para><para>
  * Similarly to \ref igraph_motifs_randesu(), this function is able to find the
- * different motifs of size three and four (ie. the number of different
+ * different motifs of size three and four (i.e. the number of different
  * subgraphs with three and four vertices) in the network. However, instead of
  * counting them, the function will call a callback function for each motif
  * found to allow further tests or post-processing.
  *
  * </para><para>
- * The \c cut_prob argument also allows sampling the motifs, just like for
- * \ref igraph_motifs_randesu(). Set the \c cut_prob argument to a zero vector
+ * The \p cut_prob argument also allows sampling the motifs, just like for
+ * \ref igraph_motifs_randesu(). Set the \p cut_prob argument to a zero vector
  * for finding all motifs.
  *
  * \param graph The graph to find the motifs in.
@@ -214,7 +200,7 @@ int igraph_motifs_randesu_callback(const igraph_t *graph, int size,
     long int *added;
     char *subg;
 
-    unsigned int *arr_idx, *arr_code;
+    const unsigned int *arr_idx, *arr_code;
     int code = 0;
     unsigned char mul, idx;
 
@@ -447,7 +433,7 @@ int igraph_motifs_randesu_callback(const igraph_t *graph, int size,
  * </para><para>
  * The total number of motifs is estimated by taking a sample of
  * vertices and counts all motifs in which these vertices are
- * included. (There is also a \c cut_prob parameter which gives the
+ * included. (There is also a \p cut_prob parameter which gives the
  * probabilities to cut a branch of the search tree.)
  *
  * </para><para>
@@ -658,12 +644,9 @@ int igraph_motifs_randesu_estimate(const igraph_t *graph, igraph_integer_t *est,
  * \brief Count the total number of motifs in a graph
  *
  * </para><para>
- * This function counts the total number of motifs in a graph without
- * assigning isomorphism classes to them.
- *
- * </para><para>
- * Directed motifs will be counted in directed graphs and undirected
- * motifs in undirected graphs.
+ * This function counts the total number of motifs in a graph,
+ * i.e. the number of of (weakly) connected triplets or quadruplets,
+ * without assigning isomorphism classes to them.
  *
  * \param graph The graph object to study.
  * \param no Pointer to an integer type, the result will be stored
