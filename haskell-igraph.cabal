@@ -9,7 +9,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Kai Zhang
 maintainer:          kai@kzhang.org
-copyright:           (c) 2016-2020 Kai Zhang
+copyright:           (c) 2016-2021 Kai Zhang
 category:            Math
 build-type:          Simple
 extra-source-files:
@@ -58,7 +58,7 @@ library
     , containers
     , data-ordlist
     , primitive
-    , singletons
+    , singletons >= 2.7
 
   extra-libraries:     stdc++
   hs-source-dirs:      src
