@@ -7,6 +7,7 @@ module Test.Algorithms
 import           Control.Arrow
 import           Control.Monad.ST
 import           Data.List
+import Control.Monad
 import qualified Data.Matrix.Unboxed as M
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -29,6 +30,7 @@ tests = testGroup "Algorithms"
     , decomposeTest
     , articulationTest
     , bridgeTest
+    , communityTest
     , pagerankTest
     , kleinbergTest
     , densityTest
@@ -124,8 +126,8 @@ decomposeTest = testGroup "Decompose"
     ]
   where
     es = [ (0,1), (1,2), (2,0)
-		 , (3,4), (4,5), (5,6)
-		 , (8,9), (9,10) ]
+         , (3,4), (4,5), (5,6)
+         , (8,9), (9,10) ]
     gr = mkGraph (replicate 11 ()) $ zip es $ repeat () :: Graph 'U () ()
 
 articulationTest :: TestTree
@@ -140,16 +142,20 @@ bridgeTest = testCase "Bridges" $ edgeLab g <$> bridges g @?= ["bridge"]
             , (("a","i"),"bridge")
             ]
 
-{-
 communityTest :: TestTree
 communityTest = testGroup "Community"
-    [ consistency ]
+    [ consistency, consistency2 ]
   where
     consistency = testCase "Consistency" $ do
-        r1 <- withSeed 134 $ return . findCommunity zacharyKarate Nothing spinglass
-        r2 <- withSeed 14 $ return . findCommunity zacharyKarate Nothing spinglass 
-        r1 @=? r2
-        -}
+        rs <- replicateM 50 $ withSeed 134 $ findCommunity zacharyKarate Nothing Nothing spinglass
+        all (== head rs) rs @=? True
+    consistency2 = testCase "Consistency -- leiden" $ do
+        rs <- replicateM 50 $ withSeed 234 $ findCommunity zacharyKarate Nothing Nothing spinglass
+        True @=? all (== head rs) rs
+    gr = mkGraph (replicate 10 ()) $ map (\(i,j) -> ((i,j),()))
+        [ (0, 1), (0, 2), (0, 3), (0, 4), (1, 2), (1, 3), (1, 4), (2, 3), (2, 4)
+        , (3, 4), (5, 6), (5, 7), (5, 8), (5, 9), (6, 7), (6, 8), (6, 9), (7, 8)
+        , (7, 9), (8, 9), (0, 5) ] :: Graph 'U () ()
 
 pagerankTest :: TestTree
 pagerankTest = testGroup "PageRank"

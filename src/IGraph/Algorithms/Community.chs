@@ -31,12 +31,12 @@ import IGraph.Internal.C2HS
 -- | Detecting community structure.
 findCommunity :: (Serialize v, Serialize e)
               => Graph 'U v e
-              -> Maybe (v -> Double)  -- ^ Function to assign node weights
+              -> Maybe (Node -> v -> Double)  -- ^ Function to assign node weights
               -> Maybe (e -> Double)  -- ^ Function to assign edge weights
               -> CommunityMethod  -- ^ Community finding algorithms
               -> Gen
-              -> [[Int]]
-findCommunity gr getNodeW getEdgeW method _ = unsafePerformIO $ allocaVector $ \result ->
+              -> IO [[Int]]
+findCommunity gr getNodeW getEdgeW method _ = allocaVector $ \result ->
     withListMaybe ew $ \ew' -> do
         case method of
             LeadingEigenvector n -> allocaArpackOpt $ \arpack ->
@@ -61,7 +61,7 @@ findCommunity gr getNodeW getEdgeW method _ = unsafePerformIO $ allocaVector $ \
         Just f -> Just $ map (f . snd) $ labEdges gr
     nw = case getNodeW of
         Nothing -> Nothing
-        Just f -> Just $ map (f . snd) $ labNodes gr
+        Just f -> Just $ map (uncurry f) $ labNodes gr
 
 data CommunityMethod =
       LeadingEigenvector
@@ -93,10 +93,25 @@ spinglass = Spinglass
     , _gamma = 1.0 }
 
 -- | Default parameters for the leiden algorithm.
+-- 1 / 2m sum_ij (A_ij - gamma n_i n_j)d(s_i, s_j), where
+-- m is the total edge weight,
+-- A_ij is the weight of edge (i, j),
+-- gamma is the so-called resolution parameter,
+-- n_i is the node weight of node i,
+-- s_i is the cluster of node i and
+-- d(x, y) = 1 if and only if x = y and 0 otherwise.
+-- By setting n_i = k_i, the degree of node i, and dividing gamma by 2m,
+-- you effectively obtain an expression for modularity.
+-- Hence, the standard modularity will be optimized when you supply the degrees
+-- as node_weights and by supplying as a resolution parameter 1.0/(2*m), with m the number of edges.
+--
+-- RBConfigurationVertexPartition: supplying the degrees as node weights, and
+-- a resolution parameter 1.0/(2*m), with m the number of edges.
+-- CPM: 
 leiden :: CommunityMethod
 leiden = Leiden
     { _resolution = 1
-    , _beta = 0 }
+    , _beta = 0.01 }
 
 {#fun igraph_community_spinglass as ^
     { `IGraph'
