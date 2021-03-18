@@ -150,7 +150,7 @@ communityTest = testGroup "Community"
         rs <- replicateM 50 $ withSeed 134 $ findCommunity zacharyKarate Nothing Nothing spinglass
         all (== head rs) rs @=? True
     consistency2 = testCase "Consistency -- leiden" $ do
-        rs <- replicateM 50 $ withSeed 234 $ findCommunity zacharyKarate Nothing Nothing spinglass
+        rs <- replicateM 50 $ withSeed 234 $ findCommunity zacharyKarate Nothing Nothing leiden
         True @=? all (== head rs) rs
     gr = mkGraph (replicate 10 ()) $ map (\(i,j) -> ((i,j),()))
         [ (0, 1), (0, 2), (0, 3), (0, 4), (1, 2), (1, 3), (1, 4), (2, 3), (2, 4)

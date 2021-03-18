@@ -19,9 +19,10 @@
 #define HAVE_STRINGS_H 1
 #define HAVE_STRING_H 1
 
+#define HAVE_TLS 1
 #define IGRAPH_F77_SAVE static IGRAPH_THREAD_LOCAL
-#define IGRAPH_THREAD_LOCAL
-#define IGRAPH_THREAD_SAFE 1
+#define IGRAPH_THREAD_LOCAL __thread
+#define TLS __thread
 
 #define INTERNAL_ARPACK 1
 #define INTERNAL_BLAS 1
@@ -29,14 +30,15 @@
 #define INTERNAL_GLPK 1
 #define INTERNAL_LAPACK 1
 
+
 #define LT_OBJDIR ".libs/"
 #define PACKAGE "igraph"
 #define PACKAGE_BUGREPORT "igraph@igraph.org"
 #define PACKAGE_NAME "igraph"
-#define PACKAGE_STRING "igraph 0.8.0"
+#define PACKAGE_STRING "igraph 0.8.5"
 #define PACKAGE_TARNAME "igraph"
 #define PACKAGE_URL ""
-#define PACKAGE_VERSION "0.8.0"
+#define PACKAGE_VERSION "0.8.5"
 #define STDC_HEADERS 1
-#define VERSION "0.8.0"
+#define VERSION "0.8.5"
 #undef YYTEXT_POINTER
