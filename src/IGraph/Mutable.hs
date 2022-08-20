@@ -23,7 +23,7 @@ import qualified Data.Map.Strict            as M
 import           Data.List                      (foldl', delete)
 import           Data.Primitive.MutVar
 import           Data.Serialize                 (Serialize, encode)
-import           Data.Singletons.Prelude        (Sing, SingI, fromSing, sing)
+import           Data.Singletons (Sing, SingI, fromSing, sing)
 import           Foreign                        hiding (new)
 
 import           IGraph.Internal

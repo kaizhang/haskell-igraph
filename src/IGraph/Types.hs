@@ -18,8 +18,8 @@
 module IGraph.Types where
 
 import           Data.Serialize          (Serialize)
-import           Data.Singletons.Prelude
 import           Data.Singletons.TH
+import Prelude.Singletons
 import           GHC.Generics            (Generic)
 
 $(singletons [d|
